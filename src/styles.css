@@ -1,0 +1,143 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Coastal Clarity — Da Nang Real Estate design system */
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-teal: var(--teal);
+  --color-teal-foreground: var(--teal-foreground);
+  --color-orange: var(--orange);
+  --color-orange-foreground: var(--orange-foreground);
+  --color-surface: var(--surface);
+  --color-surface-container: var(--surface-container);
+
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --shadow-card-hover: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Coastal Clarity tokens converted to oklch */
+  --background: oklch(0.978 0.004 247); /* #f7f9fc */
+  --foreground: oklch(0.24 0.012 240); /* #191c1e */
+  --surface: oklch(0.978 0.004 247);
+  --surface-container: oklch(0.954 0.004 247); /* #eceef1 */
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0.012 240);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.24 0.012 240);
+
+  --primary: oklch(0.36 0.13 252); /* #004379 ocean blue */
+  --primary-foreground: oklch(1 0 0);
+
+  --secondary: oklch(0.96 0.005 247);
+  --secondary-foreground: oklch(0.24 0.012 240);
+
+  --muted: oklch(0.954 0.004 247);
+  --muted-foreground: oklch(0.46 0.012 250); /* #414751 */
+
+  --accent: oklch(0.94 0.02 220);
+  --accent-foreground: oklch(0.36 0.13 252);
+
+  --teal: oklch(0.55 0.11 188); /* #006a62 */
+  --teal-foreground: oklch(1 0 0);
+
+  --orange: oklch(0.6 0.16 45); /* warm vibrant orange */
+  --orange-foreground: oklch(1 0 0);
+
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0.9 0.005 247); /* #E2E8F0-ish */
+  --input: oklch(0.9 0.005 247);
+  --ring: oklch(0.36 0.13 252);
+}
+
+.dark {
+  --background: oklch(0.18 0.01 240);
+  --foreground: oklch(0.96 0.004 247);
+  --card: oklch(0.22 0.012 240);
+  --card-foreground: oklch(0.96 0.004 247);
+  --primary: oklch(0.75 0.12 248);
+  --primary-foreground: oklch(0.18 0.01 240);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --muted: oklch(0.26 0.012 240);
+  --muted-foreground: oklch(0.72 0.01 247);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  .container-page {
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 768px) {
+    .container-page {
+      padding-inline: 2.5rem;
+    }
+  }
+  .glass {
+    background-color: color-mix(in srgb, white 90%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+}
