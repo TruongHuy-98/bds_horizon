@@ -74,14 +74,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "BDS Horizon — Bất động sản Đà Nẵng" },
+      { name: "description", content: "Nền tảng bất động sản hàng đầu Đà Nẵng. Tìm kiếm, tra cứu quy hoạch và luyện thi chứng chỉ môi giới BĐS." },
+      { name: "author", content: "BDS Horizon" },
+      { property: "og:title", content: "BDS Horizon — Bất động sản Đà Nẵng" },
+      { property: "og:description", content: "Nền tảng bất động sản hàng đầu Đà Nẵng." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "@BDSHorizon" },
     ],
     links: [
       {
