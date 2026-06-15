@@ -10,28 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TinTucRouteImport } from './routes/tin-tuc'
-import { Route as MoiGioiRouteImport } from './routes/moi-gioi'
-import { Route as DuAnRouteImport } from './routes/du-an'
 import { Route as CheckQuyHoachRouteImport } from './routes/check-quy-hoach'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MoiGioiIndexRouteImport } from './routes/moi-gioi.index'
+import { Route as DuAnIndexRouteImport } from './routes/du-an.index'
 import { Route as MoiGioiSlugRouteImport } from './routes/moi-gioi.$slug'
 import { Route as DuAnSlugRouteImport } from './routes/du-an.$slug'
 
 const TinTucRoute = TinTucRouteImport.update({
   id: '/tin-tuc',
   path: '/tin-tuc',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MoiGioiRoute = MoiGioiRouteImport.update({
-  id: '/moi-gioi',
-  path: '/moi-gioi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DuAnRoute = DuAnRouteImport.update({
-  id: '/du-an',
-  path: '/du-an',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckQuyHoachRoute = CheckQuyHoachRouteImport.update({
@@ -54,15 +44,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MoiGioiIndexRoute = MoiGioiIndexRouteImport.update({
+  id: '/moi-gioi/',
+  path: '/moi-gioi/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DuAnIndexRoute = DuAnIndexRouteImport.update({
+  id: '/du-an/',
+  path: '/du-an/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MoiGioiSlugRoute = MoiGioiSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => MoiGioiRoute,
+  id: '/moi-gioi/$slug',
+  path: '/moi-gioi/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DuAnSlugRoute = DuAnSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => DuAnRoute,
+  id: '/du-an/$slug',
+  path: '/du-an/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -70,22 +70,22 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
-  '/du-an': typeof DuAnRouteWithChildren
-  '/moi-gioi': typeof MoiGioiRouteWithChildren
   '/tin-tuc': typeof TinTucRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
+  '/du-an/': typeof DuAnIndexRoute
+  '/moi-gioi/': typeof MoiGioiIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
-  '/du-an': typeof DuAnRouteWithChildren
-  '/moi-gioi': typeof MoiGioiRouteWithChildren
   '/tin-tuc': typeof TinTucRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
+  '/du-an': typeof DuAnIndexRoute
+  '/moi-gioi': typeof MoiGioiIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -93,11 +93,11 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
-  '/du-an': typeof DuAnRouteWithChildren
-  '/moi-gioi': typeof MoiGioiRouteWithChildren
   '/tin-tuc': typeof TinTucRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
+  '/du-an/': typeof DuAnIndexRoute
+  '/moi-gioi/': typeof MoiGioiIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,33 +106,33 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/check-quy-hoach'
-    | '/du-an'
-    | '/moi-gioi'
     | '/tin-tuc'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
+    | '/du-an/'
+    | '/moi-gioi/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/auth'
     | '/check-quy-hoach'
-    | '/du-an'
-    | '/moi-gioi'
     | '/tin-tuc'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
+    | '/du-an'
+    | '/moi-gioi'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/auth'
     | '/check-quy-hoach'
-    | '/du-an'
-    | '/moi-gioi'
     | '/tin-tuc'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
+    | '/du-an/'
+    | '/moi-gioi/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -140,9 +140,11 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   CheckQuyHoachRoute: typeof CheckQuyHoachRoute
-  DuAnRoute: typeof DuAnRouteWithChildren
-  MoiGioiRoute: typeof MoiGioiRouteWithChildren
   TinTucRoute: typeof TinTucRoute
+  DuAnSlugRoute: typeof DuAnSlugRoute
+  MoiGioiSlugRoute: typeof MoiGioiSlugRoute
+  DuAnIndexRoute: typeof DuAnIndexRoute
+  MoiGioiIndexRoute: typeof MoiGioiIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,20 +154,6 @@ declare module '@tanstack/react-router' {
       path: '/tin-tuc'
       fullPath: '/tin-tuc'
       preLoaderRoute: typeof TinTucRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/moi-gioi': {
-      id: '/moi-gioi'
-      path: '/moi-gioi'
-      fullPath: '/moi-gioi'
-      preLoaderRoute: typeof MoiGioiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/du-an': {
-      id: '/du-an'
-      path: '/du-an'
-      fullPath: '/du-an'
-      preLoaderRoute: typeof DuAnRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/check-quy-hoach': {
@@ -196,52 +184,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/moi-gioi/': {
+      id: '/moi-gioi/'
+      path: '/moi-gioi'
+      fullPath: '/moi-gioi/'
+      preLoaderRoute: typeof MoiGioiIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/du-an/': {
+      id: '/du-an/'
+      path: '/du-an'
+      fullPath: '/du-an/'
+      preLoaderRoute: typeof DuAnIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/moi-gioi/$slug': {
       id: '/moi-gioi/$slug'
-      path: '/$slug'
+      path: '/moi-gioi/$slug'
       fullPath: '/moi-gioi/$slug'
       preLoaderRoute: typeof MoiGioiSlugRouteImport
-      parentRoute: typeof MoiGioiRoute
+      parentRoute: typeof rootRouteImport
     }
     '/du-an/$slug': {
       id: '/du-an/$slug'
-      path: '/$slug'
+      path: '/du-an/$slug'
       fullPath: '/du-an/$slug'
       preLoaderRoute: typeof DuAnSlugRouteImport
-      parentRoute: typeof DuAnRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface DuAnRouteChildren {
-  DuAnSlugRoute: typeof DuAnSlugRoute
-}
-
-const DuAnRouteChildren: DuAnRouteChildren = {
-  DuAnSlugRoute: DuAnSlugRoute,
-}
-
-const DuAnRouteWithChildren = DuAnRoute._addFileChildren(DuAnRouteChildren)
-
-interface MoiGioiRouteChildren {
-  MoiGioiSlugRoute: typeof MoiGioiSlugRoute
-}
-
-const MoiGioiRouteChildren: MoiGioiRouteChildren = {
-  MoiGioiSlugRoute: MoiGioiSlugRoute,
-}
-
-const MoiGioiRouteWithChildren =
-  MoiGioiRoute._addFileChildren(MoiGioiRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   CheckQuyHoachRoute: CheckQuyHoachRoute,
-  DuAnRoute: DuAnRouteWithChildren,
-  MoiGioiRoute: MoiGioiRouteWithChildren,
   TinTucRoute: TinTucRoute,
+  DuAnSlugRoute: DuAnSlugRoute,
+  MoiGioiSlugRoute: MoiGioiSlugRoute,
+  DuAnIndexRoute: DuAnIndexRoute,
+  MoiGioiIndexRoute: MoiGioiIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -8,6 +8,7 @@ import {
   Layers,
   ArrowRight,
   TrendingUp,
+  Scale,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Header from "@/components/site/Header";
+import {
+  ComparisonBar,
+  ComparisonModal,
+  usePropertyComparison,
+  type PropertyToCompare,
+} from "@/components/site/PropertyComparison";
 
 import p1 from "@/assets/project-1.jpg";
 import p2 from "@/assets/project-2.jpg";
@@ -27,7 +34,7 @@ import p4 from "@/assets/project-4.jpg";
 import p5 from "@/assets/project-5.jpg";
 import p6 from "@/assets/project-6.jpg";
 
-export const Route = createFileRoute("/du-an")({
+export const Route = createFileRoute("/du-an/")({
   component: DuAnPage,
   head: () => ({
     meta: [
@@ -198,7 +205,35 @@ const filters: { key: string; label: string }[] = [
   { key: "done", label: "Đã bàn giao" },
 ];
 
-function ProjectGrid() {
+const mapProjectToCompare = (p: typeof projects[number]): PropertyToCompare => {
+  // Realistic mock pricing, area, rooms, and address for each development project
+  const detailsMap: Record<string, { price: number; area: number; beds: number; baths: number; address: string }> = {
+    "Sun Cosmo Residence": { price: 5.2, area: 95, beds: 2, baths: 2, address: "Trần Hưng Đạo, Ngũ Hành Sơn, Đà Nẵng" },
+    "The Ocean Villas Mỹ Khê": { price: 28.0, area: 320, beds: 4, baths: 4, address: "Võ Nguyên Giáp, Sơn Trà, Đà Nẵng" },
+    "Hòa Xuân Riverside City": { price: 4.5, area: 100, beds: 3, baths: 2, address: "Nguyễn Phước Lan, Cẩm Lệ, Đà Nẵng" },
+    "Azura Riverfront Tower": { price: 6.8, area: 110, beds: 2, baths: 2, address: "Trần Hưng Đạo, Hải Châu, Đà Nẵng" },
+    "Eco Green Hòa Vang": { price: 6.5, area: 180, beds: 3, baths: 3, address: "Quốc lộ 14B, Hòa Vang, Đà Nẵng" },
+    "Da Nang Smart Plaza": { price: 8.2, area: 150, beds: 3, baths: 2, address: "FPT City, Ngũ Hành Sơn, Đà Nẵng" },
+  };
+
+  const details = detailsMap[p.name] || { price: 5.0, area: 90, beds: 2, baths: 2, address: `${p.district}, Đà Nẵng` };
+
+  return {
+    id: p.name.toLowerCase().replace(/\s+/g, "-"),
+    name: p.name,
+    img: p.img,
+    developer: p.developer,
+    district: p.district,
+    ...details,
+  };
+};
+
+interface ProjectGridProps {
+  onAddToComparison: (property: PropertyToCompare) => void;
+  isSelected: (id: string) => boolean;
+}
+
+function ProjectGrid({ onAddToComparison, isSelected }: ProjectGridProps) {
   const [active, setActive] = useState("all");
 
   const list = projects.filter((p) => {
@@ -236,76 +271,95 @@ function ProjectGrid() {
         </div>
 
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {list.map((p) => (
-            <article
-              key={p.name}
-              className="group bg-card rounded-xl overflow-hidden border border-border/60 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300"
-            >
-              <div className="relative aspect-[16/10] overflow-hidden">
-                <img
-                  src={p.img}
-                  alt={p.name}
-                  width={1024}
-                  height={640}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute top-3 left-3 flex gap-2">
-                  <span
-                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm ${statusTone[p.status]}`}
-                  >
-                    {p.status}
-                  </span>
-                  <span className="bg-white/95 text-foreground text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                    {p.category}
-                  </span>
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="text-xs text-muted-foreground">{p.developer}</div>
-                <h3 className="mt-1 font-semibold text-lg leading-snug line-clamp-1">{p.name}</h3>
-                <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {p.district}, Đà Nẵng
-                </div>
+          {list.map((p) => {
+            const propertyToCompare = mapProjectToCompare(p);
+            const isCompared = isSelected(propertyToCompare.id);
 
-                <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-                  <div className="rounded-md bg-surface-container/60 p-2">
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" /> Giá từ
-                    </div>
-                    <div className="mt-0.5 font-semibold text-primary">{p.priceFrom}</div>
-                  </div>
-                  <div className="rounded-md bg-surface-container/60 p-2">
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                      <Layers className="h-3 w-3" /> Quy mô
-                    </div>
-                    <div className="mt-0.5 font-semibold">{p.units}</div>
-                  </div>
-                  <div className="rounded-md bg-surface-container/60 p-2">
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3" /> Bàn giao
-                    </div>
-                    <div className="mt-0.5 font-semibold">{p.handover}</div>
+            return (
+              <article
+                key={p.name}
+                className="group bg-card rounded-xl overflow-hidden border border-border/60 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300"
+              >
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  <img
+                    src={p.img}
+                    alt={p.name}
+                    width={1024}
+                    height={640}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute top-3 left-3 flex gap-2">
+                    <span
+                      className={`text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm ${statusTone[p.status]}`}
+                    >
+                      {p.status}
+                    </span>
+                    <span className="bg-white/95 text-foreground text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                      {p.category}
+                    </span>
                   </div>
                 </div>
+                <div className="p-5">
+                  <div className="text-xs text-muted-foreground">{p.developer}</div>
+                  <h3 className="mt-1 font-semibold text-lg leading-snug line-clamp-1">{p.name}</h3>
+                  <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {p.district}, Đà Nẵng
+                  </div>
 
-                <Button
-                  asChild
-                  variant="outline"
-                  className="mt-5 w-full h-10 rounded-md border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground group/btn"
-                >
-                  <Link
-                    to="/du-an/$slug"
-                    params={{ slug: p.name.toLowerCase().replace(/\s+/g, "-") }}
-                  >
-                    Xem chi tiết
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
-                  </Link>
-                </Button>
-              </div>
-            </article>
-          ))}
+                  <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                    <div className="rounded-md bg-surface-container/60 p-2">
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" /> Giá từ
+                      </div>
+                      <div className="mt-0.5 font-semibold text-primary">{p.priceFrom}</div>
+                    </div>
+                    <div className="rounded-md bg-surface-container/60 p-2">
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                        <Layers className="h-3 w-3" /> Quy mô
+                      </div>
+                      <div className="mt-0.5 font-semibold">{p.units}</div>
+                    </div>
+                    <div className="rounded-md bg-surface-container/60 p-2">
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                        <CalendarDays className="h-3 w-3" /> Bàn giao
+                      </div>
+                      <div className="mt-0.5 font-semibold">{p.handover}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2.5 mt-5">
+                    <Button
+                      variant="outline"
+                      onClick={() => onAddToComparison(propertyToCompare)}
+                      className={`flex-1 h-10 rounded-md border-border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                        isCompared
+                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/95"
+                          : "hover:bg-muted"
+                      }`}
+                    >
+                      <Scale className="h-3.5 w-3.5" />
+                      {isCompared ? "Đã thêm" : "So sánh"}
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="flex-1 h-10 rounded-md border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground group/btn text-xs font-semibold"
+                    >
+                      <Link
+                        to="/du-an/$slug"
+                        params={{ slug: p.name.toLowerCase().replace(/\s+/g, "-") }}
+                      >
+                        Xem chi tiết
+                        <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -337,14 +391,41 @@ function CTASection() {
 }
 
 function DuAnPage() {
+  const {
+    selectedProperties,
+    addToComparison,
+    removeFromComparison,
+    isSelected,
+  } = usePropertyComparison();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <Header />
       <main>
         <ProjectsHero />
-        <ProjectGrid />
+        <ProjectGrid
+          onAddToComparison={addToComparison}
+          isSelected={isSelected}
+        />
         <CTASection />
       </main>
+
+      {/* Floating Bottom Comparison Bar widget */}
+      <ComparisonBar
+        selectedProperties={selectedProperties}
+        onRemove={removeFromComparison}
+        onCompareNow={() => setIsModalOpen(true)}
+      />
+
+      {/* Fullscreen detailed comparison modal matrix */}
+      <ComparisonModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        selectedProperties={selectedProperties}
+        onRemove={removeFromComparison}
+      />
     </div>
   );
 }

@@ -26,7 +26,7 @@ import b2 from "@/assets/broker-2.jpg";
 import b3 from "@/assets/broker-3.jpg";
 import b4 from "@/assets/broker-4.jpg";
 
-export const Route = createFileRoute("/moi-gioi")({
+export const Route = createFileRoute("/moi-gioi/")({
   component: BrokersPage,
   head: () => ({
     meta: [
