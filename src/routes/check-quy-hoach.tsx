@@ -41,10 +41,12 @@ export const Route = createFileRoute("/check-quy-hoach")({
 });
 
 const legend = [
-  { color: "#f5a623", label: "Residential (Đất ở)" },
-  { color: "#4ea7e3", label: "Commercial (Thương mại)" },
-  { color: "#5fbf6a", label: "Green spaces (Công viên)" },
-  { color: "#b770c9", label: "Industrial (Công nghiệp)" },
+  { color: "#f5a623", label: "Đất ở (Residential)" },
+  { color: "#4ea7e3", label: "Thương mại - Dịch vụ" },
+  { color: "#5fbf6a", label: "Công viên - Cây xanh" },
+  { color: "#b770c9", label: "Công nghiệp" },
+  { color: "#f5dd29", label: "Hỗn hợp đô thị" },
+  { color: "#e03535", label: "Trung tâm hành chính" },
 ];
 
 function CoordTabs({
@@ -135,18 +137,18 @@ function MapPanel({
       />
       <div className="absolute inset-0 bg-gradient-to-br from-background/10 via-transparent to-background/20 pointer-events-none" />
 
-      {/* Floating Control Panel (Glassmorphism card from Antigravity UI) */}
+      {/* Floating Control Panel — top-left on desktop, bottom-left on mobile to avoid overlap */}
       <PoiControlPanel
         activeCategories={activeCategories}
         onCategoryToggle={onCategoryToggle}
         activePoiCount={activePois.length}
-        className="absolute top-5 left-5 z-30"
+        className="absolute bottom-[120px] left-3 md:bottom-auto md:top-5 md:left-5 z-30"
       />
 
       {/* Active Property Pin Marker */}
       <div
         onClick={togglePropertyActive}
-        className={`absolute left-[44%] top-[42%] -translate-x-1/2 -translate-y-full cursor-pointer z-30 transition-all duration-300 ${
+        className={`absolute left-[44%] top-[42%] -translate-x-1/2 -translate-y-full cursor-pointer z-20 transition-all duration-300 ${
           activeProperty ? "scale-110" : "opacity-40 hover:opacity-100 scale-95 filter grayscale"
         }`}
         title={activeProperty ? "Click để bỏ chọn Bất động sản" : "Click để chọn xem Bất động sản"}
@@ -192,23 +194,25 @@ function MapPanel({
         );
       })()}
 
-      {/* Zoom controls */}
-      <div className="absolute top-5 right-5 flex flex-col bg-card rounded-md shadow-card border border-border overflow-hidden z-20">
-        <button className="h-10 w-10 flex items-center justify-center hover:bg-muted transition-colors border-b border-border">
-          <Plus className="h-4 w-4" />
-        </button>
-        <button className="h-10 w-10 flex items-center justify-center hover:bg-muted transition-colors">
-          <Minus className="h-4 w-4" />
+      {/* Zoom + Locate controls — top-right always, clear of POI panel on left */}
+      <div className="absolute top-3 right-3 md:top-5 md:right-5 flex flex-col gap-2 z-30">
+        <div className="flex flex-col bg-card rounded-md shadow-card border border-border overflow-hidden">
+          <button className="h-10 w-10 flex items-center justify-center hover:bg-muted transition-colors border-b border-border">
+            <Plus className="h-4 w-4" />
+          </button>
+          <button className="h-10 w-10 flex items-center justify-center hover:bg-muted transition-colors">
+            <Minus className="h-4 w-4" />
+          </button>
+        </div>
+        <button className="h-10 w-10 flex items-center justify-center bg-card rounded-md shadow-card border border-border hover:bg-muted transition-colors">
+          <LocateFixed className="h-4 w-4 text-primary" />
         </button>
       </div>
-      <button className="absolute top-[120px] right-5 h-10 w-10 flex items-center justify-center bg-card rounded-md shadow-card border border-border hover:bg-muted transition-colors z-20">
-        <LocateFixed className="h-4 w-4 text-primary" />
-      </button>
 
-      {/* Legend */}
-      <div className="absolute bottom-5 left-5 glass rounded-xl shadow-card border border-white/50 p-4 w-64 z-20 pointer-events-auto">
+      {/* Legend — bottom-left on desktop only, hidden on mobile to save space */}
+      <div className="hidden md:block absolute bottom-5 left-5 glass rounded-xl shadow-card border border-white/50 p-4 w-64 z-20 pointer-events-auto">
         <div className="text-sm font-semibold mb-3">Chú giải màu sắc</div>
-        <ul className="space-y-2.5">
+        <ul className="space-y-2">
           {legend.map((l) => (
             <li key={l.label} className="flex items-center gap-3 text-sm">
               <span className="h-4 w-4 rounded-sm shrink-0" style={{ backgroundColor: l.color }} />

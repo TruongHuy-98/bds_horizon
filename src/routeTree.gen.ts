@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TinTucRouteImport } from './routes/tin-tuc'
+import { Route as OnThiRouteImport } from './routes/on-thi'
 import { Route as CheckQuyHoachRouteImport } from './routes/check-quy-hoach'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -22,6 +23,11 @@ import { Route as DuAnSlugRouteImport } from './routes/du-an.$slug'
 const TinTucRoute = TinTucRouteImport.update({
   id: '/tin-tuc',
   path: '/tin-tuc',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnThiRoute = OnThiRouteImport.update({
+  id: '/on-thi',
+  path: '/on-thi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckQuyHoachRoute = CheckQuyHoachRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
+  '/on-thi': typeof OnThiRoute
   '/tin-tuc': typeof TinTucRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
+  '/on-thi': typeof OnThiRoute
   '/tin-tuc': typeof TinTucRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
+  '/on-thi': typeof OnThiRoute
   '/tin-tuc': typeof TinTucRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/check-quy-hoach'
+    | '/on-thi'
     | '/tin-tuc'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/check-quy-hoach'
+    | '/on-thi'
     | '/tin-tuc'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/check-quy-hoach'
+    | '/on-thi'
     | '/tin-tuc'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   CheckQuyHoachRoute: typeof CheckQuyHoachRoute
+  OnThiRoute: typeof OnThiRoute
   TinTucRoute: typeof TinTucRoute
   DuAnSlugRoute: typeof DuAnSlugRoute
   MoiGioiSlugRoute: typeof MoiGioiSlugRoute
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/tin-tuc'
       fullPath: '/tin-tuc'
       preLoaderRoute: typeof TinTucRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/on-thi': {
+      id: '/on-thi'
+      path: '/on-thi'
+      fullPath: '/on-thi'
+      preLoaderRoute: typeof OnThiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/check-quy-hoach': {
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   CheckQuyHoachRoute: CheckQuyHoachRoute,
+  OnThiRoute: OnThiRoute,
   TinTucRoute: TinTucRoute,
   DuAnSlugRoute: DuAnSlugRoute,
   MoiGioiSlugRoute: MoiGioiSlugRoute,
