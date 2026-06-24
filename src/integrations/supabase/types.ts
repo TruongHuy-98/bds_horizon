@@ -18,6 +18,7 @@ export type Database = {
           created_by: string | null;
           excerpt: string | null;
           id: string;
+          images: Json | null;
           published: boolean;
           published_at: string | null;
           slug: string;
@@ -33,6 +34,7 @@ export type Database = {
           created_by?: string | null;
           excerpt?: string | null;
           id?: string;
+          images?: Json | null;
           published?: boolean;
           published_at?: string | null;
           slug: string;
@@ -48,6 +50,7 @@ export type Database = {
           created_by?: string | null;
           excerpt?: string | null;
           id?: string;
+          images?: Json | null;
           published?: boolean;
           published_at?: string | null;
           slug?: string;

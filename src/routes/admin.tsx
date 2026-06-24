@@ -40,6 +40,8 @@ import {
   Eye,
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import ImageUploader from "@/components/admin/ImageUploader";
+import type { Json } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -851,6 +853,7 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
     district: "",
     property_type: "Căn hộ",
     image_url: "",
+    images: [] as string[],
     published: true,
   });
   const [saving, setSaving] = useState(false);
@@ -891,6 +894,7 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
       district: it.district || "",
       property_type: it.property_type || "Căn hộ",
       image_url: it.image_url || "",
+      images: Array.isArray(it.images) ? (it.images as string[]) : it.image_url ? [it.image_url] : [],
       published: it.published ?? true,
     });
   };
@@ -907,6 +911,7 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
       district: "",
       property_type: "Căn hộ",
       image_url: "",
+      images: [] as string[],
       published: true,
     });
   };
@@ -925,6 +930,7 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
       district: form.district || null,
       property_type: form.property_type,
       image_url: form.image_url || null,
+      images: form.images as Json,
       published: form.published,
     };
 
@@ -1269,26 +1275,14 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">URL hình ảnh đại diện</Label>
-              <Input
-                placeholder="https://images.unsplash.com/photo-..."
-                value={form.image_url}
-                onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                className="border-slate-200/80 focus-visible:ring-blue-500/30"
-              />
-              {/* IMAGE PREVIEW */}
-              {form.image_url && (
-                <div className="mt-2 relative rounded-lg border border-slate-200 overflow-hidden h-36 bg-slate-50">
-                  <img src={form.image_url} alt="Xem trước hình ảnh" className="size-full object-cover" />
-                  <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-[1px] flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <span className="text-[10px] text-white font-bold bg-slate-900/60 py-1 px-2.5 rounded-full flex items-center gap-1">
-                      <Eye className="size-3" /> Hình xem trước
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
+            <ImageUploader
+              images={form.images}
+              featuredImage={form.image_url}
+              onChangeImages={(urls) => setForm({ ...form, images: urls })}
+              onChangeFeaturedImage={(url) => setForm({ ...form, image_url: url })}
+              isMock={isMock}
+              label="Hình ảnh bất động sản"
+            />
 
             <div className="flex items-center justify-between rounded-xl border border-slate-200/80 p-3 bg-slate-50/40">
               <div className="space-y-0.5">
@@ -1342,6 +1336,7 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
     status: "Đang mở bán",
     price_from: "",
     image_url: "",
+    images: [] as string[],
     published: true,
   });
   const [saving, setSaving] = useState(false);
@@ -1381,6 +1376,7 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
       status: it.status || "Đang mở bán",
       price_from: it.price_from || "",
       image_url: it.image_url || "",
+      images: Array.isArray(it.images) ? (it.images as string[]) : it.image_url ? [it.image_url] : [],
       published: it.published ?? true,
     });
   };
@@ -1396,6 +1392,7 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
       status: "Đang mở bán",
       price_from: "",
       image_url: "",
+      images: [] as string[],
       published: true,
     });
   };
@@ -1414,6 +1411,7 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
       status: form.status || null,
       price_from: form.price_from || null,
       image_url: form.image_url || null,
+      images: form.images as Json,
       published: form.published,
     };
 
@@ -1724,26 +1722,14 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">URL hình ảnh dự án</Label>
-              <Input
-                placeholder="https://images.unsplash.com/photo-..."
-                value={form.image_url}
-                onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                className="border-slate-200/80 focus-visible:ring-blue-500/30"
-              />
-              {/* IMAGE PREVIEW */}
-              {form.image_url && (
-                <div className="mt-2 relative rounded-lg border border-slate-200 overflow-hidden h-36 bg-slate-50">
-                  <img src={form.image_url} alt="Xem trước hình ảnh" className="size-full object-cover" />
-                  <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-[1px] flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <span className="text-[10px] text-white font-bold bg-slate-900/60 py-1 px-2.5 rounded-full flex items-center gap-1">
-                      <Eye className="size-3" /> Hình xem trước
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
+            <ImageUploader
+              images={form.images}
+              featuredImage={form.image_url}
+              onChangeImages={(urls) => setForm({ ...form, images: urls })}
+              onChangeFeaturedImage={(url) => setForm({ ...form, image_url: url })}
+              isMock={isMock}
+              label="Hình ảnh dự án"
+            />
 
             <div className="flex items-center justify-between rounded-xl border border-slate-200/80 p-3 bg-slate-50/40">
               <div className="space-y-0.5">
@@ -1795,6 +1781,7 @@ function NewsManager({ isMock }: { isMock: boolean }) {
     author: "",
     category: "",
     cover_image: "",
+    images: [] as string[],
     published: true,
   });
   const [saving, setSaving] = useState(false);
@@ -1832,6 +1819,7 @@ function NewsManager({ isMock }: { isMock: boolean }) {
       author: it.author || "",
       category: it.category || "",
       cover_image: it.cover_image || "",
+      images: Array.isArray(it.images) ? (it.images as string[]) : it.cover_image ? [it.cover_image] : [],
       published: it.published ?? true,
     });
   };
@@ -1845,6 +1833,7 @@ function NewsManager({ isMock }: { isMock: boolean }) {
       author: "",
       category: "",
       cover_image: "",
+      images: [] as string[],
       published: true,
     });
   };
@@ -1861,6 +1850,7 @@ function NewsManager({ isMock }: { isMock: boolean }) {
       author: form.author || null,
       category: form.category || null,
       cover_image: form.cover_image || null,
+      images: form.images as Json,
       published: form.published,
       published_at: form.published ? (editingItem?.published_at || new Date().toISOString()) : null,
     };
@@ -2164,26 +2154,14 @@ function NewsManager({ isMock }: { isMock: boolean }) {
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">URL ảnh bìa bài viết</Label>
-              <Input
-                placeholder="https://images.unsplash.com/photo-..."
-                value={form.cover_image}
-                onChange={(e) => setForm({ ...form, cover_image: e.target.value })}
-                className="border-slate-200/80 focus-visible:ring-blue-500/30"
-              />
-              {/* IMAGE PREVIEW */}
-              {form.cover_image && (
-                <div className="mt-2 relative rounded-lg border border-slate-200 overflow-hidden h-36 bg-slate-50">
-                  <img src={form.cover_image} alt="Xem trước hình ảnh" className="size-full object-cover" />
-                  <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-[1px] flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <span className="text-[10px] text-white font-bold bg-slate-900/60 py-1 px-2.5 rounded-full flex items-center gap-1">
-                      <Eye className="size-3" /> Hình xem trước
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
+            <ImageUploader
+              images={form.images}
+              featuredImage={form.cover_image}
+              onChangeImages={(urls) => setForm({ ...form, images: urls })}
+              onChangeFeaturedImage={(url) => setForm({ ...form, cover_image: url })}
+              isMock={isMock}
+              label="Hình ảnh bài viết"
+            />
 
             <div className="flex items-center justify-between rounded-xl border border-slate-200/80 p-3 bg-slate-50/40">
               <div className="space-y-0.5">
