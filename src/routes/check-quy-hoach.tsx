@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import Header from "@/components/site/Header";
+import Footer from "@/components/site/Footer";
 import {
   PoiControlPanel,
   useMapPoi,
@@ -390,6 +391,7 @@ function CheckQuyHoachPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

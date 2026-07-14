@@ -308,33 +308,24 @@ const navItems: { key: SectionKey; label: string; icon: any }[] = [
 ];
 
 function AdminPage() {
-  const { user: realUser, isAdmin: realIsAdmin, loading: authLoading } = useAuth();
+  const { user: realUser, role, isAdmin, isBroker, isCollaborator, isGuest, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [grantingSelf, setGrantingSelf] = useState(false);
   const [section, setSection] = useState<SectionKey>("overview");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Check if mock mode is enabled in localStorage
-  const [isMockAdmin, setIsMockAdmin] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("bds_mock_admin") === "true";
-    }
-    return false;
-  });
-
-  const user = isMockAdmin
-    ? { email: "mock-admin@horizon.vn", id: "mock-admin-id" }
-    : realUser;
-  const isAdmin = isMockAdmin ? true : realIsAdmin;
-  const loading = isMockAdmin ? false : authLoading;
+  const isMock = typeof window !== "undefined" && !!localStorage.getItem("bds_mock_role");
+  const isMockAdmin = isMock && localStorage.getItem("bds_mock_role") === "admin";
+  const user = realUser;
+  const loading = authLoading;
 
   useEffect(() => {
-    // If not loading, not logged in and not mock mode, redirect to /auth
-    if (!loading && !user && !isMockAdmin) {
-      // In development, we allow staying on page to click "Sử dụng Mock Admin"
-      // But we will handle rendering the elegant login/bypass options below.
+    // If not loading, and user is guest/normal customer, direct to auth
+    if (!loading && isGuest && !isMock) {
+      navigate({ to: "/auth" });
     }
-  }, [loading, user, isMockAdmin]);
+  }, [loading, isGuest, isMock]);
 
   const makeMeAdmin = async () => {
     if (!realUser) return;
@@ -342,26 +333,18 @@ function AdminPage() {
     const { error } = await supabase.from("user_roles").insert({ user_id: realUser.id, role: "admin" });
     setGrantingSelf(false);
     if (error) {
-      toast.error(
-        "Không thể tự cấp quyền admin do RLS. Vui lòng vào Cloud → Database → user_roles để thêm dòng admin cho tài khoản này.",
-      );
+      toast.error("Không thể tự cấp quyền admin.");
     } else {
       toast.success("Đã cấp quyền admin. Tải lại trang...");
       setTimeout(() => window.location.reload(), 500);
     }
   };
 
-  const handleEnableMockMode = () => {
-    localStorage.setItem("bds_mock_admin", "true");
-    setIsMockAdmin(true);
-    toast.success("Đã kích hoạt chế độ Demo Mock Admin!");
-  };
-
   const handleSignOut = async () => {
-    if (isMockAdmin) {
+    if (isMock) {
+      localStorage.removeItem("bds_mock_role");
       localStorage.removeItem("bds_mock_admin");
-      setIsMockAdmin(false);
-      toast.success("Đã thoát chế độ Mock Admin");
+      toast.success("Đã thoát chế độ Demo");
       navigate({ to: "/auth" });
     } else {
       await supabase.auth.signOut();
@@ -373,82 +356,65 @@ function AdminPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-        <div className="text-sm text-slate-400 font-medium">Đang xác thực tài khoản quản trị...</div>
+        <div className="text-sm text-slate-400 font-medium">Đang xác thực tài khoản...</div>
       </div>
     );
   }
 
-  // Not logged in OR not an admin
-  if (!user || !isAdmin) {
+  // Unauthorized page for normal registered users/guests (Khách hàng)
+  if (role === "user" || isGuest) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0B192C] px-4 py-12 relative overflow-hidden">
-        {/* Background glow effects */}
         <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-blue-900/20 blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-teal-900/10 blur-[120px] pointer-events-none"></div>
 
         <Card className="max-w-md w-full p-8 space-y-6 bg-slate-900/80 border-slate-800 backdrop-blur-xl text-white shadow-2xl relative z-10">
           <div className="text-center space-y-2">
-            <div className="mx-auto size-14 rounded-2xl bg-gradient-to-br from-blue-500 to-teal-400 flex items-center justify-center shadow-lg shadow-blue-500/10">
-              <ShieldCheck className="size-8 text-white" />
+            <div className="mx-auto size-14 rounded-2xl bg-red-950 text-red-400 flex items-center justify-center border border-red-800">
+              <AlertCircle className="size-8" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-              Cần Quyền Quản Trị
+            <h1 className="text-2xl font-bold tracking-tight text-red-400">
+              Không Có Quyền Truy Cập
             </h1>
             <p className="text-sm text-slate-400">
-              {realUser 
-                ? `Tài khoản ${realUser.email} chưa được cấp quyền truy cập bảng quản trị.`
-                : "Vui lòng đăng nhập bằng tài khoản Admin hoặc sử dụng chế độ Mock Admin để trải nghiệm thử giao diện."}
+              Giao diện quản trị chỉ dành cho Admin, Nhà Môi Giới hoặc Cộng tác viên. Tài khoản của bạn là Khách hàng.
             </p>
           </div>
 
           <div className="space-y-3 pt-2">
-            {realUser && (
-              <Button 
-                onClick={makeMeAdmin} 
-                disabled={grantingSelf} 
-                className="w-full bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-500 hover:to-teal-400 text-white font-medium shadow-lg shadow-blue-500/20 transition-all duration-300"
-              >
-                {grantingSelf ? "Đang xử lý..." : "Tự cấp quyền Admin (Production)"}
-              </Button>
-            )}
-
             <Button 
-              onClick={handleEnableMockMode}
+              onClick={() => navigate({ to: "/auth" })}
               className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 font-medium transition-all duration-200"
             >
-              Sử dụng Mock Admin (Chế độ demo)
+              Chuyển đổi tài khoản khác
             </Button>
-
-            {realUser ? (
-              <Button
-                variant="ghost"
-                className="w-full text-slate-400 hover:text-white hover:bg-slate-800/50"
-                onClick={handleSignOut}
-              >
-                <LogOut className="size-4 mr-2" /> Đăng xuất tài khoản
-              </Button>
-            ) : (
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full text-slate-400 hover:text-white hover:bg-slate-800/50"
-              >
-                <Link to="/auth">Đăng nhập tài khoản thật</Link>
-              </Button>
-            )}
-          </div>
-
-          <div className="text-center pt-2 border-t border-slate-800/50">
-            <Link to="/" className="text-xs text-blue-400 hover:text-blue-300 inline-flex items-center gap-1">
-              <Home className="size-3" /> Quay về Trang chủ Website
-            </Link>
+            <Button 
+              asChild
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium"
+            >
+              <Link to="/">Quay về Trang chủ</Link>
+            </Button>
           </div>
         </Card>
       </div>
     );
   }
 
-  const currentSection = navItems.find((n) => n.key === section)!;
+  // Filter sidebar navigation items based on Role
+  const filteredNavItems = navItems.filter((item) => {
+    if (isAdmin) return true;
+    if (isBroker && item.key === "properties") return true;
+    if (isCollaborator && item.key === "news") return true;
+    if (item.key === "overview") return true; // Everyone sees overview
+    return false;
+  });
+
+  const currentNavKeys = filteredNavItems.map(item => item.key);
+  const activeSection = currentNavKeys.includes(section) ? section : currentNavKeys[0] || "overview";
+  const currentSection = navItems.find((n) => n.key === activeSection)!;
+
+  // Render role text badge
+  const roleLabel = isAdmin ? "Quản trị viên" : isBroker ? "Nhà Môi Giới" : "Cộng tác viên";
 
   return (
     <div className="h-screen overflow-hidden flex bg-slate-50/50 text-slate-900 relative">
@@ -486,13 +452,13 @@ function AdminPage() {
         {/* Admin Card */}
         <div className="p-4 mx-4 my-3 bg-slate-800/40 border border-slate-800/50 rounded-xl flex items-center gap-3">
           <div className="size-10 rounded-full bg-gradient-to-tr from-blue-600/30 to-teal-500/20 flex items-center justify-center text-blue-400 font-semibold border border-blue-500/20">
-            {isMockAdmin ? "M" : user.email?.charAt(0).toUpperCase()}
+            {role.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-slate-200 truncate">{isMockAdmin ? "Mock Administrator" : user.email}</div>
+            <div className="text-xs font-semibold text-slate-200 truncate">{isMock ? `Mock ${roleLabel}` : user?.email}</div>
             <div className="text-[10px] text-teal-400 flex items-center gap-1 font-medium mt-0.5">
               <span className="size-1.5 rounded-full bg-teal-400 animate-pulse"></span>
-              {isMockAdmin ? "Mock Mode (Local)" : "Super Admin"}
+              {isMock ? "Mock Mode (Local)" : roleLabel}
             </div>
           </div>
         </div>
@@ -502,8 +468,8 @@ function AdminPage() {
           <div className="space-y-1">
             <div className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">QUẢN LÝ HỆ THỐNG</div>
             <nav className="space-y-1">
-              {navItems.map((item) => {
-                const isActive = section === item.key;
+              {filteredNavItems.map((item) => {
+                const isActive = activeSection === item.key;
                 return (
                   <button
                     key={item.key}
@@ -580,10 +546,10 @@ function AdminPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            {isMockAdmin && (
+            {isMock && (
               <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border border-amber-200 py-1 px-2.5 text-xs font-semibold rounded-full flex items-center gap-1.5 shadow-sm">
                 <span className="size-2 rounded-full bg-amber-500 animate-ping"></span>
-                Mock Mode Active
+                Mock Mode Active ({role.toUpperCase()})
               </Badge>
             )}
             <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 font-medium">
@@ -593,19 +559,19 @@ function AdminPage() {
             <div className="h-8 w-px bg-slate-200"></div>
             <div className="flex items-center gap-2">
               <div className="size-8 rounded-full bg-gradient-to-tr from-blue-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
-                {isMockAdmin ? "A" : "U"}
+                {role.charAt(0).toUpperCase()}
               </div>
-              <span className="hidden md:inline-block text-xs font-bold text-slate-700">{isMockAdmin ? "Administrator" : user.email?.split('@')[0]}</span>
+              <span className="hidden md:inline-block text-xs font-bold text-slate-700">{isMock ? `Mock ${roleLabel}` : user?.email?.split('@')[0]}</span>
             </div>
           </div>
         </header>
 
         {/* Main Workspace */}
         <main className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
-          {section === "overview" && <Overview onGo={setSection} isMock={isMockAdmin} />}
-          {section === "properties" && <PropertiesManager isMock={isMockAdmin} />}
-          {section === "projects" && <ProjectsManager isMock={isMockAdmin} />}
-          {section === "news" && <NewsManager isMock={isMockAdmin} />}
+          {activeSection === "overview" && <Overview onGo={setSection} isMock={isMock} />}
+          {activeSection === "properties" && <PropertiesManager isMock={isMock} />}
+          {activeSection === "projects" && <ProjectsManager isMock={isMock} />}
+          {activeSection === "news" && <NewsManager isMock={isMock} />}
         </main>
 
       </div>
@@ -835,6 +801,7 @@ function Overview({ onGo, isMock }: { onGo: (s: SectionKey) => void; isMock: boo
 
 /* ---------- 2. PROPERTIES MANAGER ---------- */
 function PropertiesManager({ isMock }: { isMock: boolean }) {
+  const { user, isAdmin } = useAuth();
   const [items, setItems] = useState<PropertyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -861,13 +828,20 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
   const load = async () => {
     setLoading(true);
     if (isMock) {
-      setItems(LOCAL_DB.getProperties());
+      const mockRole = localStorage.getItem("bds_mock_role");
+      let mockList = LOCAL_DB.getProperties();
+      if (mockRole === "broker") {
+        mockList = mockList.map((p, idx) => idx < 2 ? { ...p, created_by: "mock-broker-id" } : p);
+        mockList = mockList.filter(p => p.created_by === "mock-broker-id");
+      }
+      setItems(mockList);
     } else {
       try {
-        const { data, error } = await supabase
-          .from("properties")
-          .select("*")
-          .order("created_at", { ascending: false });
+        let query = supabase.from("properties").select("*");
+        if (!isAdmin) {
+          query = query.eq("created_by", user?.id);
+        }
+        const { data, error } = await query.order("created_at", { ascending: false });
         if (error) throw error;
         setItems(data || []);
       } catch (err) {
@@ -932,6 +906,7 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
       image_url: form.image_url || null,
       images: form.images as Json,
       published: form.published,
+      created_by: editingItem ? editingItem.created_by : (user?.id || null),
     };
 
     if (isMock) {
@@ -1768,6 +1743,7 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
 
 /* ---------- 4. NEWS MANAGER ---------- */
 function NewsManager({ isMock }: { isMock: boolean }) {
+  const { user, isAdmin } = useAuth();
   const [items, setItems] = useState<NewsPostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -1789,13 +1765,20 @@ function NewsManager({ isMock }: { isMock: boolean }) {
   const load = async () => {
     setLoading(true);
     if (isMock) {
-      setItems(LOCAL_DB.getNews());
+      const mockRole = localStorage.getItem("bds_mock_role");
+      let mockList = LOCAL_DB.getNews();
+      if (mockRole === "collaborator") {
+        mockList = mockList.map((n, idx) => idx < 1 ? { ...n, created_by: "mock-collaborator-id" } : n);
+        mockList = mockList.filter(n => n.created_by === "mock-collaborator-id");
+      }
+      setItems(mockList);
     } else {
       try {
-        const { data, error } = await supabase
-          .from("news_posts")
-          .select("*")
-          .order("created_at", { ascending: false });
+        let query = supabase.from("news_posts").select("*");
+        if (!isAdmin) {
+          query = query.eq("created_by", user?.id);
+        }
+        const { data, error } = await query.order("created_at", { ascending: false });
         if (error) throw error;
         setItems(data || []);
       } catch (err) {
@@ -1853,6 +1836,7 @@ function NewsManager({ isMock }: { isMock: boolean }) {
       images: form.images as Json,
       published: form.published,
       published_at: form.published ? (editingItem?.published_at || new Date().toISOString()) : null,
+      created_by: editingItem ? editingItem.created_by : (user?.id || null),
     };
 
     if (isMock) {

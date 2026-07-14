@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Header from "@/components/site/Header";
+import Footer from "@/components/site/Footer";
 import {
   ComparisonBar,
   ComparisonModal,
@@ -401,7 +402,7 @@ function DuAnPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background">
       <Header />
       <main>
         <ProjectsHero />
@@ -426,6 +427,7 @@ function DuAnPage() {
         selectedProperties={selectedProperties}
         onRemove={removeFromComparison}
       />
+      <Footer />
     </div>
   );
 }
