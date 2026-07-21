@@ -1,4 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Search,
   MapPin,
@@ -12,6 +14,10 @@ import {
   ShieldCheck,
   Phone,
   Mail,
+  CalendarDays,
+  User,
+  Heart,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +29,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Header from "@/components/site/Header";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 import heroImg from "@/assets/hero-danang.jpg";
 import planMap from "@/assets/planning-map.jpg";
@@ -141,6 +154,26 @@ function Logo() {
 }
 
 function Hero() {
+  const navigate = useNavigate();
+  const [keyword, setKeyword] = useState("");
+  const [category, setCategory] = useState("all");
+  const [district, setDistrict] = useState("all");
+  const [priceRange, setPriceRange] = useState("all");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const searchParams: Record<string, string> = {};
+    if (keyword.trim()) searchParams.keyword = keyword.trim();
+    if (category !== "all") searchParams.category = category;
+    if (district !== "all") searchParams.district = district;
+    if (priceRange !== "all") searchParams.priceRange = priceRange;
+
+    navigate({
+      to: "/nha-dat-ban",
+      search: searchParams,
+    });
+  };
+
   return (
     <section className="relative h-[520px] md:h-[560px] w-full overflow-hidden">
       <img
@@ -152,61 +185,73 @@ function Hero() {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-primary/30 via-primary/40 to-primary/60" />
       <div className="relative container-page h-full flex flex-col items-center justify-center text-center">
-        <h1 className="text-white text-3xl md:text-5xl font-bold drop-shadow-md max-w-3xl">
+        <h1 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-md max-w-5xl md:whitespace-nowrap">
           Tìm kiếm tổ ấm mơ ước tại Đà Nẵng
         </h1>
         <p className="mt-4 text-white/85 text-base md:text-lg max-w-xl">
           Hơn 8.500 bất động sản đã thẩm định, minh bạch pháp lý và quy hoạch.
         </p>
-        <div className="mt-8 w-full max-w-5xl glass rounded-xl shadow-card p-4 md:p-5 border border-white/40">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-            <div className="md:col-span-2 relative">
+        <form onSubmit={handleSearch} className="mt-8 w-full max-w-5xl glass rounded-xl shadow-card p-3 md:p-4 border border-white/40">
+          <div className="flex flex-col md:flex-row gap-2.5 items-center">
+            <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Tìm kiếm bất động sản..."
-                className="pl-9 h-11 bg-white border-border rounded-md"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                className="pl-9 h-11 bg-white border-border rounded-md w-full"
               />
             </div>
-            <Select>
-              <SelectTrigger className="h-11 bg-white rounded-md">
-                <SelectValue placeholder="Loại nhà đất" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="apt">Căn hộ</SelectItem>
-                <SelectItem value="villa">Biệt thự</SelectItem>
-                <SelectItem value="land">Đất nền</SelectItem>
-                <SelectItem value="town">Nhà phố</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="h-11 bg-white rounded-md">
-                <SelectValue placeholder="Quận / Huyện" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hai-chau">Hải Châu</SelectItem>
-                <SelectItem value="son-tra">Sơn Trà</SelectItem>
-                <SelectItem value="ngu-hanh-son">Ngũ Hành Sơn</SelectItem>
-                <SelectItem value="cam-le">Cẩm Lệ</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="h-11 bg-white rounded-md">
-                <SelectValue placeholder="Khoảng giá" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Dưới 2 tỷ</SelectItem>
-                <SelectItem value="2">2 - 5 tỷ</SelectItem>
-                <SelectItem value="3">5 - 10 tỷ</SelectItem>
-                <SelectItem value="4">Trên 10 tỷ</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="mt-3 flex justify-center">
-            <Button className="bg-teal text-teal-foreground hover:bg-teal/90 h-11 px-10 rounded-md font-medium">
+            <div className="w-full md:w-36 lg:w-40 shrink-0">
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="h-11 bg-white rounded-md w-full">
+                  <SelectValue placeholder="Loại nhà đất" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả loại BĐS</SelectItem>
+                  <SelectItem value="apt">Căn hộ</SelectItem>
+                  <SelectItem value="villa">Biệt thự</SelectItem>
+                  <SelectItem value="land">Đất nền</SelectItem>
+                  <SelectItem value="town">Nhà phố</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full md:w-36 lg:w-40 shrink-0">
+              <Select value={district} onValueChange={setDistrict}>
+                <SelectTrigger className="h-11 bg-white rounded-md w-full">
+                  <SelectValue placeholder="Quận / Huyện" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả quận/huyện</SelectItem>
+                  <SelectItem value="Hải Châu">Hải Châu</SelectItem>
+                  <SelectItem value="Sơn Trà">Sơn Trà</SelectItem>
+                  <SelectItem value="Ngũ Hành Sơn">Ngũ Hành Sơn</SelectItem>
+                  <SelectItem value="Cẩm Lệ">Cẩm Lệ</SelectItem>
+                  <SelectItem value="Thanh Khê">Thanh Khê</SelectItem>
+                  <SelectItem value="Liên Chiểu">Liên Chiểu</SelectItem>
+                  <SelectItem value="Hòa Vang">Hòa Vang</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full md:w-36 lg:w-40 shrink-0">
+              <Select value={priceRange} onValueChange={setPriceRange}>
+                <SelectTrigger className="h-11 bg-white rounded-md w-full">
+                  <SelectValue placeholder="Khoảng giá" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả giá</SelectItem>
+                  <SelectItem value="under-2">Dưới 2 tỷ</SelectItem>
+                  <SelectItem value="2-5">2 - 5 tỷ</SelectItem>
+                  <SelectItem value="5-10">5 - 10 tỷ</SelectItem>
+                  <SelectItem value="over-10">Trên 10 tỷ</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button type="submit" className="w-full md:w-auto shrink-0 bg-teal text-teal-foreground hover:bg-teal/90 h-11 px-6 rounded-md font-medium whitespace-nowrap">
               Tìm kiếm
             </Button>
           </div>
-        </div>
+        </form>
       </div>
     </section>
   );
@@ -286,6 +331,113 @@ function Tag({ tone, children }: { tone: "orange" | "teal"; children: React.Reac
 }
 
 function FeaturedProperties() {
+  const [dbProperties, setDbProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: "", phone: "", message: "" });
+
+  const isMock = typeof window !== "undefined"
+    ? !!localStorage.getItem("bds_mock_role") || !import.meta.env.VITE_SUPABASE_URL
+    : true;
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setLoading(true);
+      let list: any[] = [];
+      if (isMock) {
+        const localData = localStorage.getItem("mock_properties");
+        list = localData ? JSON.parse(localData) : [];
+      } else {
+        try {
+          const { data, error } = await supabase
+            .from("properties")
+            .select("*")
+            .eq("published", true)
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          list = data || [];
+        } catch (err) {
+          console.warn("Failed to fetch properties from Supabase, falling back to mock:", err);
+          const localData = localStorage.getItem("mock_properties");
+          list = localData ? JSON.parse(localData) : [];
+        }
+      }
+      setDbProperties(list);
+      setLoading(false);
+    };
+
+    fetchProperties();
+  }, []);
+
+  // Map database listings to UI format
+  const mappedDbProperties = dbProperties.map((p) => ({
+    raw: {
+      title: p.title,
+      description: p.description || "Chưa có mô tả chi tiết cho bất động sản này.",
+      price: p.price_label || (p.price ? `${p.price} tỷ` : "Thỏa thuận"),
+      area: p.area ? `${p.area}m²` : "N/A",
+      beds: p.bedrooms || 0,
+      baths: p.bathrooms || 0,
+      address: p.address || p.district || "Đà Nẵng",
+      district: p.district || "Đà Nẵng",
+      images: Array.isArray(p.images) && p.images.length > 0 
+        ? p.images 
+        : p.image_url 
+          ? [p.image_url] 
+          : ["https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60"],
+      listing_type: p.listing_type === "rent" ? "Cho thuê" : "Mua bán",
+      status: p.status === "available" ? "Còn trống" : p.status === "rented" ? "Đã cho thuê" : "Đã bán",
+      developer: p.developer || "Đang cập nhật",
+    },
+    img: p.image_url || (Array.isArray(p.images) && p.images[0]) || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60",
+    tag: p.listing_type === "rent" ? "Cho thuê" : "Mua bán",
+    tagTone: p.listing_type === "rent" ? ("teal" as const) : ("orange" as const),
+    extra: p.status === "available" ? "Còn trống" : p.status === "rented" ? "Đã cho thuê" : "Đã bán",
+    title: p.title,
+    loc: p.address || p.district || "Đà Nẵng",
+    price: p.price_label || (p.price ? `${p.price} tỷ` : "Thỏa thuận"),
+    area: p.area ? `${p.area}m²` : "N/A",
+    beds: p.bedrooms || 0,
+    baths: p.bathrooms || 0,
+  }));
+
+  const mappedStaticProperties = properties.map((p) => ({
+    ...p,
+    raw: {
+      title: p.title,
+      description: `Bất động sản cao cấp sở hữu vị trí đắc địa tại khu vực ${p.loc}. Không gian thiết kế hiện đại, thông thoáng, tối ưu hóa công năng sử dụng. Gần các tiện ích trường học, bệnh viện, khu mua sắm, an ninh đảm bảo 24/7. Thích hợp cho hộ gia đình sinh sống hoặc đầu tư kinh doanh, cho thuê sinh lời tốt.`,
+      price: p.price,
+      area: p.area,
+      beds: p.beds,
+      baths: p.baths,
+      address: p.loc,
+      district: p.loc.split(",")[0],
+      images: [p.img],
+      listing_type: p.tag === "Cho thuê" ? "Cho thuê" : "Mua bán",
+      status: p.extra || "Còn trống",
+      developer: "Đang cập nhật",
+    }
+  }));
+
+  // Combine dynamic listings with the static ones so the page is never empty
+  const allProperties = [...mappedDbProperties, ...mappedStaticProperties];
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactForm.name || !contactForm.phone) {
+      toast.error("Vui lòng điền đầy đủ họ tên và số điện thoại.");
+      return;
+    }
+    setIsSubmittingContact(true);
+    setTimeout(() => {
+      toast.success("Gửi yêu cầu liên hệ thành công! Chúng tôi sẽ gọi lại cho bạn trong vòng 15 phút.");
+      setIsSubmittingContact(false);
+      setContactForm({ name: "", phone: "", message: "" });
+    }, 1000);
+  };
+
   return (
     <section className="py-16 md:py-20">
       <div className="container-page">
@@ -304,12 +456,23 @@ function FeaturedProperties() {
           </a>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {properties.map((p) => (
-            <article
-              key={p.title}
-              className="group bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 border border-border/60"
-            >
+        {loading ? (
+          <div className="py-20 text-center text-muted-foreground">
+            <div className="animate-spin size-8 border-t-2 border-b-2 border-primary rounded-full mx-auto mb-3"></div>
+            Đang tải danh sách bất động sản...
+          </div>
+        ) : (
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {allProperties.map((p, idx) => (
+              <article
+                key={idx}
+                onClick={() => {
+                  setSelectedProperty(p);
+                  setActiveImageIndex(0);
+                  setContactForm({ name: "", phone: "", message: "" });
+                }}
+                className="group bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 border border-border/60 cursor-pointer"
+              >
               <div className="relative aspect-[4/3] overflow-hidden">
                 <img
                   src={p.img}
@@ -358,7 +521,140 @@ function FeaturedProperties() {
               </div>
             </article>
           ))}
-        </div>
+          </div>
+        )}
+
+        <Dialog open={!!selectedProperty} onOpenChange={(open) => { if (!open) setSelectedProperty(null); }}>
+          <DialogContent className="max-w-4xl p-0 overflow-hidden border border-border/80 bg-card rounded-2xl shadow-2xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="p-6 pb-0 border-b border-border/50 shrink-0">
+              <div className="flex items-center gap-3">
+                {selectedProperty && <Tag tone={selectedProperty.tagTone}>{selectedProperty.tag}</Tag>}
+                {selectedProperty?.extra && (
+                  <span className="bg-muted text-muted-foreground text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                    {selectedProperty.extra}
+                  </span>
+                )}
+              </div>
+              <DialogTitle className="text-xl md:text-2xl font-bold mt-2 text-foreground pr-8">
+                {selectedProperty?.title}
+              </DialogTitle>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground pb-4 mt-1">
+                <MapPin className="h-4 w-4 text-primary shrink-0" />
+                <span>{selectedProperty?.loc}</span>
+              </div>
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Left Column: Image Gallery */}
+              <div className="space-y-4">
+                <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted border border-border/40">
+                  <img
+                    src={selectedProperty?.raw.images[activeImageIndex] || selectedProperty?.img}
+                    alt={selectedProperty?.title}
+                    className="w-full h-full object-cover transition-all duration-300"
+                  />
+                </div>
+                
+                {/* Thumbnails grid */}
+                {selectedProperty?.raw.images && selectedProperty.raw.images.length > 1 && (
+                  <div className="grid grid-cols-4 gap-3">
+                    {selectedProperty.raw.images.map((imgUrl: string, idx: number) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveImageIndex(idx)}
+                        className={`relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all ${
+                          idx === activeImageIndex ? "border-primary shadow-md scale-95" : "border-transparent opacity-75 hover:opacity-100"
+                        }`}
+                      >
+                        <img src={imgUrl} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Specs overview cards */}
+                <div className="grid grid-cols-3 gap-3 pt-2">
+                  <div className="bg-surface-container/50 border border-border/40 rounded-xl p-3.5 text-center">
+                    <div className="text-xs text-muted-foreground">Giá bán</div>
+                    <div className="text-base font-bold text-primary mt-0.5">{selectedProperty?.price}</div>
+                  </div>
+                  <div className="bg-surface-container/50 border border-border/40 rounded-xl p-3.5 text-center">
+                    <div className="text-xs text-muted-foreground">Diện tích</div>
+                    <div className="text-base font-bold mt-0.5">{selectedProperty?.area}</div>
+                  </div>
+                  <div className="bg-surface-container/50 border border-border/40 rounded-xl p-3.5 text-center">
+                    <div className="text-xs text-muted-foreground">Phòng ngủ / Tắm</div>
+                    <div className="text-sm font-bold mt-1 flex justify-center gap-2 text-muted-foreground">
+                      <span className="flex items-center gap-0.5 text-foreground"><Bed className="h-3.5 w-3.5" /> {selectedProperty?.beds}</span>
+                      <span>/</span>
+                      <span className="flex items-center gap-0.5 text-foreground"><Bath className="h-3.5 w-3.5" /> {selectedProperty?.baths}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Descriptions & Contact Form */}
+              <div className="flex flex-col space-y-6">
+                <div>
+                  <h4 className="font-bold text-sm text-foreground uppercase tracking-wider mb-2">Mô tả chi tiết</h4>
+                  <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-l-2 border-primary/20 pl-3">
+                    {selectedProperty?.raw.description}
+                  </div>
+                </div>
+
+                <div className="border border-border/50 bg-surface-container/20 rounded-xl p-5">
+                  <h4 className="font-bold text-sm text-foreground uppercase tracking-wider flex items-center gap-1.5 mb-4">
+                    <User className="h-4 w-4 text-primary" /> Liên hệ tư vấn
+                  </h4>
+                  <form onSubmit={handleContactSubmit} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label htmlFor="modal-name" className="text-xs font-semibold text-muted-foreground">Họ và tên</label>
+                      <Input
+                        id="modal-name"
+                        required
+                        placeholder="Nguyễn Văn A"
+                        value={contactForm.name}
+                        onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                        className="bg-card border-border h-10"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label htmlFor="modal-phone" className="text-xs font-semibold text-muted-foreground">Số điện thoại</label>
+                      <Input
+                        id="modal-phone"
+                        type="tel"
+                        required
+                        placeholder="0905 xxx xxx"
+                        value={contactForm.phone}
+                        onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                        className="bg-card border-border h-10"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label htmlFor="modal-msg" className="text-xs font-semibold text-muted-foreground">Lời nhắn (Không bắt buộc)</label>
+                      <textarea
+                        id="modal-msg"
+                        rows={2}
+                        placeholder="Tôi muốn nhận thông tin tư vấn cụ thể..."
+                        value={contactForm.message}
+                        onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                        className="w-full bg-card border border-border rounded-md p-2.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={isSubmittingContact}
+                      className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-semibold h-11 rounded-md mt-2 flex items-center justify-center gap-1.5"
+                    >
+                      {isSubmittingContact ? "Đang gửi..." : "Gửi yêu cầu gọi lại"}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </section>
   );

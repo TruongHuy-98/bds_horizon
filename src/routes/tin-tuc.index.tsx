@@ -171,14 +171,20 @@ function LatestNews({ posts }: { posts: any[] }) {
               key={n.id}
               className="grid grid-cols-1 gap-5 rounded-xl border border-border bg-card p-4 shadow-card transition-shadow hover:shadow-card-hover sm:grid-cols-[200px_1fr]"
             >
-              <img
-                src={n.cover_image || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&auto=format&fit=crop&q=60"}
-                alt={n.title}
-                width={400}
-                height={260}
-                loading="lazy"
-                className="h-[150px] w-full rounded-lg object-cover sm:h-full"
-              />
+              <Link
+                to="/tin-tuc/$slug"
+                params={{ slug: n.slug }}
+                className="overflow-hidden rounded-lg block h-[150px] sm:h-auto"
+              >
+                <img
+                  src={n.cover_image || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&auto=format&fit=crop&q=60"}
+                  alt={n.title}
+                  width={400}
+                  height={260}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                />
+              </Link>
               <div className="flex flex-col">
                 <div className="mb-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                   <span className="rounded bg-accent px-2 py-0.5 font-semibold uppercase tracking-wider text-primary">
@@ -189,7 +195,13 @@ function LatestNews({ posts }: { posts: any[] }) {
                     {new Date(n.published_at || n.created_at).toLocaleDateString("vi-VN")}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-foreground line-clamp-2">{n.title}</h3>
+                <Link
+                  to="/tin-tuc/$slug"
+                  params={{ slug: n.slug }}
+                  className="hover:text-primary transition-colors"
+                >
+                  <h3 className="text-lg font-bold text-foreground line-clamp-2">{n.title}</h3>
+                </Link>
                 <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{n.excerpt}</p>
                 <Link
                   to="/tin-tuc/$slug"

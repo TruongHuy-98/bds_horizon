@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Search,
   MapPin,
@@ -142,7 +143,23 @@ const statusTone: Record<Status, string> = {
   "Đã bàn giao": "bg-muted text-foreground/70",
 };
 
-function ProjectsHero() {
+interface ProjectsHeroProps {
+  search: string;
+  setSearch: (v: string) => void;
+  category: string;
+  setCategory: (v: string) => void;
+  district: string;
+  setDistrict: (v: string) => void;
+}
+
+function ProjectsHero({
+  search,
+  setSearch,
+  category,
+  setCategory,
+  district,
+  setDistrict,
+}: ProjectsHeroProps) {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-teal text-white">
       <div className="absolute inset-0 opacity-10 [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:24px_24px]" />
@@ -162,15 +179,18 @@ function ProjectsHero() {
           <div className="md:col-span-2 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm dự án theo tên..."
-              className="pl-9 h-11 bg-white border-border rounded-md"
+              className="pl-9 h-11 bg-white text-slate-800 border-border rounded-md placeholder:text-muted-foreground/60"
             />
           </div>
-          <Select>
-            <SelectTrigger className="h-11 bg-white rounded-md">
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="h-11 bg-white text-slate-800 rounded-md border-border">
               <SelectValue placeholder="Loại dự án" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">Tất cả loại dự án</SelectItem>
               <SelectItem value="apt">Căn hộ</SelectItem>
               <SelectItem value="villa">Biệt thự</SelectItem>
               <SelectItem value="urban">Khu đô thị</SelectItem>
@@ -178,11 +198,12 @@ function ProjectsHero() {
               <SelectItem value="office">Văn phòng</SelectItem>
             </SelectContent>
           </Select>
-          <Select>
-            <SelectTrigger className="h-11 bg-white rounded-md">
+          <Select value={district} onValueChange={setDistrict}>
+            <SelectTrigger className="h-11 bg-white text-slate-800 rounded-md border-border">
               <SelectValue placeholder="Quận / Huyện" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">Tất cả quận/huyện</SelectItem>
               <SelectItem value="hc">Hải Châu</SelectItem>
               <SelectItem value="st">Sơn Trà</SelectItem>
               <SelectItem value="nhs">Ngũ Hành Sơn</SelectItem>
@@ -206,7 +227,7 @@ const filters: { key: string; label: string }[] = [
   { key: "done", label: "Đã bàn giao" },
 ];
 
-const mapProjectToCompare = (p: typeof projects[number]): PropertyToCompare => {
+const mapProjectToCompare = (p: any): PropertyToCompare => {
   // Realistic mock pricing, area, rooms, and address for each development project
   const detailsMap: Record<string, { price: number; area: number; beds: number; baths: number; address: string }> = {
     "Sun Cosmo Residence": { price: 5.2, area: 95, beds: 2, baths: 2, address: "Trần Hưng Đạo, Ngũ Hành Sơn, Đà Nẵng" },
@@ -217,10 +238,16 @@ const mapProjectToCompare = (p: typeof projects[number]): PropertyToCompare => {
     "Da Nang Smart Plaza": { price: 8.2, area: 150, beds: 3, baths: 2, address: "FPT City, Ngũ Hành Sơn, Đà Nẵng" },
   };
 
-  const details = detailsMap[p.name] || { price: 5.0, area: 90, beds: 2, baths: 2, address: `${p.district}, Đà Nẵng` };
+  const details = detailsMap[p.name] || { 
+    price: parseFloat(p.priceFrom) || 5.0, 
+    area: 90, 
+    beds: 2, 
+    baths: 2, 
+    address: p.location || `${p.district}, Đà Nẵng` 
+  };
 
   return {
-    id: p.name.toLowerCase().replace(/\s+/g, "-"),
+    id: p.slug || p.name.toLowerCase().replace(/\s+/g, "-"),
     name: p.name,
     img: p.img,
     developer: p.developer,
@@ -230,11 +257,13 @@ const mapProjectToCompare = (p: typeof projects[number]): PropertyToCompare => {
 };
 
 interface ProjectGridProps {
+  projects: any[];
+  loading: boolean;
   onAddToComparison: (property: PropertyToCompare) => void;
   isSelected: (id: string) => boolean;
 }
 
-function ProjectGrid({ onAddToComparison, isSelected }: ProjectGridProps) {
+function ProjectGrid({ projects, loading, onAddToComparison, isSelected }: ProjectGridProps) {
   const [active, setActive] = useState("all");
 
   const list = projects.filter((p) => {
@@ -271,97 +300,114 @@ function ProjectGrid({ onAddToComparison, isSelected }: ProjectGridProps) {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {list.map((p) => {
-            const propertyToCompare = mapProjectToCompare(p);
-            const isCompared = isSelected(propertyToCompare.id);
+        {loading ? (
+          <div className="py-20 text-center text-muted-foreground">
+            <div className="animate-spin size-8 border-t-2 border-b-2 border-primary rounded-full mx-auto mb-3"></div>
+            Đang tải danh sách dự án...
+          </div>
+        ) : (
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {list.map((p, idx) => {
+              const propertyToCompare = mapProjectToCompare(p);
+              const isCompared = isSelected(propertyToCompare.id);
 
-            return (
-              <article
-                key={p.name}
-                className="group bg-card rounded-xl overflow-hidden border border-border/60 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden">
-                  <img
-                    src={p.img}
-                    alt={p.name}
-                    width={1024}
-                    height={640}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute top-3 left-3 flex gap-2">
-                    <span
-                      className={`text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm ${statusTone[p.status]}`}
-                    >
-                      {p.status}
-                    </span>
-                    <span className="bg-white/95 text-foreground text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                      {p.category}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <div className="text-xs text-muted-foreground">{p.developer}</div>
-                  <h3 className="mt-1 font-semibold text-lg leading-snug line-clamp-1">{p.name}</h3>
-                  <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {p.district}, Đà Nẵng
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-                    <div className="rounded-md bg-surface-container/60 p-2">
-                      <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3" /> Giá từ
-                      </div>
-                      <div className="mt-0.5 font-semibold text-primary">{p.priceFrom}</div>
-                    </div>
-                    <div className="rounded-md bg-surface-container/60 p-2">
-                      <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                        <Layers className="h-3 w-3" /> Quy mô
-                      </div>
-                      <div className="mt-0.5 font-semibold">{p.units}</div>
-                    </div>
-                    <div className="rounded-md bg-surface-container/60 p-2">
-                      <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                        <CalendarDays className="h-3 w-3" /> Bàn giao
-                      </div>
-                      <div className="mt-0.5 font-semibold">{p.handover}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2.5 mt-5">
-                    <Button
-                      variant="outline"
-                      onClick={() => onAddToComparison(propertyToCompare)}
-                      className={`flex-1 h-10 rounded-md border-border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-                        isCompared
-                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/95"
-                          : "hover:bg-muted"
-                      }`}
-                    >
-                      <Scale className="h-3.5 w-3.5" />
-                      {isCompared ? "Đã thêm" : "So sánh"}
-                    </Button>
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="flex-1 h-10 rounded-md border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground group/btn text-xs font-semibold"
-                    >
-                      <Link
-                        to="/du-an/$slug"
-                        params={{ slug: p.name.toLowerCase().replace(/\s+/g, "-") }}
+              return (
+                <article
+                  key={idx}
+                  className="group bg-card rounded-xl overflow-hidden border border-border/60 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300"
+                >
+                  <Link
+                    to="/du-an/$slug"
+                    params={{ slug: p.slug || p.name.toLowerCase().replace(/\s+/g, "-") }}
+                    className="relative aspect-[16/10] overflow-hidden block"
+                  >
+                    <img
+                      src={p.img}
+                      alt={p.name}
+                      width={1024}
+                      height={640}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <span
+                        className={`text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm ${statusTone[p.status as Status] || "bg-teal text-teal-foreground"}`}
                       >
-                        Xem chi tiết
-                        <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1" />
-                      </Link>
-                    </Button>
+                        {p.status}
+                      </span>
+                      <span className="bg-white/95 text-foreground text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                        {p.category}
+                      </span>
+                    </div>
+                  </Link>
+                  <div className="p-5">
+                    <div className="text-xs text-muted-foreground">{p.developer}</div>
+                    <Link
+                      to="/du-an/$slug"
+                      params={{ slug: p.slug || p.name.toLowerCase().replace(/\s+/g, "-") }}
+                      className="block hover:text-primary transition-colors"
+                    >
+                      <h3 className="mt-1 font-semibold text-lg leading-snug line-clamp-1">{p.name}</h3>
+                    </Link>
+                    <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {p.district}, Đà Nẵng
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                      <div className="rounded-md bg-surface-container/60 p-2">
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                          <TrendingUp className="h-3 w-3" /> Giá từ
+                        </div>
+                        <div className="mt-0.5 font-semibold text-primary">{p.priceFrom}</div>
+                      </div>
+                      <div className="rounded-md bg-surface-container/60 p-2">
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                          <Layers className="h-3 w-3" /> Quy mô
+                        </div>
+                        <div className="mt-0.5 font-semibold">{p.units}</div>
+                      </div>
+                      <div className="rounded-md bg-surface-container/60 p-2">
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                          <CalendarDays className="h-3 w-3" /> Bàn giao
+                        </div>
+                        <div className="mt-0.5 font-semibold">{p.handover}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2.5 mt-5">
+                      <Button
+                        variant="outline"
+                        onClick={() => onAddToComparison(propertyToCompare)}
+                        className={`flex-1 h-10 rounded-md border-border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                          isCompared
+                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/95"
+                            : "hover:bg-muted"
+                        }`}
+                      >
+                        <Scale className="h-3.5 w-3.5" />
+                        {isCompared ? "Đã thêm" : "So sánh"}
+                      </Button>
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="flex-1 h-10 rounded-md border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground group/btn text-xs font-semibold"
+                      >
+                        <Link
+                          to="/du-an/$slug"
+                          params={{ slug: p.slug || p.name.toLowerCase().replace(/\s+/g, "-") }}
+                        >
+                          Xem chi tiết
+                          <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1" />
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -401,12 +447,136 @@ function DuAnPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Filter state
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [district, setDistrict] = useState("all");
+
+  // Projects state
+  const [dbProjects, setDbProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const isMock = typeof window !== "undefined"
+    ? !!localStorage.getItem("bds_mock_role") || !import.meta.env.VITE_SUPABASE_URL
+    : true;
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoading(true);
+      let list: any[] = [];
+      if (isMock) {
+        const localData = localStorage.getItem("mock_projects");
+        list = localData ? JSON.parse(localData) : [];
+      } else {
+        try {
+          const { data, error } = await supabase
+            .from("projects")
+            .select("*")
+            .eq("published", true)
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          list = data || [];
+        } catch (err) {
+          console.warn("Failed to fetch projects from Supabase, falling back to mock:", err);
+          const localData = localStorage.getItem("mock_projects");
+          list = localData ? JSON.parse(localData) : [];
+        }
+      }
+      setDbProjects(list);
+      setLoading(false);
+    };
+
+    fetchProjects();
+  }, []);
+
+  // Helper functions to guess category and district for database projects
+  const guessCategory = (name: string, description: string): Category => {
+    const text = `${name} ${description || ""}`.toLowerCase();
+    if (text.includes("villa") || text.includes("biệt thự")) return "Biệt thự";
+    if (text.includes("resort") || text.includes("nghỉ dưỡng")) return "Nghỉ dưỡng";
+    if (text.includes("đô thị") || text.includes("plaz") || text.includes("khu đô")) return "Khu đô thị";
+    if (text.includes("văn phòng") || text.includes("office") || text.includes("tòa nhà")) return "Văn phòng";
+    return "Căn hộ";
+  };
+
+  const guessDistrict = (location: string): string => {
+    const text = (location || "").toLowerCase();
+    if (text.includes("hải châu")) return "Hải Châu";
+    if (text.includes("sơn trà")) return "Sơn Trà";
+    if (text.includes("ngũ hành sơn")) return "Ngũ Hành Sơn";
+    if (text.includes("cẩm lệ")) return "Cẩm Lệ";
+    if (text.includes("hòa vang")) return "Hòa Vang";
+    if (text.includes("liên chiểu")) return "Liên Chiểu";
+    if (text.includes("thanh khê")) return "Thanh Khê";
+    return "Đà Nẵng";
+  };
+
+  // Map database projects to component project format
+  const mappedDbProjects = dbProjects.map((p) => ({
+    img: p.image_url || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=60",
+    name: p.name,
+    developer: p.developer || "Chưa rõ CĐT",
+    district: guessDistrict(p.location),
+    category: guessCategory(p.name, p.description),
+    status: (p.status || "Đang mở bán") as Status,
+    priceFrom: p.price_from || "Liên hệ",
+    units: p.scale || "N/A",
+    handover: "N/A",
+    slug: p.slug,
+    location: p.location,
+  }));
+
+  const allProjects = [...mappedDbProjects, ...projects];
+
+  // Filter projects based on search inputs
+  const filteredProjects = allProjects.filter((p) => {
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) {
+      return false;
+    }
+    if (category && category !== "all") {
+      const catMap: Record<string, string> = {
+        apt: "Căn hộ",
+        villa: "Biệt thự",
+        urban: "Khu đô thị",
+        resort: "Nghỉ dưỡng",
+        office: "Văn phòng",
+      };
+      const requiredCat = catMap[category];
+      if (requiredCat && p.category !== requiredCat) {
+        return false;
+      }
+    }
+    if (district && district !== "all") {
+      const distMap: Record<string, string> = {
+        hc: "Hải Châu",
+        st: "Sơn Trà",
+        nhs: "Ngũ Hành Sơn",
+        cl: "Cẩm Lệ",
+        hv: "Hòa Vang",
+      };
+      const requiredDist = distMap[district];
+      if (requiredDist && !p.district.includes(requiredDist)) {
+        return false;
+      }
+    }
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main>
-        <ProjectsHero />
+        <ProjectsHero
+          search={search}
+          setSearch={setSearch}
+          category={category}
+          setCategory={setCategory}
+          district={district}
+          setDistrict={setDistrict}
+        />
         <ProjectGrid
+          projects={filteredProjects}
+          loading={loading}
           onAddToComparison={addToComparison}
           isSelected={isSelected}
         />

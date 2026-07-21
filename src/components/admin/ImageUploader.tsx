@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { UploadCloud, Trash2, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ImageUploaderProps {
   images: string[];
@@ -28,8 +29,11 @@ export default function ImageUploader({
   const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
+    toast.loading("Đang tải các ảnh lên...", { id: "upload-toast" });
 
     const newUrls: string[] = [];
+    let errorCount = 0;
+    let lastError: any = null;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -38,8 +42,9 @@ export default function ImageUploader({
         if (isMock) {
           // Convert to Base64 data URL for offline mode mock db storage
           const reader = new FileReader();
-          const base64Promise = new Promise<string>((resolve) => {
+          const base64Promise = new Promise<string>((resolve, reject) => {
             reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => reject(new Error("Lỗi khi đọc file bằng FileReader"));
           });
           reader.readAsDataURL(file);
           const base64Url = await base64Promise;
@@ -62,8 +67,10 @@ export default function ImageUploader({
 
           newUrls.push(publicUrl);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to upload file:", file.name, err);
+        errorCount++;
+        lastError = err;
       }
     }
 
@@ -74,6 +81,14 @@ export default function ImageUploader({
       if (!featuredImage || !images.includes(featuredImage)) {
         onChangeFeaturedImage(newUrls[0]);
       }
+    }
+
+    if (errorCount === 0) {
+      toast.success(`Đã tải lên thành công ${newUrls.length} hình ảnh`, { id: "upload-toast" });
+    } else if (newUrls.length > 0) {
+      toast.warning(`Tải lên thành công ${newUrls.length} ảnh, thất bại ${errorCount} ảnh: ${lastError?.message || lastError}`, { id: "upload-toast" });
+    } else {
+      toast.error(`Tải ảnh thất bại: ${lastError?.message || lastError}`, { id: "upload-toast" });
     }
 
     setUploading(false);
@@ -108,39 +123,39 @@ export default function ImageUploader({
             return (
               <div
                 key={idx}
-                className={`relative aspect-video rounded-lg overflow-hidden group border bg-white shadow-sm transition-all ${
-                  isFeatured ? "ring-2 ring-blue-500 border-transparent scale-95" : "border-slate-200"
+                className={`relative aspect-video rounded-lg overflow-hidden border bg-white shadow-sm transition-all cursor-pointer ${
+                  isFeatured ? "ring-2 ring-blue-500 border-transparent" : "border-slate-200 hover:border-slate-300"
                 }`}
+                onClick={() => onChangeFeaturedImage(url)}
+                title="Nhấp để chọn làm ảnh đại diện"
               >
                 <img src={url} alt={`Thumbnail ${idx}`} className="size-full object-cover" />
-                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
-                  {!isFeatured && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => onChangeFeaturedImage(url)}
-                      className="h-7 text-[10px] px-2 font-bold bg-white text-slate-700 hover:bg-slate-100"
-                    >
-                      Chọn làm bìa
-                    </Button>
+                
+                {/* Selection Indicator Badge */}
+                <div className="absolute top-2 left-2 z-10">
+                  {isFeatured ? (
+                    <span className="bg-blue-600 text-white text-[9px] font-bold py-1 px-2 rounded-full flex items-center gap-1 shadow-md">
+                      <CheckCircle className="size-3" /> Ảnh đại diện
+                    </span>
+                  ) : (
+                    <span className="bg-black/50 hover:bg-black/75 text-white text-[9px] font-medium py-1 px-2 rounded-full flex items-center gap-1 shadow-md transition-colors">
+                      Đặt làm đại diện
+                    </span>
                   )}
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="destructive"
-                    onClick={() => handleRemoveImage(url)}
-                    className="h-7 w-7 rounded-md bg-red-500 hover:bg-red-600 text-white"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
                 </div>
 
-                {isFeatured && (
-                  <span className="absolute bottom-1.5 left-1.5 bg-blue-600 text-white text-[9px] font-bold py-0.5 px-2 rounded-full flex items-center gap-1 shadow-md">
-                    <CheckCircle className="size-3" /> Ảnh đại diện
-                  </span>
-                )}
+                {/* Delete Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent setting as featured image when deleting
+                    handleRemoveImage(url);
+                  }}
+                  className="absolute top-2 right-2 z-10 h-6 w-6 rounded-full bg-black/60 hover:bg-red-600 text-white flex items-center justify-center transition-colors shadow"
+                  title="Xóa hình ảnh này"
+                >
+                  <Trash2 className="size-3" />
+                </button>
               </div>
             );
           })}

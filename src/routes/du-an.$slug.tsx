@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   MapPin,
   Download,
@@ -100,8 +101,130 @@ const agents = [
 
 function ProjectDetailPage() {
   const { slug } = Route.useParams();
-  const projectName = "The Landmark Da Nang";
+  const [project, setProject] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeImage, setActiveImage] = useState<string>("");
   const [activeSection, setActiveSection] = useState("gallery");
+
+  const isMock = typeof window !== "undefined"
+    ? !!localStorage.getItem("bds_mock_role") || !import.meta.env.VITE_SUPABASE_URL
+    : true;
+
+  useEffect(() => {
+    const loadProject = async () => {
+      setLoading(true);
+      let found: any = null;
+
+      if (isMock) {
+        const localData = localStorage.getItem("mock_projects");
+        const list = localData ? JSON.parse(localData) : [];
+        found = list.find((p: any) => p.slug === slug || p.name.toLowerCase().replace(/\s+/g, "-") === slug);
+      } else {
+        try {
+          const { data, error } = await supabase
+            .from("projects")
+            .select("*")
+            .eq("slug", slug)
+            .maybeSingle();
+          if (error) throw error;
+          found = data;
+        } catch (err) {
+          console.warn("Failed to fetch project from Supabase, trying mock:", err);
+          const localData = localStorage.getItem("mock_projects");
+          const list = localData ? JSON.parse(localData) : [];
+          found = list.find((p: any) => p.slug === slug || p.name.toLowerCase().replace(/\s+/g, "-") === slug);
+        }
+      }
+
+      if (!found) {
+        const staticProjects = [
+          {
+            name: "Sun Cosmo Residence",
+            slug: "sun-cosmo-residence",
+            developer: "Sun Group",
+            location: "Trần Hưng Đạo, Ngũ Hành Sơn, Đà Nẵng",
+            scale: "1.250 căn",
+            status: "Đang mở bán",
+            price_from: "55 tr/m²",
+            description: "Tổ hợp căn hộ cao cấp và nhà phố thương mại nằm ngay chân cầu Trần Thị Lý. View sông Hàn và trung tâm thành phố tuyệt đẹp, kiến trúc kết hợp truyền thống và hiện đại.",
+          },
+          {
+            name: "The Ocean Villas Mỹ Khê",
+            slug: "the-ocean-villas-my-khe",
+            developer: "VinaCapital",
+            location: "Võ Nguyên Giáp, Sơn Trà, Đà Nẵng",
+            scale: "120 biệt thự",
+            status: "Đang mở bán",
+            price_from: "28 tỷ/căn",
+            description: "Biệt thự ven sông đắc địa, khu đô thị sinh thái Hòa Xuân. Gồm 5 phòng ngủ master, hồ bơi tràn bờ riêng, sân vườn rộng thoáng mát thích hợp nghỉ dưỡng gia đình.",
+          },
+          {
+            name: "Hòa Xuân Riverside City",
+            slug: "hoa-xuan-riverside-city",
+            developer: "Đất Xanh Miền Trung",
+            location: "Nguyễn Phước Lan, Cẩm Lệ, Đà Nẵng",
+            scale: "1.500 lô đất nền",
+            status: "Đã bàn giao",
+            price_from: "42 tr/m²",
+            description: "Khu đô thị sinh thái Hòa Xuân ven sông với cơ sở hạ tầng đồng bộ, cảnh quan xanh mát, giao thông thuận tiện và quy hoạch bài bản.",
+          },
+          {
+            name: "Azura Riverfront Tower",
+            slug: "azura-riverfront-tower",
+            developer: "VinaCapital",
+            location: "Trần Hưng Đạo, Hải Châu, Đà Nẵng",
+            scale: "225 căn hộ",
+            status: "Đang mở bán",
+            price_from: "65 tr/m²",
+            description: "Tòa tháp căn hộ cao cấp bên bờ sông Hàn, vị trí đắc địa cạnh cầu Sông Hàn, đầy đủ tiện ích chuẩn quốc tế.",
+          },
+          {
+            name: "Eco Green Hòa Vang",
+            slug: "eco-green-hoa-vang",
+            developer: "HUD",
+            location: "Quốc lộ 14B, Hòa Vang, Đà Nẵng",
+            scale: "350 căn nhà phố",
+            status: "Sắp mở bán",
+            price_from: "3.5 tỷ/căn",
+            description: "Khu nhà phố sinh thái thân thiện môi trường tại Hòa Vang, không khí trong lành, thiết kế tối ưu mảng xanh.",
+          },
+          {
+            name: "Da Nang Smart Plaza",
+            slug: "da-nang-smart-plaza",
+            developer: "FPT City",
+            location: "FPT City, Ngũ Hành Sơn, Đà Nẵng",
+            scale: "1 tháp, 25 tầng",
+            status: "Sắp mở bán",
+            price_from: "40 tr/m²",
+            description: "Tổ hợp thương mại dịch vụ và căn hộ thông minh tại FPT City Đà Nẵng, công nghệ Smart Home cao cấp.",
+          }
+        ];
+        found = staticProjects.find((p) => p.slug === slug || p.name.toLowerCase().replace(/\s+/g, "-") === slug);
+      }
+
+      setProject(found);
+      if (found) {
+        const images = Array.isArray(found.images) && found.images.length > 0
+          ? found.images
+          : found.image_url
+            ? [found.image_url]
+            : [hero, int1, int2, amenity];
+        setActiveImage(images[0]);
+      }
+      setLoading(false);
+    };
+
+    loadProject();
+  }, [slug]);
+
+  const projectName = project?.name || "The Landmark Da Nang";
+  const projectImages = Array.isArray(project?.images) && project.images.length > 0
+    ? project.images
+    : project?.image_url
+      ? [project.image_url]
+      : [hero, int1, int2, amenity];
+
+  const mainImage = activeImage || projectImages[0] || hero;
 
   const sections = [
     { id: "gallery", label: "Overview" },
@@ -126,7 +249,7 @@ function ProjectDetailPage() {
     };
     window.addEventListener("scroll", handleScrollEvent);
     return () => window.removeEventListener("scroll", handleScrollEvent);
-  }, []);
+  }, [project]);
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -195,94 +318,110 @@ function ProjectDetailPage() {
         </div>
 
         {/* Gallery + Summary */}
-        <section id="gallery" className="container-page mt-6 grid grid-cols-1 lg:grid-cols-3 gap-8 scroll-mt-24">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl shadow-card bg-muted group border border-border/40">
-              <img
-                src={hero}
-                alt={projectName}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-              />
-              <span className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-1 rounded-full shadow-lg">
-                1 / 18 ảnh
-              </span>
-              <div className="absolute top-4 right-4 flex gap-2">
-                <Button size="icon" variant="secondary" className="h-9 w-9 rounded-full bg-white/90 shadow backdrop-blur-sm hover:bg-white text-muted-foreground hover:text-foreground">
-                  <Share2 className="h-4 w-4" />
-                </Button>
-                <Button size="icon" variant="secondary" className="h-9 w-9 rounded-full bg-white/90 shadow backdrop-blur-sm hover:bg-white text-muted-foreground hover:text-red-500">
-                  <Heart className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 gap-4">
-              {[hero, int1, int2, amenity].map((src, i) => (
-                <button
-                  key={i}
-                  className="relative aspect-[4/3] overflow-hidden rounded-xl group border border-border/40 hover:border-primary/50 transition-colors shadow-sm"
-                >
-                  <img
-                    src={src}
-                    alt=""
-                    loading="lazy"
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
-                  />
-                  {i === 3 && (
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] grid place-items-center text-white text-sm font-bold tracking-wide">
-                      +14 Ảnh
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
+        {loading ? (
+          <div className="container-page py-24 text-center text-muted-foreground">
+            <div className="animate-spin size-8 border-t-2 border-b-2 border-primary rounded-full mx-auto mb-3"></div>
+            Đang tải thông tin chi tiết dự án...
           </div>
-
-          <aside className="bg-card rounded-2xl shadow-card border border-border/50 p-6 lg:p-7 flex flex-col justify-between self-start">
-            <div>
-              <div className="flex items-center justify-between">
-                <Badge className="bg-accent/40 text-primary hover:bg-accent/50 border border-primary/10 px-3 py-1 font-semibold text-xs rounded-full">
-                  Sắp mở bán
-                </Badge>
-                <div className="flex items-center gap-1 text-xs text-orange font-bold">
-                  <Sparkles className="h-3.5 w-3.5 fill-orange" />
-                  Nổi bật
+        ) : (
+          <section id="gallery" className="container-page mt-6 grid grid-cols-1 lg:grid-cols-3 gap-8 scroll-mt-24">
+            <div className="lg:col-span-2 space-y-4">
+              <div className="relative aspect-[16/10] overflow-hidden rounded-2xl shadow-card bg-muted group border border-border/40">
+                <img
+                  src={mainImage}
+                  alt={projectName}
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                />
+                <span className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-1 rounded-full shadow-lg">
+                  1 / {projectImages.length} ảnh
+                </span>
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <Button size="icon" variant="secondary" className="h-9 w-9 rounded-full bg-white/90 shadow backdrop-blur-sm hover:bg-white text-muted-foreground hover:text-foreground">
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="secondary" className="h-9 w-9 rounded-full bg-white/90 shadow backdrop-blur-sm hover:bg-white text-muted-foreground hover:text-red-500">
+                    <Heart className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-              <h1 className="mt-4 text-3xl font-extrabold tracking-tight leading-tight text-primary">
-                {projectName}
-              </h1>
-              <div className="mt-2.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <MapPin className="h-4 w-4 text-teal shrink-0" /> Sơn Trà, Hải Châu, Đà Nẵng
+              <div className="grid grid-cols-4 gap-4">
+                {projectImages.slice(0, 4).map((src: string, i: number) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImage(src)}
+                    className={`relative aspect-[4/3] overflow-hidden rounded-xl group border hover:border-primary/50 transition-colors shadow-sm ${
+                      mainImage === src ? "border-primary ring-2 ring-primary/20" : "border-border/40"
+                    }`}
+                  >
+                    <img
+                      src={src}
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                    />
+                    {i === 3 && projectImages.length > 4 && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] grid place-items-center text-white text-sm font-bold tracking-wide">
+                        +{projectImages.length - 4} Ảnh
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <aside className="bg-card rounded-2xl shadow-card border border-border/50 p-6 lg:p-7 flex flex-col justify-between self-start">
+              <div>
+                <div className="flex items-center justify-between">
+                  <Badge className="bg-accent/40 text-primary hover:bg-accent/50 border border-primary/10 px-3 py-1 font-semibold text-xs rounded-full">
+                    {project?.status || "Đang thi công"}
+                  </Badge>
+                  <div className="flex items-center gap-1 text-xs text-orange font-bold">
+                    <Sparkles className="h-3.5 w-3.5 fill-orange" />
+                    Nổi bật
+                  </div>
+                </div>
+                <h1 className="mt-4 text-3xl font-extrabold tracking-tight leading-tight text-primary">
+                  {projectName}
+                </h1>
+                <div className="mt-2.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <MapPin className="h-4 w-4 text-teal shrink-0" /> {project?.location || "Sơn Trà, Hải Châu, Đà Nẵng"}
+                </div>
+
+                {project?.description && (
+                  <p className="mt-4 text-sm text-muted-foreground leading-relaxed line-clamp-6">
+                    {project.description}
+                  </p>
+                )}
+
+                <div className="h-px bg-border/60 my-6" />
+
+                <dl className="space-y-4 text-sm">
+                  <Row k="Chủ đầu tư" v={project?.developer || "Đang cập nhật"} />
+                  <Row k="Quy mô" v={project?.scale || "Đang cập nhật"} />
+                  <Row k="Diện tích" v={project?.area || "1.2 ha"} />
+                  <Row k="Loại hình" v={project?.category || "Căn hộ"} />
+                  <Row k="Trạng thái" v={project?.status || "Đang thi công"} />
+                </dl>
               </div>
 
-              <div className="h-px bg-border/60 my-6" />
-
-              <dl className="space-y-4 text-sm">
-                <Row k="Chủ đầu tư" v="Cosmos Group" />
-                <Row k="Quy mô" v="2 tháp, 39 tầng" />
-                <Row k="Diện tích" v="1.2 ha" />
-                <Row k="Loại hình" v="Căn hộ, Penthouse" />
-                <Row k="Trạng thái" v="Đang thi công" />
-              </dl>
-            </div>
-
-            <div className="mt-8 space-y-3">
-              <Button
-                onClick={() => scrollToSection("pricing")}
-                className="w-full h-12 bg-primary hover:bg-primary/95 text-white font-semibold rounded-xl transition-all shadow-md shadow-primary/10 hover:shadow-lg"
-              >
-                Đăng ký nhận bảng giá
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => scrollToSection("broker")}
-                className="w-full h-12 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/30 font-semibold rounded-xl transition-all"
-              >
-                Liên hệ Môi giới
-              </Button>
-            </div>
-          </aside>
-        </section>
+              <div className="mt-8 space-y-3">
+                <Button
+                  onClick={() => scrollToSection("pricing")}
+                  className="w-full h-12 bg-primary hover:bg-primary/95 text-white font-semibold rounded-xl transition-all shadow-md shadow-primary/10 hover:shadow-lg"
+                >
+                  Đăng ký nhận bảng giá
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => scrollToSection("broker")}
+                  className="w-full h-12 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/30 font-semibold rounded-xl transition-all"
+                >
+                  Liên hệ Môi giới
+                </Button>
+              </div>
+            </aside>
+          </section>
+        )}
 
         {/* Location & Map */}
         <section id="map" className="container-page mt-20 scroll-mt-24">

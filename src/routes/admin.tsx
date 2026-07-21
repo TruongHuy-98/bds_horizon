@@ -839,7 +839,7 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
       try {
         let query = supabase.from("properties").select("*");
         if (!isAdmin) {
-          query = query.eq("created_by", user?.id);
+          query = query.eq("created_by", user?.id || "");
         }
         const { data, error } = await query.order("created_at", { ascending: false });
         if (error) throw error;
@@ -910,16 +910,22 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
     };
 
     if (isMock) {
-      if (editingItem) {
-        LOCAL_DB.saveProperty({ ...payload, id: editingItem.id });
-        toast.success("Đã cập nhật tin đăng thành công (Mock DB)");
-      } else {
-        LOCAL_DB.saveProperty(payload);
-        toast.success("Đã đăng tin mới thành công (Mock DB)");
+      try {
+        if (editingItem) {
+          LOCAL_DB.saveProperty({ ...payload, id: editingItem.id });
+          toast.success("Đã cập nhật tin đăng thành công (Mock DB)");
+        } else {
+          LOCAL_DB.saveProperty(payload);
+          toast.success("Đã đăng tin mới thành công (Mock DB)");
+        }
+        handleCancelEdit();
+        load();
+      } catch (err: any) {
+        console.error("Local save error:", err);
+        toast.error(`Không thể lưu (Mock DB): Dung lượng LocalStorage có thể đã đầy do ảnh Base64 quá lớn! Chi tiết: ${err.message}`);
+      } finally {
+        setSaving(false);
       }
-      handleCancelEdit();
-      load();
-      setSaving(false);
     } else {
       try {
         let error;
@@ -1253,8 +1259,8 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
             <ImageUploader
               images={form.images}
               featuredImage={form.image_url}
-              onChangeImages={(urls) => setForm({ ...form, images: urls })}
-              onChangeFeaturedImage={(url) => setForm({ ...form, image_url: url })}
+              onChangeImages={(urls) => setForm(prev => ({ ...prev, images: urls }))}
+              onChangeFeaturedImage={(url) => setForm(prev => ({ ...prev, image_url: url }))}
               isMock={isMock}
               label="Hình ảnh bất động sản"
             />
@@ -1391,16 +1397,22 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
     };
 
     if (isMock) {
-      if (editingItem) {
-        LOCAL_DB.saveProject({ ...payload, id: editingItem.id });
-        toast.success("Đã cập nhật dự án thành công (Mock DB)");
-      } else {
-        LOCAL_DB.saveProject(payload);
-        toast.success("Đã thêm dự án mới thành công (Mock DB)");
+      try {
+        if (editingItem) {
+          LOCAL_DB.saveProject({ ...payload, id: editingItem.id });
+          toast.success("Đã cập nhật dự án thành công (Mock DB)");
+        } else {
+          LOCAL_DB.saveProject(payload);
+          toast.success("Đã thêm dự án mới thành công (Mock DB)");
+        }
+        handleCancelEdit();
+        load();
+      } catch (err: any) {
+        console.error("Local save error:", err);
+        toast.error(`Không thể lưu (Mock DB): Dung lượng LocalStorage có thể đã đầy! Chi tiết: ${err.message}`);
+      } finally {
+        setSaving(false);
       }
-      handleCancelEdit();
-      load();
-      setSaving(false);
     } else {
       try {
         let error;
@@ -1700,8 +1712,8 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
             <ImageUploader
               images={form.images}
               featuredImage={form.image_url}
-              onChangeImages={(urls) => setForm({ ...form, images: urls })}
-              onChangeFeaturedImage={(url) => setForm({ ...form, image_url: url })}
+              onChangeImages={(urls) => setForm(prev => ({ ...prev, images: urls }))}
+              onChangeFeaturedImage={(url) => setForm(prev => ({ ...prev, image_url: url }))}
               isMock={isMock}
               label="Hình ảnh dự án"
             />
@@ -1776,7 +1788,7 @@ function NewsManager({ isMock }: { isMock: boolean }) {
       try {
         let query = supabase.from("news_posts").select("*");
         if (!isAdmin) {
-          query = query.eq("created_by", user?.id);
+          query = query.eq("created_by", user?.id || "");
         }
         const { data, error } = await query.order("created_at", { ascending: false });
         if (error) throw error;
@@ -1840,16 +1852,22 @@ function NewsManager({ isMock }: { isMock: boolean }) {
     };
 
     if (isMock) {
-      if (editingItem) {
-        LOCAL_DB.saveNews({ ...payload, id: editingItem.id });
-        toast.success("Đã cập nhật bài viết thành công (Mock DB)");
-      } else {
-        LOCAL_DB.saveNews(payload);
-        toast.success("Đã đăng bài viết mới thành công (Mock DB)");
+      try {
+        if (editingItem) {
+          LOCAL_DB.saveNews({ ...payload, id: editingItem.id });
+          toast.success("Đã cập nhật bài viết thành công (Mock DB)");
+        } else {
+          LOCAL_DB.saveNews(payload);
+          toast.success("Đã đăng bài viết mới thành công (Mock DB)");
+        }
+        handleCancelEdit();
+        load();
+      } catch (err: any) {
+        console.error("Local save error:", err);
+        toast.error(`Không thể lưu (Mock DB): Dung lượng LocalStorage có thể đã đầy! Chi tiết: ${err.message}`);
+      } finally {
+        setSaving(false);
       }
-      handleCancelEdit();
-      load();
-      setSaving(false);
     } else {
       try {
         let error;
@@ -2141,8 +2159,8 @@ function NewsManager({ isMock }: { isMock: boolean }) {
             <ImageUploader
               images={form.images}
               featuredImage={form.cover_image}
-              onChangeImages={(urls) => setForm({ ...form, images: urls })}
-              onChangeFeaturedImage={(url) => setForm({ ...form, cover_image: url })}
+              onChangeImages={(urls) => setForm(prev => ({ ...prev, images: urls }))}
+              onChangeFeaturedImage={(url) => setForm(prev => ({ ...prev, cover_image: url }))}
               isMock={isMock}
               label="Hình ảnh bài viết"
             />

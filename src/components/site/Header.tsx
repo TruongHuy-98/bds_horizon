@@ -38,8 +38,8 @@ export default function Header() {
   };
 
   const nav: { label: string; to?: string; href?: string }[] = [
-    { label: "Mua bán", to: "/" },
-    { label: "Cho thuê", href: "#" },
+    { label: "Nhà đất bán", to: "/nha-dat-ban" },
+    { label: "Nhà đất cho thuê", to: "/nha-dat-cho-thue" },
     { label: "Dự án", to: "/du-an" },
     { label: "Check Quy Hoạch", to: "/check-quy-hoach" },
     { label: "Luyện thi", to: "/on-thi" },
