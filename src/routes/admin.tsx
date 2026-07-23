@@ -38,10 +38,25 @@ import {
   Activity,
   ArrowLeft,
   Eye,
+  FileText,
+  Users,
+  CheckCircle,
+  XCircle,
+  GraduationCap,
+  Clock,
+  Award,
+  HelpCircle,
+  Check,
+  FileSpreadsheet,
+  Sparkles,
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import ImageUploader from "@/components/admin/ImageUploader";
 import type { Json } from "@/integrations/supabase/types";
+import { INITIAL_MOCK_EXAMS, ExamSet, ExamQuestion } from "@/data/mockExamsData";
+import { INITIAL_MOCK_EXAM_RESULTS, ExamResult } from "@/data/mockExamResultsData";
+import { SmartQuestionImporterModal } from "@/components/admin/SmartQuestionImporterModal";
+import type { ParsedQuestion } from "@/lib/questionParser";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -60,7 +75,7 @@ const slugify = (s: string) =>
   "-" +
   Math.random().toString(36).slice(2, 6);
 
-type SectionKey = "overview" | "properties" | "projects" | "news";
+type SectionKey = "overview" | "properties" | "projects" | "news" | "exams" | "exam-results";
 type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 type NewsPostRow = Database["public"]["Tables"]["news_posts"]["Row"];
@@ -297,15 +312,85 @@ const LOCAL_DB = {
     }
     localStorage.setItem("mock_news", JSON.stringify(list));
     return list;
+  },
+
+  // Exams Management
+  getExams: (): ExamSet[] => {
+    if (typeof window === "undefined") return [];
+    const data = localStorage.getItem("mock_exams");
+    if (!data) {
+      localStorage.setItem("mock_exams", JSON.stringify(INITIAL_MOCK_EXAMS));
+      return INITIAL_MOCK_EXAMS;
+    }
+    return JSON.parse(data);
+  },
+  saveExam: (item: Partial<ExamSet> & { id?: string }): ExamSet[] => {
+    const list = LOCAL_DB.getExams();
+    if (item.id) {
+      const index = list.findIndex(e => e.id === item.id);
+      if (index !== -1) {
+        list[index] = { 
+          ...list[index], 
+          ...item, 
+          questionCount: item.questions ? item.questions.length : list[index].questionCount 
+        } as ExamSet;
+      }
+    } else {
+      const newExam: ExamSet = {
+        id: "exam-" + Math.random().toString(36).substring(2, 9),
+        title: item.title || "Bộ đề thi mới",
+        slug: slugify(item.title || "bo-de-thi-moi"),
+        certificateType: (item.certificateType as any) || "Môi giới BĐS",
+        durationMinutes: Number(item.durationMinutes) || 60,
+        passingScorePercent: Number(item.passingScorePercent) || 70,
+        questionCount: item.questions ? item.questions.length : 0,
+        published: item.published ?? true,
+        createdAt: new Date().toISOString(),
+        questions: item.questions || []
+      };
+      list.unshift(newExam);
+    }
+    localStorage.setItem("mock_exams", JSON.stringify(list));
+    return list;
+  },
+  deleteExam: (id: string): ExamSet[] => {
+    const list = LOCAL_DB.getExams().filter(e => e.id !== id);
+    localStorage.setItem("mock_exams", JSON.stringify(list));
+    return list;
+  },
+  togglePublishExam: (id: string): ExamSet[] => {
+    const list = LOCAL_DB.getExams();
+    const index = list.findIndex(e => e.id === id);
+    if (index !== -1) {
+      list[index].published = !list[index].published;
+    }
+    localStorage.setItem("mock_exams", JSON.stringify(list));
+    return list;
+  },
+  getExamResults: (): ExamResult[] => {
+    if (typeof window === "undefined") return [];
+    const data = localStorage.getItem("mock_exam_results");
+    if (!data) {
+      localStorage.setItem("mock_exam_results", JSON.stringify(INITIAL_MOCK_EXAM_RESULTS));
+      return INITIAL_MOCK_EXAM_RESULTS;
+    }
+    return JSON.parse(data);
   }
 };
 
-const navItems: { key: SectionKey; label: string; icon: any }[] = [
-  { key: "overview", label: "Tổng quan", icon: LayoutDashboard },
-  { key: "properties", label: "Tin đăng bán/thuê", icon: Building2 },
-  { key: "projects", label: "Dự án BĐS", icon: Landmark },
-  { key: "news", label: "Tin tức & Sự kiện", icon: Newspaper },
+const systemNavItems: { key: SectionKey; label: string; icon: any; category: string }[] = [
+  { key: "overview", label: "Tổng quan", icon: LayoutDashboard, category: "system" },
+  { key: "properties", label: "Tin đăng bán/thuê", icon: Building2, category: "system" },
+  { key: "projects", label: "Dự án BĐS", icon: Landmark, category: "system" },
+  { key: "news", label: "Tin tức & Sự kiện", icon: Newspaper, category: "system" },
 ];
+
+const examNavItems: { key: SectionKey; label: string; icon: any; category: string }[] = [
+  { key: "exams", label: "Quản lý Đề thi & Câu hỏi", icon: FileText, category: "exam" },
+  { key: "exam-results", label: "Kết quả & Người thi", icon: Users, category: "exam" },
+];
+
+const navItems = [...systemNavItems, ...examNavItems];
 
 function AdminPage() {
   const { user: realUser, role, isAdmin, isBroker, isCollaborator, isGuest, loading: authLoading } = useAuth();
@@ -403,11 +488,14 @@ function AdminPage() {
   // Filter sidebar navigation items based on Role
   const filteredNavItems = navItems.filter((item) => {
     if (isAdmin) return true;
-    if (isBroker && item.key === "properties") return true;
+    if (isBroker && (item.key === "properties" || item.key === "exams")) return true;
     if (isCollaborator && item.key === "news") return true;
     if (item.key === "overview") return true; // Everyone sees overview
     return false;
   });
+
+  const filteredSystemItems = filteredNavItems.filter((item) => item.category === "system");
+  const filteredExamItems = filteredNavItems.filter((item) => item.category === "exam");
 
   const currentNavKeys = filteredNavItems.map(item => item.key);
   const activeSection = currentNavKeys.includes(section) ? section : currentNavKeys[0] || "overview";
@@ -464,36 +552,73 @@ function AdminPage() {
         </div>
 
         {/* Sidebar Content (Navigation) */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-7">
-          <div className="space-y-1">
-            <div className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">QUẢN LÝ HỆ THỐNG</div>
-            <nav className="space-y-1">
-              {filteredNavItems.map((item) => {
-                const isActive = activeSection === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    onClick={() => {
-                      setSection(item.key);
-                      setMobileOpen(false);
-                    }}
-                    className={`
-                      w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group
-                      ${isActive 
-                        ? "bg-blue-600/10 text-blue-400 border-l-4 border-blue-500 pl-2 font-semibold" 
-                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"}
-                    `}
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon className={`size-4.5 transition-colors ${isActive ? "text-blue-400" : "text-slate-400 group-hover:text-slate-300"}`} />
-                      <span>{item.label}</span>
-                    </div>
-                    <ChevronRight className={`size-3.5 transition-transform duration-200 opacity-0 group-hover:opacity-100 ${isActive ? "opacity-100 text-blue-400 translate-x-0.5" : "text-slate-500"}`} />
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-6">
+          {filteredSystemItems.length > 0 && (
+            <div className="space-y-1">
+              <div className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">QUẢN LÝ HỆ THỐNG</div>
+              <nav className="space-y-1">
+                {filteredSystemItems.map((item) => {
+                  const isActive = activeSection === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => {
+                        setSection(item.key);
+                        setMobileOpen(false);
+                      }}
+                      className={`
+                        w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group
+                        ${isActive 
+                          ? "bg-blue-600/10 text-blue-400 border-l-4 border-blue-500 pl-2 font-semibold" 
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"}
+                      `}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon className={`size-4.5 transition-colors ${isActive ? "text-blue-400" : "text-slate-400 group-hover:text-slate-300"}`} />
+                        <span>{item.label}</span>
+                      </div>
+                      <ChevronRight className={`size-3.5 transition-transform duration-200 opacity-0 group-hover:opacity-100 ${isActive ? "opacity-100 text-blue-400 translate-x-0.5" : "text-slate-500"}`} />
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          )}
+
+          {filteredExamItems.length > 0 && (
+            <div className="space-y-1">
+              <div className="px-3 text-[10px] font-bold text-teal-400 uppercase tracking-widest mb-2 flex items-center gap-1.5 font-bold">
+                <GraduationCap className="size-3.5 text-teal-400" />
+                <span>QUẢN LÝ ÔN THI</span>
+              </div>
+              <nav className="space-y-1">
+                {filteredExamItems.map((item) => {
+                  const isActive = activeSection === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => {
+                        setSection(item.key);
+                        setMobileOpen(false);
+                      }}
+                      className={`
+                        w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group
+                        ${isActive 
+                          ? "bg-teal-500/10 text-teal-400 border-l-4 border-teal-400 pl-2 font-semibold" 
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"}
+                      `}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon className={`size-4.5 transition-colors ${isActive ? "text-teal-400" : "text-slate-400 group-hover:text-slate-300"}`} />
+                        <span>{item.label}</span>
+                      </div>
+                      <ChevronRight className={`size-3.5 transition-transform duration-200 opacity-0 group-hover:opacity-100 ${isActive ? "opacity-100 text-teal-400 translate-x-0.5" : "text-slate-500"}`} />
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          )}
 
           <div className="space-y-1">
             <div className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 font-semibold">TRANG CHỦ</div>
@@ -572,6 +697,8 @@ function AdminPage() {
           {activeSection === "properties" && <PropertiesManager isMock={isMock} />}
           {activeSection === "projects" && <ProjectsManager isMock={isMock} />}
           {activeSection === "news" && <NewsManager isMock={isMock} />}
+          {activeSection === "exams" && <ExamsManager isMock={isMock} />}
+          {activeSection === "exam-results" && <ExamResultsManager isMock={isMock} />}
         </main>
 
       </div>
@@ -2195,6 +2322,1100 @@ function NewsManager({ isMock }: { isMock: boolean }) {
           </form>
         </Card>
       </div>
+
+    </div>
+  );
+}
+
+/* ---------- 5. EXAMS MANAGER (Trang 1: Quản lý Đề thi & Câu hỏi) ---------- */
+function ExamsManager({ isMock }: { isMock: boolean }) {
+  const [items, setItems] = useState<ExamSet[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCertType, setFilterCertType] = useState("all");
+  const [editingItem, setEditingItem] = useState<ExamSet | null>(null);
+
+  // Form state
+  const [form, setForm] = useState({
+    title: "",
+    certificateType: "Môi giới BĐS" as "Môi giới BĐS" | "Định giá BĐS" | "Quản lý Sàn BĐS",
+    durationMinutes: 60,
+    passingScorePercent: 70,
+    published: true,
+    questions: [] as ExamQuestion[],
+  });
+
+  // Question editing sub-form state
+  const [showQuestionForm, setShowQuestionForm] = useState(false);
+  const [editingQIndex, setEditingQIndex] = useState<number | null>(null);
+  const [qForm, setQForm] = useState({
+    id: "",
+    content: "",
+    optionA: "",
+    optionB: "",
+    optionC: "",
+    optionD: "",
+    correctOption: "A" as "A" | "B" | "C" | "D",
+    explanation: "",
+  });
+
+  const [saving, setSaving] = useState(false);
+  const [showSmartImporter, setShowSmartImporter] = useState(false);
+
+  const handleImportParsedQuestions = (parsedList: ParsedQuestion[]) => {
+    const convertedQuestions: ExamQuestion[] = parsedList.map((pq) => {
+      let options = pq.options || [];
+      if (options.length === 0 && pq.subStatements && pq.subStatements.length > 0) {
+        options = pq.subStatements.map((sub) => ({
+          key: sub.key.toUpperCase() as any,
+          text: sub.text,
+        }));
+      }
+      if (options.length === 0) {
+        options = [
+          { key: "A", text: "Đáp án A" },
+          { key: "B", text: "Đáp án B" },
+          { key: "C", text: "Đáp án C" },
+          { key: "D", text: "Đáp án D" },
+        ];
+      }
+      let correctOption = "A";
+      if (pq.answer) {
+        const match = pq.answer.match(/([A-D])/i);
+        if (match) correctOption = match[1].toUpperCase();
+      }
+      return {
+        id: pq.id || "q-smart-" + Math.random().toString(36).substring(2, 9),
+        content: pq.title,
+        options,
+        correctOption: correctOption as any,
+        explanation: pq.explanation || "",
+        type: pq.type,
+        context: pq.context,
+        subStatements: pq.subStatements,
+      };
+    });
+
+    setForm((prev) => ({
+      ...prev,
+      questions: [...prev.questions, ...convertedQuestions],
+    }));
+  };
+
+  const load = () => {
+    setLoading(true);
+    setItems(LOCAL_DB.getExams());
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+  }, [isMock]);
+
+  const handleStartEdit = (it: ExamSet) => {
+    setEditingItem(it);
+    setForm({
+      title: it.title,
+      certificateType: it.certificateType,
+      durationMinutes: it.durationMinutes,
+      passingScorePercent: it.passingScorePercent,
+      published: it.published,
+      questions: it.questions || [],
+    });
+    setShowQuestionForm(false);
+    setEditingQIndex(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItem(null);
+    setForm({
+      title: "",
+      certificateType: "Môi giới BĐS",
+      durationMinutes: 60,
+      passingScorePercent: 70,
+      published: true,
+      questions: [],
+    });
+    setShowQuestionForm(false);
+    setEditingQIndex(null);
+  };
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim()) {
+      toast.error("Vui lòng nhập tên đề thi!");
+      return;
+    }
+    setSaving(true);
+    try {
+      if (editingItem) {
+        LOCAL_DB.saveExam({ ...form, id: editingItem.id });
+        toast.success("Đã cập nhật bộ đề thi thành công!");
+      } else {
+        LOCAL_DB.saveExam(form);
+        toast.success("Đã tạo bộ đề thi mới thành công!");
+      }
+      handleCancelEdit();
+      load();
+    } catch (err: any) {
+      toast.error("Lỗi khi lưu đề thi: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = (id: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa bộ đề thi này?")) return;
+    LOCAL_DB.deleteExam(id);
+    toast.success("Đã xóa bộ đề thi");
+    if (editingItem && editingItem.id === id) handleCancelEdit();
+    load();
+  };
+
+  const togglePublish = (it: ExamSet) => {
+    LOCAL_DB.togglePublishExam(it.id);
+    toast.success("Đã thay đổi trạng thái phát hành đề thi");
+    load();
+  };
+
+  // Question sub-form handlers
+  const handleAddOrUpdateQuestion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!qForm.content.trim()) {
+      toast.error("Vui lòng nhập nội dung câu hỏi!");
+      return;
+    }
+    const newQuestion: ExamQuestion = {
+      id: qForm.id || "q-" + Math.random().toString(36).substring(2, 9),
+      content: qForm.content,
+      options: [
+        { key: "A", text: qForm.optionA || "Đáp án A" },
+        { key: "B", text: qForm.optionB || "Đáp án B" },
+        { key: "C", text: qForm.optionC || "Đáp án C" },
+        { key: "D", text: qForm.optionD || "Đáp án D" },
+      ],
+      correctOption: qForm.correctOption,
+      explanation: qForm.explanation,
+    };
+
+    if (editingQIndex !== null) {
+      const updated = [...form.questions];
+      updated[editingQIndex] = newQuestion;
+      setForm(prev => ({ ...prev, questions: updated }));
+      toast.success("Đã cập nhật câu hỏi!");
+    } else {
+      setForm(prev => ({ ...prev, questions: [...prev.questions, newQuestion] }));
+      toast.success("Đã thêm câu hỏi vào bộ đề!");
+    }
+
+    setQForm({
+      id: "",
+      content: "",
+      optionA: "",
+      optionB: "",
+      optionC: "",
+      optionD: "",
+      correctOption: "A",
+      explanation: "",
+    });
+    setEditingQIndex(null);
+    setShowQuestionForm(false);
+  };
+
+  const handleEditQuestion = (index: number, q: ExamQuestion) => {
+    setEditingQIndex(index);
+    setQForm({
+      id: q.id,
+      content: q.content,
+      optionA: q.options.find(o => o.key === "A")?.text || "",
+      optionB: q.options.find(o => o.key === "B")?.text || "",
+      optionC: q.options.find(o => o.key === "C")?.text || "",
+      optionD: q.options.find(o => o.key === "D")?.text || "",
+      correctOption: (["A", "B", "C", "D"].includes(q.correctOption) ? q.correctOption : "A") as "A" | "B" | "C" | "D",
+      explanation: q.explanation || "",
+    });
+    setShowQuestionForm(true);
+  };
+
+  const handleDeleteQuestion = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      questions: prev.questions.filter((_, i) => i !== index)
+    }));
+    toast.success("Đã xóa câu hỏi khỏi danh sách");
+  };
+
+  const handleImportMockExcel = () => {
+    const mockQuestionsPreset: ExamQuestion[] = [
+      {
+        id: "q-imp-1",
+        content: "Theo quy định, tổ chức kinh doanh dịch vụ môi giới BĐS phải công khai thông tin gì tại trụ sở?",
+        options: [
+          { key: "A", text: "Thông tin về bất động sản đưa vào kinh doanh và giấy chứng nhận hành nghề của môi giới." },
+          { key: "B", text: "Số tài khoản cá nhân của giám đốc doanh nghiệp." },
+          { key: "C", text: "Thông tin danh sách người thân của khách hàng." },
+          { key: "D", text: "Bản sao chứng minh nhân dân của người mua." }
+        ],
+        correctOption: "A",
+        explanation: "Doanh nghiệp kinh doanh dịch vụ BĐS có trách nhiệm công khai thông tin minh bạch về BĐS và chứng chỉ hành nghề."
+      },
+      {
+        id: "q-imp-2",
+        content: "Trường hợp đơn phương chấm dứt hợp đồng môi giới BĐS, bên vi phạm phải chịu trách nhiệm gì?",
+        options: [
+          { key: "A", text: "Bồi thường thiệt hại và chịu phạt vi phạm theo thỏa thuận trong hợp đồng." },
+          { key: "B", text: "Không chịu bất kỳ trách nhiệm nào." },
+          { key: "C", text: "Tự động gia hạn hợp đồng thêm 1 năm." },
+          { key: "D", text: "Chịu phạt hành chính tối đa 500 triệu đồng." }
+        ],
+        correctOption: "A",
+        explanation: "Theo pháp luật dân sự và kinh doanh BĐS, bên vi phạm nghĩa vụ hợp đồng phải bồi thường thiệt hại thực tế phát sinh."
+      }
+    ];
+
+    setForm(prev => ({
+      ...prev,
+      questions: [...prev.questions, ...mockQuestionsPreset]
+    }));
+    toast.success("Đã nhập thành công 2 câu hỏi trắc nghiệm từ Excel/JSON!");
+  };
+
+  const filteredItems = items.filter((it) => {
+    const matchesSearch = it.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCert = filterCertType === "all" || it.certificateType === filterCertType;
+    return matchesSearch && matchesCert;
+  });
+
+  return (
+    <div className="grid lg:grid-cols-12 gap-8 items-start">
+      
+      {/* LEFT COLUMN: EXAM SETS LIST */}
+      <div className="lg:col-span-6 space-y-4">
+        <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+          <div className="relative w-full flex-1">
+            <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
+            <Input
+              placeholder="Tìm tên đề thi..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 bg-slate-50/50 border-slate-200/80 focus-visible:ring-teal-500/30"
+            />
+          </div>
+          <div className="w-full sm:w-auto">
+            <select
+              value={filterCertType}
+              onChange={(e) => setFilterCertType(e.target.value)}
+              className="text-xs font-medium bg-white border border-slate-200 rounded-lg p-2.5 w-full focus:outline-none focus:ring-1 focus:ring-teal-500"
+            >
+              <option value="all">Tất cả Loại chứng chỉ</option>
+              <option value="Môi giới BĐS">Môi giới BĐS</option>
+              <option value="Định giá BĐS">Định giá BĐS</option>
+              <option value="Quản lý Sàn BĐS">Quản lý Sàn BĐS</option>
+            </select>
+          </div>
+        </div>
+
+        <Card className="border-slate-100 overflow-hidden shadow-sm bg-white">
+          <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
+            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <FileText className="size-4 text-teal-600" />
+              Danh sách bộ đề thi ({filteredItems.length})
+            </h3>
+            <Badge className="bg-teal-50 text-teal-700 hover:bg-teal-50 border-none font-semibold text-xs">
+              Mới nhất xếp trước
+            </Badge>
+          </div>
+
+          {loading ? (
+            <div className="p-8 text-center text-slate-400 space-y-2">
+              <div className="animate-spin size-8 border-t-2 border-b-2 border-teal-600 rounded-full mx-auto"></div>
+              <p className="text-xs font-medium">Đang tải danh sách đề thi...</p>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="p-16 text-center text-slate-400 bg-slate-50/20">
+              <GraduationCap className="size-12 mx-auto text-slate-300 stroke-[1.5] mb-2" />
+              <p className="font-semibold text-slate-800 text-sm">Không tìm thấy bộ đề thi nào</p>
+              <p className="text-xs text-slate-400 mt-0.5">Vui lòng điều chỉnh bộ lọc hoặc thêm bộ đề mới bên phải</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 max-h-[72vh] overflow-y-auto">
+              {filteredItems.map((it) => (
+                <div key={it.id} className="p-4 space-y-3 hover:bg-slate-50/40 transition-colors group">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[10px] font-bold py-0 h-4 px-2 border-teal-200 bg-teal-50 text-teal-700">
+                          {it.certificateType}
+                        </Badge>
+                        <Badge
+                          variant={it.published ? "default" : "secondary"}
+                          className={`cursor-pointer text-[10px] font-bold py-0.5 px-2 rounded-full border-none shadow-sm ${
+                            it.published ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          }`}
+                          onClick={() => togglePublish(it)}
+                        >
+                          {it.published ? "Công khai" : "Bản nháp"}
+                        </Badge>
+                      </div>
+                      <h4 className="font-bold text-slate-900 text-sm group-hover:text-teal-600 transition-colors line-clamp-2">
+                        {it.title}
+                      </h4>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleStartEdit(it)}
+                        className="size-8 text-slate-500 hover:text-teal-600 hover:bg-teal-50 rounded-lg"
+                        title="Chỉnh sửa bộ đề & câu hỏi"
+                      >
+                        <Edit2 className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => remove(it.id)}
+                        className="size-8 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                        title="Xóa bộ đề"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Exam metadata bar */}
+                  <div className="grid grid-cols-3 gap-2 p-2.5 bg-slate-50/60 rounded-lg text-xs font-medium text-slate-600">
+                    <div className="flex items-center gap-1.5">
+                      <HelpCircle className="size-3.5 text-teal-600" />
+                      <span><strong>{it.questions ? it.questions.length : it.questionCount}</strong> câu hỏi</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="size-3.5 text-amber-600" />
+                      <span><strong>{it.durationMinutes}</strong> phút</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Award className="size-3.5 text-emerald-600" />
+                      <span>Điểm Đạt: <strong>{it.passingScorePercent}%</strong></span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* RIGHT COLUMN: ACTION FORM */}
+      <div className="lg:col-span-6 space-y-4">
+        <Card className="p-6 border-slate-100 shadow-sm bg-white space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+              {editingItem ? (
+                <>
+                  <Edit2 className="size-4 text-teal-600" /> Cập nhật bộ đề thi
+                </>
+              ) : (
+                <>
+                  <Plus className="size-4 text-teal-600" /> Tạo bộ đề thi mới
+                </>
+              )}
+            </h3>
+            {editingItem && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleCancelEdit}
+                className="h-7 text-xs hover:bg-slate-100 text-slate-500 hover:text-slate-900"
+              >
+                <ArrowLeft className="size-3 mr-1" /> Tạo mới
+              </Button>
+            )}
+          </div>
+
+          <form onSubmit={submit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Tên bộ đề thi <span className="text-red-500">*</span></Label>
+              <Input
+                required
+                placeholder="Ví dụ: Đề thi thử Chứng chỉ Môi giới BĐS - Bộ đề số 01..."
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                className="border-slate-200/80 focus-visible:ring-teal-500/30"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Loại chứng chỉ</Label>
+                <select
+                  value={form.certificateType}
+                  onChange={(e) => setForm({ ...form, certificateType: e.target.value as any })}
+                  className="w-full text-xs font-medium bg-white border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                >
+                  <option value="Môi giới BĐS">Môi giới BĐS</option>
+                  <option value="Định giá BĐS">Định giá BĐS</option>
+                  <option value="Quản lý Sàn BĐS">Quản lý Sàn BĐS</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold flex items-center gap-0.5">
+                  <Clock className="size-3 text-slate-400" /> Thời gian (phút)
+                </Label>
+                <Input
+                  type="number"
+                  required
+                  min={5}
+                  max={180}
+                  value={form.durationMinutes}
+                  onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })}
+                  className="border-slate-200/80 focus-visible:ring-teal-500/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold flex items-center gap-0.5">
+                  <Award className="size-3 text-slate-400" /> Điểm Đạt (%)
+                </Label>
+                <Input
+                  type="number"
+                  required
+                  min={10}
+                  max={100}
+                  value={form.passingScorePercent}
+                  onChange={(e) => setForm({ ...form, passingScorePercent: Number(e.target.value) })}
+                  className="border-slate-200/80 focus-visible:ring-teal-500/30"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl border border-slate-200/80 p-3 bg-slate-50/40">
+              <div className="space-y-0.5">
+                <div className="text-xs font-bold text-slate-800">Trạng thái phát hành</div>
+                <div className="text-[10px] text-slate-400 font-medium">Bật để thí sinh có thể chọn làm bài thi này</div>
+              </div>
+              <Switch 
+                checked={form.published} 
+                onCheckedChange={(v) => setForm({ ...form, published: v })} 
+              />
+            </div>
+
+            {/* QUESTION MANAGEMENT SECTION */}
+            <div className="pt-2 space-y-3 border-t border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-slate-100">
+                <div className="space-y-0.5 min-w-0">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5 flex-wrap">
+                    <HelpCircle className="size-4 text-teal-600 shrink-0" />
+                    <span>Danh sách câu hỏi</span>
+                    <Badge variant="outline" className="text-[11px] font-bold py-0 h-4 px-2 border-teal-300 bg-teal-50 text-teal-700">
+                      {form.questions.length} câu
+                    </Badge>
+                  </h4>
+                  <p className="text-[11px] text-slate-400">Quản lý câu hỏi trắc nghiệm, tình huống & tự luận</p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setShowSmartImporter(true)}
+                    className="h-8 text-xs bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold shadow-sm"
+                    title="Nhập tự động từ văn bản thô AI Smart Importer"
+                  >
+                    <Sparkles className="size-3.5 mr-1 animate-pulse" />
+                    Thêm thông minh (AI)
+                  </Button>
+                </div>
+              </div>
+
+              {/* Secondary Action Toolbar Bar */}
+              <div className="flex items-center justify-between gap-2 p-2 bg-slate-50/70 border border-slate-200/80 rounded-xl text-xs">
+                <span className="text-[11px] text-slate-500 font-medium pl-1 hidden sm:inline">
+                  Tùy chọn nạp câu hỏi khác:
+                </span>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleImportMockExcel}
+                    className="h-7 text-xs border-slate-200 text-slate-700 hover:bg-white bg-white font-medium"
+                    title="Nhập nhanh dữ liệu mẫu Excel/JSON"
+                  >
+                    <FileSpreadsheet className="size-3 mr-1 text-teal-600" />
+                    Nhập Excel
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditingQIndex(null);
+                      setQForm({
+                        id: "",
+                        content: "",
+                        optionA: "",
+                        optionB: "",
+                        optionC: "",
+                        optionD: "",
+                        correctOption: "A",
+                        explanation: "",
+                      });
+                      setShowQuestionForm(!showQuestionForm);
+                    }}
+                    className="h-7 text-xs border-teal-300 text-teal-800 bg-teal-50/50 hover:bg-teal-100 font-semibold"
+                  >
+                    <Plus className="size-3 mr-1 text-teal-600" />
+                    Thêm thủ công
+                  </Button>
+                </div>
+              </div>
+
+              {/* Sub-form to Add/Edit a Question */}
+              {showQuestionForm && (
+                <div className="p-4 bg-teal-50/40 border border-teal-200/80 rounded-xl space-y-3 transition-all duration-200">
+                  <div className="flex items-center justify-between pb-2 border-b border-teal-100">
+                    <h5 className="text-xs font-bold text-teal-900 flex items-center gap-1.5">
+                      <Sparkles className="size-3.5 text-teal-600" />
+                      {editingQIndex !== null ? "Chỉnh sửa câu hỏi" : "Tạo câu hỏi trắc nghiệm mới"}
+                    </h5>
+                    <button
+                      type="button"
+                      onClick={() => setShowQuestionForm(false)}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-bold text-slate-700">Nội dung câu hỏi <span className="text-red-500">*</span></Label>
+                    <Textarea
+                      placeholder="Nhập nội dung câu hỏi trắc nghiệm..."
+                      rows={2}
+                      value={qForm.content}
+                      onChange={(e) => setQForm({ ...qForm, content: e.target.value })}
+                      className="text-xs bg-white border-slate-200 focus-visible:ring-teal-500/30"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-bold text-slate-600">Đáp án A</Label>
+                      <Input
+                        placeholder="Nội dung đáp án A"
+                        value={qForm.optionA}
+                        onChange={(e) => setQForm({ ...qForm, optionA: e.target.value })}
+                        className="text-xs bg-white border-slate-200"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-bold text-slate-600">Đáp án B</Label>
+                      <Input
+                        placeholder="Nội dung đáp án B"
+                        value={qForm.optionB}
+                        onChange={(e) => setQForm({ ...qForm, optionB: e.target.value })}
+                        className="text-xs bg-white border-slate-200"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-bold text-slate-600">Đáp án C</Label>
+                      <Input
+                        placeholder="Nội dung đáp án C"
+                        value={qForm.optionC}
+                        onChange={(e) => setQForm({ ...qForm, optionC: e.target.value })}
+                        className="text-xs bg-white border-slate-200"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-bold text-slate-600">Đáp án D</Label>
+                      <Input
+                        placeholder="Nội dung đáp án D"
+                        value={qForm.optionD}
+                        onChange={(e) => setQForm({ ...qForm, optionD: e.target.value })}
+                        className="text-xs bg-white border-slate-200"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-bold text-emerald-700">Đáp án đúng chuẩn</Label>
+                      <select
+                        value={qForm.correctOption}
+                        onChange={(e) => setQForm({ ...qForm, correctOption: e.target.value as any })}
+                        className="w-full text-xs font-bold text-emerald-800 bg-white border border-emerald-300 rounded-lg p-2 focus:outline-none"
+                      >
+                        <option value="A">Đáp án A</option>
+                        <option value="B">Đáp án B</option>
+                        <option value="C">Đáp án C</option>
+                        <option value="D">Đáp án D</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-bold text-slate-600">Giải thích đáp án</Label>
+                      <Input
+                        placeholder="Trích dẫn điều luật hoặc căn cứ..."
+                        value={qForm.explanation}
+                        onChange={(e) => setQForm({ ...qForm, explanation: e.target.value })}
+                        className="text-xs bg-white border-slate-200"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowQuestionForm(false)}
+                      className="h-7 text-xs text-slate-500"
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleAddOrUpdateQuestion}
+                      className="h-7 text-xs bg-teal-700 hover:bg-teal-600 text-white font-semibold"
+                    >
+                      {editingQIndex !== null ? "Lưu thay đổi câu hỏi" : "Thêm vào danh sách"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Questions List preview */}
+              {form.questions.length === 0 ? (
+                <div className="p-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                  Chưa có câu hỏi nào trong bộ đề này. Bấm <strong className="text-teal-700">"Thêm thông minh (AI)"</strong>, <strong>"Nhập Excel"</strong> hoặc <strong>"Thêm thủ công"</strong> để nạp câu hỏi.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {form.questions.map((q, idx) => (
+                    <div key={q.id || idx} className="p-3 bg-slate-50/70 border border-slate-200/70 rounded-lg text-xs space-y-1.5 relative group">
+                      <div className="flex items-start justify-between gap-2 pr-14">
+                        <span className="font-bold text-slate-800">
+                          Câu {idx + 1}: {q.content}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px]">
+                        <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          Đáp án đúng: {q.correctOption}
+                        </span>
+                        {q.explanation && (
+                          <span className="text-slate-500 truncate">
+                            - {q.explanation}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="absolute right-2 top-2.5 flex items-center gap-1 opacity-80 group-hover:opacity-100">
+                        <button
+                          type="button"
+                          onClick={() => handleEditQuestion(idx, q)}
+                          className="p-1 text-slate-400 hover:text-teal-600"
+                          title="Sửa câu hỏi"
+                        >
+                          <Edit2 className="size-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteQuestion(idx)}
+                          className="p-1 text-slate-400 hover:text-red-600"
+                          title="Xóa câu hỏi"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Button 
+              type="submit" 
+              disabled={saving} 
+              className="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold shadow-lg shadow-teal-500/10 transition-all duration-300 py-5 h-auto rounded-xl"
+            >
+              {saving ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin size-4 border-2 border-t-transparent border-white rounded-full"></span>
+                  Đang lưu...
+                </span>
+              ) : editingItem ? (
+                "Cập nhật đề thi"
+              ) : (
+                "Lưu bộ đề thi"
+              )}
+            </Button>
+          </form>
+        </Card>
+      </div>
+
+      {/* SMART QUESTION IMPORTER MODAL */}
+      <SmartQuestionImporterModal
+        isOpen={showSmartImporter}
+        onClose={() => setShowSmartImporter(false)}
+        examTitle={form.title || "Bộ đề thi mới"}
+        onImportQuestions={handleImportParsedQuestions}
+      />
+
+    </div>
+  );
+}
+
+/* ---------- 6. EXAM RESULTS MANAGER (Trang 2: Kết quả & Người thi) ---------- */
+function ExamResultsManager({ isMock }: { isMock: boolean }) {
+  const [results, setResults] = useState<ExamResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [selectedResult, setSelectedResult] = useState<ExamResult | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setResults(LOCAL_DB.getExamResults());
+    setLoading(false);
+  }, [isMock]);
+
+  const filteredResults = results.filter((res) => {
+    const matchesSearch =
+      res.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      res.candidatePhone.includes(searchTerm) ||
+      res.candidateEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      res.examTitle.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      filterStatus === "all"
+        ? true
+        : filterStatus === "passed"
+        ? res.passed
+        : !res.passed;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalAttempts = results.length;
+  const passedAttempts = results.filter(r => r.passed).length;
+  const passRate = totalAttempts > 0 ? ((passedAttempts / totalAttempts) * 100).toFixed(1) : "0";
+  const newTodayCount = results.filter(r => r.submittedAt.includes("2026-07-23")).length;
+
+  return (
+    <div className="space-y-6">
+      
+      {/* Quick Stats Header Cards */}
+      <div className="grid sm:grid-cols-3 gap-5">
+        <Card className="p-5 border-slate-100 bg-white shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Tổng lượt thi</p>
+            <p className="text-2xl font-bold text-slate-900 tracking-tight">{totalAttempts}</p>
+          </div>
+          <div className="size-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <Users className="size-5" />
+          </div>
+        </Card>
+
+        <Card className="p-5 border-slate-100 bg-white shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Tỷ lệ Đạt (%)</p>
+            <p className="text-2xl font-bold text-emerald-600 tracking-tight">{passRate}%</p>
+          </div>
+          <div className="size-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <Award className="size-5" />
+          </div>
+        </Card>
+
+        <Card className="p-5 border-slate-100 bg-white shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Thí sinh mới hôm nay</p>
+            <p className="text-2xl font-bold text-indigo-600 tracking-tight">{newTodayCount}</p>
+          </div>
+          <div className="size-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <GraduationCap className="size-5" />
+          </div>
+        </Card>
+      </div>
+
+      {/* Filter and Search controls */}
+      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+        <div className="relative w-full flex-1">
+          <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
+          <Input
+            placeholder="Tìm theo Tên thí sinh, SĐT, Email hoặc Tên bộ đề..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-slate-50/50 border-slate-200/80 focus-visible:ring-blue-500/30"
+          />
+        </div>
+        <div className="w-full sm:w-auto">
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="text-xs font-medium bg-white border border-slate-200 rounded-lg p-2.5 w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="all">Tất cả Kết quả</option>
+            <option value="passed">ĐẠT (Pass)</option>
+            <option value="failed">KHÔNG ĐẠT (Fail)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Full Results Table */}
+      <Card className="border-slate-100 overflow-hidden shadow-sm bg-white">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+          <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+            <Users className="size-4 text-blue-600" />
+            Danh sách kết quả thi ({filteredResults.length})
+          </h3>
+          <Badge className="bg-slate-100 text-slate-600 border-none font-semibold text-xs">
+            Cập nhật thời gian thực
+          </Badge>
+        </div>
+
+        {loading ? (
+          <div className="p-8 text-center text-slate-400 space-y-2">
+            <div className="animate-spin size-8 border-t-2 border-b-2 border-blue-600 rounded-full mx-auto"></div>
+            <p className="text-xs font-medium">Đang nạp dữ liệu thi...</p>
+          </div>
+        ) : filteredResults.length === 0 ? (
+          <div className="p-16 text-center text-slate-400">
+            <Users className="size-12 mx-auto text-slate-300 stroke-[1.5] mb-2" />
+            <p className="font-semibold text-slate-800 text-sm">Không tìm thấy lượt thi nào</p>
+            <p className="text-xs text-slate-400 mt-0.5">Thử tìm kiếm với từ khóa khác</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[11px] font-bold border-b border-slate-100">
+                <tr>
+                  <th className="py-3.5 px-6">Thí sinh</th>
+                  <th className="py-3.5 px-4">Bộ đề đã thi</th>
+                  <th className="py-3.5 px-4">Điểm số & Thời gian</th>
+                  <th className="py-3.5 px-4 text-center">Trạng thái</th>
+                  <th className="py-3.5 px-4">Ngày thi</th>
+                  <th className="py-3.5 px-6 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {filteredResults.map((res) => (
+                  <tr key={res.id} className="hover:bg-slate-50/50 transition-colors">
+                    
+                    {/* Col 1: Candidate Info */}
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={res.candidateAvatar}
+                          alt={res.candidateName}
+                          className="size-9 rounded-full object-cover border border-slate-200"
+                        />
+                        <div>
+                          <div className="font-bold text-slate-900 text-sm">{res.candidateName}</div>
+                          <div className="text-[11px] text-slate-400">{res.candidatePhone} • {res.candidateEmail}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Col 2: Exam set */}
+                    <td className="py-4 px-4">
+                      <div className="space-y-0.5 max-w-xs">
+                        <Badge variant="outline" className="text-[10px] font-bold py-0 h-4 px-1.5 border-blue-200 bg-blue-50 text-blue-700">
+                          {res.certificateType}
+                        </Badge>
+                        <div className="font-semibold text-slate-800 text-xs line-clamp-1">{res.examTitle}</div>
+                      </div>
+                    </td>
+
+                    {/* Col 3: Score & Time */}
+                    <td className="py-4 px-4">
+                      <div className="space-y-0.5">
+                        <div className="font-bold text-slate-900">{res.scoreText} ({res.scorePercent}%)</div>
+                        <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                          <Clock className="size-3 text-slate-400" /> Làm trong {res.timeSpentMinutes} phút
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Col 4: Result Badge */}
+                    <td className="py-4 px-4 text-center">
+                      {res.passed ? (
+                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 font-bold border border-emerald-200 text-xs py-1 px-3 rounded-full inline-flex items-center gap-1">
+                          <CheckCircle className="size-3.5 text-emerald-600" />
+                          ĐẠT
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-100 text-red-800 hover:bg-red-100 font-bold border border-red-200 text-xs py-1 px-3 rounded-full inline-flex items-center gap-1">
+                          <XCircle className="size-3.5 text-red-600" />
+                          KHÔNG ĐẠT
+                        </Badge>
+                      )}
+                    </td>
+
+                    {/* Col 5: Date */}
+                    <td className="py-4 px-4 whitespace-nowrap text-slate-500">
+                      {res.submittedAt}
+                    </td>
+
+                    {/* Col 6: Actions */}
+                    <td className="py-4 px-6 text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedResult(res)}
+                        className="text-xs border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 font-semibold"
+                      >
+                        <Eye className="size-3.5 mr-1.5" />
+                        Xem chi tiết bài làm
+                      </Button>
+                    </td>
+
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {/* ---------- MODAL REVIEW CANDIDATE SUBMISSION DETAILS ---------- */}
+      {selectedResult && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+          <Card className="max-w-3xl w-full bg-white border-slate-200 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col my-auto">
+            
+            {/* Modal Header */}
+            <div className="p-6 bg-slate-900 text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedResult.candidateAvatar}
+                  alt={selectedResult.candidateName}
+                  className="size-11 rounded-full object-cover border-2 border-blue-400"
+                />
+                <div>
+                  <h3 className="font-bold text-lg text-white flex items-center gap-2">
+                    Chi tiết bài làm: {selectedResult.candidateName}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {selectedResult.candidatePhone} • {selectedResult.candidateEmail}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedResult(null)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* Exam Summary Banner inside Modal */}
+            <div className="p-4 bg-slate-50 border-b border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-medium shrink-0">
+              <div>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Bài thi</span>
+                <span className="font-bold text-slate-800 line-clamp-1">{selectedResult.examTitle}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Điểm kết quả</span>
+                <span className="font-bold text-slate-900">{selectedResult.scoreText} ({selectedResult.scorePercent}%)</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Thời gian nộp</span>
+                <span className="font-bold text-slate-800">{selectedResult.submittedAt}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Kết quả chung cuộc</span>
+                {selectedResult.passed ? (
+                  <span className="font-extrabold text-emerald-600">ĐẠT ĐẦU RÀO</span>
+                ) : (
+                  <span className="font-extrabold text-red-600">KHÔNG ĐẠT</span>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Body: Answer items list */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-white">
+              <h4 className="font-bold text-slate-900 text-sm uppercase tracking-wider text-slate-500 border-b pb-2">
+                Chi tiết từng câu hỏi ({selectedResult.answers.length} câu)
+              </h4>
+
+              <div className="space-y-5">
+                {selectedResult.answers.map((ans, qIdx) => (
+                  <div key={ans.questionId || qIdx} className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/30 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <h5 className="font-bold text-slate-900 text-sm">
+                        Câu {qIdx + 1}: {ans.questionContent}
+                      </h5>
+                      {ans.isCorrect ? (
+                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 font-bold border-none text-[11px] shrink-0">
+                          <Check className="size-3 mr-1 text-emerald-600" /> ĐÚNG
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-100 text-red-800 hover:bg-red-100 font-bold border-none text-[11px] shrink-0">
+                          <X className="size-3 mr-1 text-red-600" /> SAI
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Options list */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+                      {ans.options.map((opt) => {
+                        const isChosen = opt.key === ans.selectedOption;
+                        const isCorrectKey = opt.key === ans.correctOption;
+
+                        let style = "bg-white border-slate-200 text-slate-700";
+                        if (isCorrectKey) {
+                          style = "bg-emerald-50 border-emerald-300 text-emerald-900 font-bold";
+                        } else if (isChosen && !isCorrectKey) {
+                          style = "bg-red-50 border-red-300 text-red-900 font-bold";
+                        }
+
+                        return (
+                          <div
+                            key={opt.key}
+                            className={`p-2.5 rounded-lg border flex items-center justify-between ${style}`}
+                          >
+                            <span>
+                              <strong>{opt.key}.</strong> {opt.text}
+                            </span>
+                            {isChosen && (
+                              <Badge variant="outline" className="text-[9px] py-0 h-4 bg-white/80">
+                                Lựa chọn của thí sinh
+                              </Badge>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Explanation */}
+                    {ans.explanation && (
+                      <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-lg text-xs text-blue-900 space-y-0.5">
+                        <strong className="block text-blue-700">Giải thích đáp án:</strong>
+                        <p>{ans.explanation}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+              <Button
+                onClick={() => setSelectedResult(null)}
+                className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-6"
+              >
+                Đóng cửa sổ
+              </Button>
+            </div>
+
+          </Card>
+        </div>
+      )}
 
     </div>
   );
