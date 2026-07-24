@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MapPin,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,7 @@ type Broker = {
   district: string;
   rating: number;
   reviews: number;
+  verified?: boolean;
 };
 
 const brokers: Broker[] = [
@@ -65,6 +67,7 @@ const brokers: Broker[] = [
     district: "Hải Châu",
     rating: 4.9,
     reviews: 128,
+    verified: true,
   },
   {
     img: b2,
@@ -74,6 +77,7 @@ const brokers: Broker[] = [
     district: "Sơn Trà",
     rating: 5.0,
     reviews: 245,
+    verified: true,
   },
   {
     img: b3,
@@ -83,6 +87,7 @@ const brokers: Broker[] = [
     district: "Ngũ Hành Sơn",
     rating: 4.7,
     reviews: 89,
+    verified: true,
   },
   {
     img: b4,
@@ -92,6 +97,7 @@ const brokers: Broker[] = [
     district: "Toàn thành phố",
     rating: 5.0,
     reviews: 512,
+    verified: false, // Demo Chưa xác thực
   },
 ];
 
@@ -164,6 +170,7 @@ function BrokersHero() {
 }
 
 function BrokerCard({ b }: { b: Broker }) {
+  const isVerified = b.verified ?? true;
   return (
     <article className="group bg-card rounded-xl overflow-hidden border border-border/60 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300">
       <div className="relative aspect-[4/5] overflow-hidden bg-muted">
@@ -175,9 +182,15 @@ function BrokerCard({ b }: { b: Broker }) {
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
-          <BadgeCheck className="h-3.5 w-3.5" /> Đã xác minh
-        </span>
+        {isVerified ? (
+          <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
+            <BadgeCheck className="h-3.5 w-3.5" /> Đã xác minh
+          </span>
+        ) : (
+          <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-red-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
+            <AlertCircle className="h-3.5 w-3.5" /> Chưa xác thực
+          </span>
+        )}
       </div>
       <div className="p-5">
         <h3 className="font-semibold text-lg">{b.name}</h3>

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { BadgeCheck, Star, Phone, Mail, Search, MapPin, Heart } from "lucide-react";
+import { BadgeCheck, Star, Phone, Mail, Search, MapPin, Heart, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/site/Header";
 
@@ -36,6 +36,7 @@ type BrokerDetail = {
   reviews: number;
   phone: string;
   specialties: string[];
+  verified?: boolean;
 };
 
 const brokerMap: Record<string, BrokerDetail> = {
@@ -46,6 +47,7 @@ const brokerMap: Record<string, BrokerDetail> = {
     reviews: 120,
     phone: "0905 xxx xxx",
     specialties: ["Đất nền Nam Hòa Xuân", "Căn hộ Sơn Trà"],
+    verified: true,
   },
   "tran-thi-minh": {
     name: "Trần Thị Minh",
@@ -54,6 +56,7 @@ const brokerMap: Record<string, BrokerDetail> = {
     reviews: 245,
     phone: "0905 xxx xxx",
     specialties: ["Biệt thự biển", "Sơn Trà"],
+    verified: true,
   },
   "le-hoang-long": {
     name: "Lê Hoàng Long",
@@ -62,6 +65,7 @@ const brokerMap: Record<string, BrokerDetail> = {
     reviews: 89,
     phone: "0905 xxx xxx",
     specialties: ["Đất nền dự án", "Ngũ Hành Sơn"],
+    verified: true,
   },
   "pham-ngoc-lan": {
     name: "Phạm Ngọc Lan",
@@ -70,6 +74,7 @@ const brokerMap: Record<string, BrokerDetail> = {
     reviews: 512,
     phone: "0905 xxx xxx",
     specialties: ["Đầu tư quy mô lớn", "Toàn thành phố"],
+    verified: false, // Demo màu đỏ Chưa xác thực
   },
   "le-thi-mai-anh": {
     name: "Lê Thị Mai Anh",
@@ -78,6 +83,7 @@ const brokerMap: Record<string, BrokerDetail> = {
     reviews: 156,
     phone: "0905 xxx xxx",
     specialties: ["Đất nền Hòa Xuân", "Căn hộ trung tâm"],
+    verified: true,
   },
   "tran-hoang-long": {
     name: "Trần Hoàng Long",
@@ -86,6 +92,7 @@ const brokerMap: Record<string, BrokerDetail> = {
     reviews: 210,
     phone: "0905 xxx xxx",
     specialties: ["Nhà phố trung tâm", "Hải Châu"],
+    verified: true,
   },
 };
 
@@ -134,6 +141,8 @@ const listings = [
 
 function BrokerHero({ b }: { b: BrokerDetail }) {
   const [showPhone, setShowPhone] = useState(false);
+  const isVerified = b.verified ?? true;
+
   return (
     <section className="relative">
       <div className="relative h-64 md:h-80 overflow-hidden">
@@ -151,9 +160,15 @@ function BrokerHero({ b }: { b: BrokerDetail }) {
               <div className="h-32 w-32 md:h-40 md:w-40 rounded-full overflow-hidden ring-4 ring-card shadow-md">
                 <img src={b.img} alt={b.name} className="h-full w-full object-cover" />
               </div>
-              <span className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-teal text-white grid place-items-center ring-2 ring-card">
-                <BadgeCheck className="h-4 w-4" />
-              </span>
+              {isVerified ? (
+                <span className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-teal text-white grid place-items-center ring-2 ring-card shadow-xs">
+                  <BadgeCheck className="h-4 w-4" />
+                </span>
+              ) : (
+                <span className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-red-600 text-white grid place-items-center ring-2 ring-card shadow-xs" title="Chưa xác thực">
+                  <AlertCircle className="h-4 w-4" />
+                </span>
+              )}
             </div>
 
             <div className="flex-1 min-w-0">
@@ -161,9 +176,15 @@ function BrokerHero({ b }: { b: BrokerDetail }) {
                 <h1 className="text-3xl md:text-4xl font-bold text-primary tracking-tight">
                   {b.name}
                 </h1>
-                <span className="inline-flex items-center gap-1 bg-teal/15 text-teal text-xs font-semibold px-3 py-1 rounded-full">
-                  <BadgeCheck className="h-3.5 w-3.5" /> Môi giới Xác thực
-                </span>
+                {isVerified ? (
+                  <span className="inline-flex items-center gap-1 bg-teal/15 text-teal text-xs font-semibold px-3 py-1 rounded-full border border-teal/20">
+                    <BadgeCheck className="h-3.5 w-3.5" /> Môi giới Xác thực
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 text-xs font-semibold px-3 py-1 rounded-full">
+                    <AlertCircle className="h-3.5 w-3.5" /> Chưa xác thực
+                  </span>
+                )}
               </div>
               <div className="mt-2 flex items-center gap-2 text-sm">
                 <Star className="h-4 w-4 fill-orange text-orange" />
