@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Header from "@/components/site/Header";
+import Footer from "@/components/site/Footer";
 
 import b1 from "@/assets/broker-1.jpg";
 import b2 from "@/assets/broker-2.jpg";
@@ -305,49 +306,7 @@ function Pagination() {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="border-t border-border/60 bg-surface-container/30">
-      <div className="container-page py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
-        <div>
-          <div className="text-primary font-bold text-base">Da Nang Estates</div>
-          <p className="mt-3 text-muted-foreground leading-relaxed">
-            Giải pháp Bất động sản chuyên nghiệp tại thành phố đáng sống nhất Việt Nam.
-          </p>
-        </div>
-        <div>
-          <div className="font-semibold text-primary">Bất động sản</div>
-          <ul className="mt-3 space-y-2 text-muted-foreground">
-            <li>Biệt thự ven biển</li>
-            <li>Căn hộ trung tâm</li>
-            <li>Mặt bằng thương mại</li>
-            <li>Dự án đất nền</li>
-          </ul>
-        </div>
-        <div>
-          <div className="font-semibold text-primary">Công ty</div>
-          <ul className="mt-3 space-y-2 text-muted-foreground">
-            <li>Giới thiệu</li>
-            <li>Liên hệ</li>
-            <li>Điều khoản dịch vụ</li>
-            <li>Chính sách bảo mật</li>
-          </ul>
-        </div>
-        <div>
-          <div className="font-semibold text-primary">Hỗ trợ</div>
-          <ul className="mt-3 space-y-2 text-muted-foreground">
-            <li>Trung tâm trợ giúp</li>
-            <li>Tin thị trường</li>
-            <li>Hỗ trợ Môi giới</li>
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-border/60 py-5 text-center text-xs text-muted-foreground">
-        © 2026 Da Nang Estates. Professional Real Estate Solutions.
-      </div>
-    </footer>
-  );
-}
+
 
 function BrokersPage() {
   return (

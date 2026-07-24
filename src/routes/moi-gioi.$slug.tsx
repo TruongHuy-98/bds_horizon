@@ -3,6 +3,7 @@ import { useState } from "react";
 import { BadgeCheck, Star, Phone, Mail, Search, MapPin, Heart, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/site/Header";
+import Footer from "@/components/site/Footer";
 
 import heroBg from "@/assets/hero-danang.jpg";
 import b1 from "@/assets/broker-1.jpg";
@@ -313,44 +314,7 @@ function Listings() {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="border-t border-border/60 bg-surface-container/30 mt-8">
-      <div className="container-page py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
-        <div>
-          <div className="text-primary font-bold text-base">DaNang Realty</div>
-          <p className="mt-3 text-muted-foreground leading-relaxed">
-            Chuyên trang cung cấp thông tin bất động sản minh bạch và uy tín nhất tại Đà Nẵng.
-          </p>
-        </div>
-        <div>
-          <div className="font-semibold text-primary">Dịch vụ</div>
-          <ul className="mt-3 space-y-2 text-muted-foreground">
-            <li>Mua bán nhà đất</li>
-            <li>Cho thuê căn hộ</li>
-            <li>Dự án mới</li>
-            <li>Tư vấn quy hoạch</li>
-          </ul>
-        </div>
-        <div>
-          <div className="font-semibold text-primary">Công ty</div>
-          <ul className="mt-3 space-y-2 text-muted-foreground">
-            <li>Về chúng tôi</li>
-            <li>Điều khoản</li>
-            <li>Chính sách bảo mật</li>
-            <li>Liên hệ</li>
-          </ul>
-        </div>
-        <div>
-          <div className="font-semibold text-primary">Kết nối</div>
-          <p className="mt-3 text-muted-foreground text-xs">
-            © 2026 DaNang Realty. Chuyên trang bất động sản Đà Nẵng.
-          </p>
-        </div>
-      </div>
-    </footer>
-  );
-}
+
 
 function BrokerDetailPage() {
   const { slug } = Route.useParams();

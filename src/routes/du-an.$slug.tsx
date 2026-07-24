@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/site/Header";
+import Footer from "@/components/site/Footer";
 
 import hero from "@/assets/detail-hero.jpg";
 import int1 from "@/assets/detail-interior-1.jpg";
@@ -712,51 +713,7 @@ function ProjectDetailPage() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/60 bg-muted/30 py-16">
-        <div className="container-page grid grid-cols-1 md:grid-cols-4 gap-10 text-sm">
-          <div className="md:col-span-2 space-y-4">
-            <div className="font-extrabold text-primary flex items-center gap-2 text-base">
-              <Building2 className="h-5 w-5 text-teal" /> Da Nang Coastal Estates
-            </div>
-            <p className="text-muted-foreground text-xs leading-relaxed max-w-sm">
-              Sàn giao dịch BĐS đáng tin cậy hàng đầu tại Đà Nẵng. Chúng tôi mang đến những giải
-              pháp đầu tư minh bạch, chính sách bán hàng tối ưu và uy tín hàng đầu.
-            </p>
-          </div>
-          <div className="space-y-4">
-            <div className="font-bold text-foreground">Khám phá</div>
-            <ul className="space-y-2 text-muted-foreground text-xs font-medium">
-              <li>
-                <Link to="/du-an" className="hover:text-primary transition-colors">Dự án mới</Link>
-              </li>
-              <li>
-                <Link to="/du-an" className="hover:text-primary transition-colors">Căn hộ ven sông</Link>
-              </li>
-              <li>
-                <Link to="/du-an" className="hover:text-primary transition-colors">Biệt thự biển</Link>
-              </li>
-            </ul>
-          </div>
-          <div className="space-y-4">
-            <div className="font-bold text-foreground">Liên hệ</div>
-            <ul className="space-y-2 text-muted-foreground text-xs font-medium leading-relaxed">
-              <li>Hotline: 1900 6868</li>
-              <li>Email: info@danangrealty.com</li>
-              <li>Địa chỉ: 22 Bạch Đằng, Hải Châu, Đà Nẵng</li>
-            </ul>
-          </div>
-        </div>
-        <div className="container-page mt-12 pt-8 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground/80 font-medium">
-          <div>
-            © 2026 Da Nang Coastal Estates. All rights reserved.
-          </div>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

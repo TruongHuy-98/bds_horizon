@@ -22,6 +22,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import Header from "@/components/site/Header";
+import Footer from "@/components/site/Footer";
 import { supabase } from "@/integrations/supabase/client";
 
 import agentAvatar from "@/assets/agent-1.jpg";
@@ -559,6 +560,7 @@ function NewsDetailPage() {
           </aside>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Header from "@/components/site/Header";
+import Footer from "@/components/site/Footer";
 import { toast } from "sonner";
 
 import news1 from "@/assets/news-1.jpg";
@@ -55,77 +56,7 @@ export const Route = createFileRoute("/on-thi")({
   }),
 });
 
-function Footer() {
-  return (
-    <footer className="mt-20 border-t border-border bg-[#F8FAFC] py-14">
-      <div className="container-page grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="space-y-4">
-          <div className="text-lg font-bold text-[#0F172A] tracking-tight">Da Nang Estates</div>
-          <p className="text-sm text-slate-500 leading-relaxed">
-            Professional Real Estate Solutions in Da Nang and Central Vietnam.
-          </p>
-        </div>
-        <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">HỌC TẬP</h4>
-          <ul className="space-y-2.5 text-sm text-slate-500 font-medium">
-            <li>
-              <a href="#" className="hover:text-primary transition-colors">
-                Khóa học Môi giới
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-primary transition-colors">
-                Tài liệu Pháp luật
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-primary transition-colors">
-                Đề thi mẫu
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">HỖ TRỢ</h4>
-          <ul className="space-y-2.5 text-sm text-slate-500 font-medium">
-            <li>
-              <a href="#" className="hover:text-primary transition-colors">
-                Contact
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-primary transition-colors">
-                Terms of Service
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-primary transition-colors">
-                Privacy Policy
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">COPYRIGHT</h4>
-          <p className="text-sm text-slate-500 mb-4">
-            © 2024 Da Nang Estates. Professional Real Estate Solutions.
-          </p>
-          <div className="flex gap-4">
-            <a href="#" className="text-slate-400 hover:text-primary transition-colors">
-              <ExternalLink className="h-5 w-5" />
-            </a>
-            <a href="#" className="text-slate-400 hover:text-primary transition-colors">
-              <Share2 className="h-5 w-5" />
-            </a>
-            <a href="#" className="text-slate-400 hover:text-primary transition-colors">
-              <Mail className="h-5 w-5" />
-            </a>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-}
+
 
 interface UserExamResult {
   id: string;

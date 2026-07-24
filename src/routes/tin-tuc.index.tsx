@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Header from "@/components/site/Header";
+import Footer from "@/components/site/Footer";
 import { supabase } from "@/integrations/supabase/client";
 
 import heroImg from "@/assets/news-hero.jpg";
@@ -316,55 +317,7 @@ function PlanningCTA() {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="mt-16 border-t border-border bg-surface-container">
-      <div className="container-page grid grid-cols-2 gap-8 py-12 md:grid-cols-4">
-        <div>
-          <div className="text-sm font-bold text-primary">DaNang Estates</div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Nền tảng bất động sản hàng đầu khu vực miền Trung, kết nối nhà đầu tư với những cơ hội
-            tiềm năng nhất.
-          </p>
-        </div>
-        <div>
-          <h4 className="mb-3 text-sm font-semibold">Dịch vụ</h4>
-          <ul className="space-y-2 text-xs text-muted-foreground">
-            <li>Mua bán nhà đất</li>
-            <li>Thuê &amp; Cho thuê</li>
-            <li>Tư vấn đầu tư</li>
-            <li>Thẩm định giá</li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="mb-3 text-sm font-semibold">Hỗ trợ</h4>
-          <ul className="space-y-2 text-xs text-muted-foreground">
-            <li>Về chúng tôi</li>
-            <li>Điều khoản sử dụng</li>
-            <li>Chính sách bảo mật</li>
-            <li>Liên hệ quảng cáo</li>
-            <li>Sitemap</li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="mb-3 text-sm font-semibold">Đăng ký bản tin</h4>
-          <p className="mb-3 text-xs text-muted-foreground">
-            Nhận báo cáo thị trường Đà Nẵng hàng tuần qua email.
-          </p>
-          <form className="flex gap-2">
-            <Input placeholder="Email của bạn" className="h-9 text-sm" />
-            <Button className="h-9 rounded-md bg-primary text-primary-foreground hover:bg-primary/90">
-              Gửi
-            </Button>
-          </form>
-        </div>
-      </div>
-      <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">
-        © 2024 DaNang Estates. Toàn bộ thông tin được bảo mật và kiểm chứng.
-      </div>
-    </footer>
-  );
-}
+
 
 function NewsPage() {
   const [active, setActive] = useState<Category>("Tất cả");

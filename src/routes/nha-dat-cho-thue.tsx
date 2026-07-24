@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import Header from "@/components/site/Header";
+import Footer from "@/components/site/Footer";
 import { ListingFilterBar, FilterState } from "@/components/listings/ListingFilterBar";
 import { PropertyListingCard } from "@/components/listings/PropertyListingCard";
 import { ListingSidebar } from "@/components/listings/ListingSidebar";
@@ -253,6 +254,8 @@ function NhaDatChoThuePage() {
           </div>
         </div>
       </main>
+
+      <Footer />
 
       {/* Property Detail Modal */}
       <Dialog open={!!selectedProperty} onOpenChange={(open) => { if (!open) setSelectedProperty(null); }}>

@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Header from "@/components/site/Header";
+import Footer from "@/components/site/Footer";
 import {
   Dialog,
   DialogContent,
@@ -717,86 +718,7 @@ function TopAgents() {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="border-t border-border bg-card">
-      <div className="container-page py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
-        <div className="md:col-span-2">
-          <Logo />
-          <p className="mt-4 text-sm text-muted-foreground max-w-md leading-relaxed">
-            Nền tảng kết nối giao dịch bất động sản chuyên nghiệp nhất tại Đà Nẵng. Chúng tôi cam
-            kết mang lại giá trị thực và thông tin minh bạch nhất cho cộng đồng.
-          </p>
-          <div className="mt-5 flex flex-col gap-2 text-sm text-muted-foreground">
-            <span className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-primary" />
-              <span>0236 888 9999</span>
-            </span>
-            <span className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-primary" />
-              <span>hello@danang-realestate.vn</span>
-            </span>
-          </div>
-        </div>
-        <div>
-          <h4 className="font-semibold text-sm">Dịch vụ</h4>
-          <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
-            <li>
-              <a href="#" className="hover:text-primary">
-                Mua bán
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-primary">
-                Cho thuê
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-primary">
-                Check Quy Hoạch
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-primary">
-                Hướng dẫn đăng tin
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="font-semibold text-sm">Công ty</h4>
-          <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
-            <li>
-              <a href="#" className="hover:text-primary">
-                Giới thiệu
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-primary">
-                Liên hệ
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-primary">
-                Điều khoản sử dụng
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-primary">
-                Chính sách bảo mật
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-border">
-        <div className="container-page py-5 text-xs text-muted-foreground">
-          © 2026 Da Nang Real Estate. All rights reserved. Coastal living, professional service.
-        </div>
-      </div>
-    </footer>
-  );
-}
+
 
 function HomePage() {
   return (
