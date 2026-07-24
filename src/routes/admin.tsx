@@ -57,6 +57,7 @@ import { INITIAL_MOCK_EXAMS, ExamSet, ExamQuestion } from "@/data/mockExamsData"
 import { INITIAL_MOCK_EXAM_RESULTS, ExamResult } from "@/data/mockExamResultsData";
 import { SmartQuestionImporterModal } from "@/components/admin/SmartQuestionImporterModal";
 import type { ParsedQuestion } from "@/lib/questionParser";
+import NewsEditorModal, { NewsFormData } from "@/components/admin/NewsEditorModal";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -76,9 +77,9 @@ const slugify = (s: string) =>
   Math.random().toString(36).slice(2, 6);
 
 type SectionKey = "overview" | "properties" | "projects" | "news" | "exams" | "exam-results";
-type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
-type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
-type NewsPostRow = Database["public"]["Tables"]["news_posts"]["Row"];
+export type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
+export type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
+export type NewsPostRow = Database["public"]["Tables"]["news_posts"]["Row"];
 
 /* ---------- Local DB Mock Helper for Offline Mode ---------- */
 const LOCAL_DB = {
@@ -1880,26 +1881,17 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
   );
 }
 
-/* ---------- 4. NEWS MANAGER ---------- */
+/* ---------- 4. NEWS MANAGER (WordPress Style Rich Editor & SEO Preview) ---------- */
 function NewsManager({ isMock }: { isMock: boolean }) {
   const { user, isAdmin } = useAuth();
   const [items, setItems] = useState<NewsPostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
+  
+  // Editor Modal states
+  const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<NewsPostRow | null>(null);
-
-  const [form, setForm] = useState({
-    title: "",
-    excerpt: "",
-    content: "",
-    author: "",
-    category: "",
-    cover_image: "",
-    images: [] as string[],
-    published: true,
-  });
-  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -1932,87 +1924,75 @@ function NewsManager({ isMock }: { isMock: boolean }) {
     load();
   }, [isMock]);
 
-  const handleStartEdit = (it: NewsPostRow) => {
-    setEditingItem(it);
-    setForm({
-      title: it.title,
-      excerpt: it.excerpt || "",
-      content: it.content || "",
-      author: it.author || "",
-      category: it.category || "",
-      cover_image: it.cover_image || "",
-      images: Array.isArray(it.images) ? (it.images as string[]) : it.cover_image ? [it.cover_image] : [],
-      published: it.published ?? true,
-    });
-  };
-
-  const handleCancelEdit = () => {
+  const handleOpenCreateModal = () => {
     setEditingItem(null);
-    setForm({
-      title: "",
-      excerpt: "",
-      content: "",
-      author: "",
-      category: "",
-      cover_image: "",
-      images: [] as string[],
-      published: true,
-    });
+    setModalOpen(true);
   };
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
+  const handleOpenEditModal = (it: NewsPostRow) => {
+    setEditingItem(it);
+    setModalOpen(true);
+  };
+
+  const handleSaveModal = async (formData: NewsFormData) => {
+    const isPublic = formData.publishStatus === "public";
+    const isScheduled = formData.publishStatus === "scheduled";
+    
+    let publishedAt: string | null = null;
+    if (isPublic) {
+      publishedAt = editingItem?.published_at || new Date().toISOString();
+    } else if (isScheduled) {
+      publishedAt = new Date(formData.scheduledAt).toISOString();
+    }
 
     const payload = {
-      title: form.title,
-      slug: editingItem ? editingItem.slug : slugify(form.title),
-      excerpt: form.excerpt || null,
-      content: form.content || null,
-      author: form.author || null,
-      category: form.category || null,
-      cover_image: form.cover_image || null,
-      images: form.images as Json,
-      published: form.published,
-      published_at: form.published ? (editingItem?.published_at || new Date().toISOString()) : null,
+      title: formData.title,
+      slug: formData.slug || slugify(formData.title),
+      excerpt: formData.excerpt || null,
+      content: formData.content || null,
+      author: formData.author || null,
+      category: formData.category || null,
+      cover_image: formData.cover_image || null,
+      images: formData.images as Json,
+      published: isPublic,
+      published_at: publishedAt,
       created_by: editingItem ? editingItem.created_by : (user?.id || null),
+      // Extended Metadata
+      tags: formData.tags,
+      focus_keyword: formData.focusKeyword,
+      seo_title: formData.seoTitle,
+      seo_description: formData.seoDescription,
     };
 
     if (isMock) {
       try {
         if (editingItem) {
           LOCAL_DB.saveNews({ ...payload, id: editingItem.id });
-          toast.success("Đã cập nhật bài viết thành công (Mock DB)");
+          toast.success("Đã cập nhật bài viết thành công (Trình soạn thảo WP / Mock DB)");
         } else {
           LOCAL_DB.saveNews(payload);
-          toast.success("Đã đăng bài viết mới thành công (Mock DB)");
+          toast.success("Đã phát hành bài viết mới thành công (Trình soạn thảo WP / Mock DB)");
         }
-        handleCancelEdit();
         load();
       } catch (err: any) {
         console.error("Local save error:", err);
-        toast.error(`Không thể lưu (Mock DB): Dung lượng LocalStorage có thể đã đầy! Chi tiết: ${err.message}`);
-      } finally {
-        setSaving(false);
+        toast.error(`Không thể lưu bài viết: Dung lượng LocalStorage có thể đã đầy! ${err.message}`);
       }
     } else {
       try {
         let error;
         if (editingItem) {
-          const res = await supabase.from("news_posts").update(payload).eq("id", editingItem.id);
+          const res = await supabase.from("news_posts").update(payload as any).eq("id", editingItem.id);
           error = res.error;
         } else {
-          const res = await supabase.from("news_posts").insert(payload);
+          const res = await supabase.from("news_posts").insert(payload as any);
           error = res.error;
         }
         if (error) throw error;
-        toast.success(editingItem ? "Đã lưu bài viết" : "Đã đăng bài tin tức thành công");
-        handleCancelEdit();
+        toast.success(editingItem ? "Đã lưu cập nhật bài viết" : "Đã đăng bài tin tức thành công!");
         load();
       } catch (err: any) {
         toast.error(`Lỗi: ${err.message}`);
-      } finally {
-        setSaving(false);
       }
     }
   };
@@ -2023,14 +2003,12 @@ function NewsManager({ isMock }: { isMock: boolean }) {
     if (isMock) {
       LOCAL_DB.deleteNews(id);
       toast.success("Đã xóa bài viết (Mock DB)");
-      if (editingItem && editingItem.id === id) handleCancelEdit();
       load();
     } else {
       try {
         const { error } = await supabase.from("news_posts").delete().eq("id", id);
         if (error) throw error;
         toast.success("Đã xóa bài viết thành công");
-        if (editingItem && editingItem.id === id) handleCancelEdit();
         load();
       } catch (err: any) {
         toast.error(`Lỗi: ${err.message}`);
@@ -2041,7 +2019,7 @@ function NewsManager({ isMock }: { isMock: boolean }) {
   const togglePublish = async (it: NewsPostRow) => {
     if (isMock) {
       LOCAL_DB.togglePublishNews(it.id);
-      toast.success("Đã thay đổi hiển thị bài viết (Mock DB)");
+      toast.success("Đã thay đổi trạng thái hiển thị bài viết");
       load();
     } else {
       try {
@@ -2071,15 +2049,33 @@ function NewsManager({ isMock }: { isMock: boolean }) {
   const uniqueCategories = Array.from(new Set(items.map((i) => i.category).filter(Boolean)));
 
   return (
-    <div className="grid lg:grid-cols-12 gap-8 items-start">
-      
-      {/* LEFT COLUMN: LIST VIEW */}
-      <div className="lg:col-span-7 space-y-4">
+    <div className="space-y-6">
+      {/* TOP HEADER BAR */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+        <div>
+          <h2 className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
+            <Newspaper className="size-5 text-blue-600" /> Quản lý Bài viết & Sự kiện
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Soạn thảo bài viết chuẩn SEO, định dạng Rich Text WYSIWYG chuyên nghiệp như WordPress
+          </p>
+        </div>
+
+        <Button
+          onClick={handleOpenCreateModal}
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs py-5 px-5 rounded-xl shadow-lg shadow-blue-500/10 flex items-center gap-2 transition-all duration-300"
+        >
+          <Plus className="size-4" /> Viết bài mới (Trình soạn thảo WP)
+        </Button>
+      </div>
+
+      {/* FILTER & LIST SECTION */}
+      <div className="space-y-4">
         <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
           <div className="relative w-full flex-1">
             <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
             <Input
-              placeholder="Tìm kiếm bài viết..."
+              placeholder="Tìm kiếm theo tiêu đề, tóm tắt..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9 bg-slate-50/50 border-slate-200/80 focus-visible:ring-blue-500/30"
@@ -2097,7 +2093,7 @@ function NewsManager({ isMock }: { isMock: boolean }) {
           </select>
         </div>
 
-        <Card className="border-slate-100 overflow-hidden shadow-sm bg-white">
+        <Card className="border-slate-100 overflow-hidden shadow-sm bg-white rounded-2xl">
           <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
             <h3 className="font-bold text-slate-900 text-sm">Danh sách tin bài ({filteredItems.length})</h3>
             <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100 border-none font-semibold text-xs">
@@ -2106,21 +2102,21 @@ function NewsManager({ isMock }: { isMock: boolean }) {
           </div>
 
           {loading ? (
-            <div className="p-8 text-center text-slate-400 space-y-2">
+            <div className="p-12 text-center text-slate-400 space-y-2">
               <div className="animate-spin size-8 border-t-2 border-b-2 border-blue-600 rounded-full mx-auto"></div>
-              <p className="text-xs font-medium">Đang tải tin bài...</p>
+              <p className="text-xs font-medium">Đang tải danh sách bài viết...</p>
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="p-16 text-center text-slate-400 bg-slate-50/20">
               <Newspaper className="size-12 mx-auto text-slate-300 stroke-[1.5] mb-2" />
               <p className="font-semibold text-slate-800 text-sm">Không tìm thấy bài viết nào</p>
-              <p className="text-xs text-slate-400 mt-0.5">Vui lòng điều chỉnh bộ lọc hoặc thêm tin bài mới</p>
+              <p className="text-xs text-slate-400 mt-0.5">Bấm nút "Viết bài mới" phía trên để tạo bài viết đầu tiên</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 max-h-[70vh] overflow-y-auto">
+            <div className="divide-y divide-slate-100">
               {filteredItems.map((it) => (
-                <div key={it.id} className="p-4 flex gap-4 hover:bg-slate-50/40 transition-colors group">
-                  <div className="w-20 h-16 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200/40">
+                <div key={it.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-slate-50/40 transition-colors group">
+                  <div className="w-24 h-16 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200/40 relative">
                     {it.cover_image ? (
                       <img src={it.cover_image} alt={it.title} className="size-full object-cover" />
                     ) : (
@@ -2129,14 +2125,18 @@ function NewsManager({ isMock }: { isMock: boolean }) {
                       </div>
                     )}
                   </div>
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-bold text-slate-900 text-sm truncate group-hover:text-blue-600 transition-colors">
+                      <h4 
+                        onClick={() => handleOpenEditModal(it)}
+                        className="font-bold text-slate-900 text-sm truncate group-hover:text-blue-600 transition-colors cursor-pointer"
+                      >
                         {it.title}
                       </h4>
                       <Badge
                         variant={it.published ? "default" : "secondary"}
-                        className={`cursor-pointer text-[10px] font-bold py-0.5 px-2 rounded-full border-none shadow-sm ${
+                        className={`cursor-pointer text-[10px] font-bold py-0.5 px-2.5 rounded-full border-none shadow-xs shrink-0 ${
                           it.published ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                         onClick={() => togglePublish(it)}
@@ -2145,51 +2145,71 @@ function NewsManager({ isMock }: { isMock: boolean }) {
                       </Badge>
                     </div>
                     
-                    <p className="text-xs text-slate-500 line-clamp-1 mt-1">{it.excerpt}</p>
+                    <p className="text-xs text-slate-500 line-clamp-1 mt-1">{it.excerpt || "Chưa có đoạn tóm tắt..."}</p>
                     
-                    <div className="text-xs text-slate-400 font-medium flex flex-wrap gap-x-2.5 gap-y-1 mt-1.5">
-                      <span className="text-slate-600 font-bold">{it.author || "Người viết"}</span>
-                      <span className="text-slate-300">•</span>
-                      <span className="flex items-center gap-1">
-                        <Tag className="size-3 text-slate-400" />
-                        {it.category || "Chuyên mục"}
+                    <div className="text-xs text-slate-400 font-medium flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2">
+                      <span className="text-slate-700 font-bold flex items-center gap-1">
+                        <User className="size-3 text-slate-400" />
+                        {it.author || "Ban Biên Tập"}
                       </span>
                       <span className="text-slate-300">•</span>
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-purple-600 font-semibold">
+                        <Tag className="size-3" />
+                        {it.category || "Thị trường BĐS"}
+                      </span>
+                      <span className="text-slate-300">•</span>
+                      <span className="flex items-center gap-1 text-slate-500">
                         <Calendar className="size-3 text-slate-400" />
                         {new Date(it.created_at).toLocaleDateString("vi-VN")}
                       </span>
+
+                      {/* Display Tag Pills if available */}
+                      {Array.isArray((it as any).tags) && (it as any).tags.length > 0 && (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <div className="flex items-center gap-1">
+                            {(it as any).tags.slice(0, 3).map((t: string) => (
+                              <Badge key={t} variant="outline" className="text-[9px] py-0 px-1 border-slate-200 bg-slate-50">
+                                #{t}
+                              </Badge>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-1 shrink-0 ml-2">
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center pt-2 sm:pt-0">
                     <Button
                       asChild
                       variant="ghost"
                       size="icon"
                       className="size-8 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                      title="Xem bài viết trên trang chủ"
                     >
                       <Link 
                         to="/tin-tuc/$slug" 
                         params={{ slug: it.slug }} 
                         target="_blank"
                       >
-                        <Eye className="size-3.5" />
+                        <Eye className="size-4" />
                       </Link>
                     </Button>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      onClick={() => handleStartEdit(it)}
-                      className="size-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                      size="sm"
+                      onClick={() => handleOpenEditModal(it)}
+                      className="h-8 px-2.5 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg flex items-center gap-1"
                     >
-                      <Edit2 className="size-3.5" />
+                      <Edit2 className="size-3.5" /> Chỉnh sửa
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => remove(it.id)}
                       className="size-8 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                      title="Xóa bài viết"
                     >
                       <Trash2 className="size-3.5" />
                     </Button>
@@ -2201,128 +2221,14 @@ function NewsManager({ isMock }: { isMock: boolean }) {
         </Card>
       </div>
 
-      {/* RIGHT COLUMN: ACTION FORM */}
-      <div className="lg:col-span-5">
-        <Card className="p-6 border-slate-100 shadow-sm bg-white space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-              {editingItem ? (
-                <>
-                  <Edit2 className="size-4 text-blue-600" /> Cập nhật bài viết
-                </>
-              ) : (
-                <>
-                  <Plus className="size-4 text-blue-600" /> Bài viết mới
-                </>
-              )}
-            </h3>
-            {editingItem && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleCancelEdit}
-                className="h-7 text-xs hover:bg-slate-100 text-slate-500 hover:text-slate-900"
-              >
-                <ArrowLeft className="size-3 mr-1" /> Tạo mới
-              </Button>
-            )}
-          </div>
-
-          <form onSubmit={submit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Tiêu đề bài báo <span className="text-red-500">*</span></Label>
-              <Input
-                required
-                placeholder="Ví dụ: Lãi suất mua nhà giảm sốc nhất trong vòng 5 năm..."
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="border-slate-200/80 focus-visible:ring-blue-500/30"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Tóm tắt ngắn (Excerpt)</Label>
-              <Textarea
-                placeholder="Viết một đoạn tóm tắt ngắn khoảng 2-3 dòng giới thiệu nội dung để hiển thị trên danh mục..."
-                rows={2}
-                value={form.excerpt}
-                onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
-                className="border-slate-200/80 focus-visible:ring-blue-500/30 resize-none text-sm"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Nội dung chi tiết</Label>
-              <Textarea
-                placeholder="Soạn thảo nội dung bài báo chi tiết tại đây..."
-                rows={8}
-                value={form.content}
-                onChange={(e) => setForm({ ...form, content: e.target.value })}
-                className="border-slate-200/80 focus-visible:ring-blue-500/30 text-sm"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Tác giả</Label>
-                <Input
-                  placeholder="Ví dụ: Nguyễn Minh Khang..."
-                  value={form.author}
-                  onChange={(e) => setForm({ ...form, author: e.target.value })}
-                  className="border-slate-200/80 focus-visible:ring-blue-500/30"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Chuyên mục tin</Label>
-                <Input
-                  placeholder="Ví dụ: Thị trường BĐS, Quy hoạch..."
-                  value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="border-slate-200/80 focus-visible:ring-blue-500/30"
-                />
-              </div>
-            </div>
-
-            <ImageUploader
-              images={form.images}
-              featuredImage={form.cover_image}
-              onChangeImages={(urls) => setForm(prev => ({ ...prev, images: urls }))}
-              onChangeFeaturedImage={(url) => setForm(prev => ({ ...prev, cover_image: url }))}
-              isMock={isMock}
-              label="Hình ảnh bài viết"
-            />
-
-            <div className="flex items-center justify-between rounded-xl border border-slate-200/80 p-3 bg-slate-50/40">
-              <div className="space-y-0.5">
-                <div className="text-xs font-bold text-slate-800">Hiển thị công khai</div>
-                <div className="text-[10px] text-slate-400 font-medium">Bật để phát hành bài viết ngay lập tức</div>
-              </div>
-              <Switch 
-                checked={form.published} 
-                onCheckedChange={(v) => setForm({ ...form, published: v })} 
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              disabled={saving} 
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-blue-500/10 transition-all duration-300 py-5 h-auto rounded-xl"
-            >
-              {saving ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin size-4 border-2 border-t-transparent border-white rounded-full"></span>
-                  Đang xử lý...
-                </span>
-              ) : editingItem ? (
-                "Cập nhật bài viết"
-              ) : (
-                "Đăng bài báo"
-              )}
-            </Button>
-          </form>
-        </Card>
-      </div>
-
+      {/* WORDPRESS-STYLE FULL RICH EDITOR MODAL */}
+      <NewsEditorModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSaveModal}
+        editingItem={editingItem}
+        isMock={isMock}
+      />
     </div>
   );
 }
