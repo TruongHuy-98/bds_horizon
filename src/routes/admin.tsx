@@ -49,6 +49,13 @@ import {
   Check,
   FileSpreadsheet,
   Sparkles,
+  BadgeCheck,
+  Lock,
+  Unlock,
+  UserCheck,
+  Shield,
+  ShieldAlert,
+  Filter,
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import ImageUploader from "@/components/admin/ImageUploader";
@@ -58,6 +65,8 @@ import { INITIAL_MOCK_EXAM_RESULTS, ExamResult } from "@/data/mockExamResultsDat
 import { SmartQuestionImporterModal } from "@/components/admin/SmartQuestionImporterModal";
 import type { ParsedQuestion } from "@/lib/questionParser";
 import NewsEditorModal, { NewsFormData } from "@/components/admin/NewsEditorModal";
+import { LOCAL_USERS_DB, UserAccount, UserRole, BrokerPlanType, UserStatus } from "@/data/mockUsersData";
+import { UserEditModal } from "@/components/admin/UserEditModal";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -76,7 +85,7 @@ const slugify = (s: string) =>
   "-" +
   Math.random().toString(36).slice(2, 6);
 
-type SectionKey = "overview" | "properties" | "projects" | "news" | "exams" | "exam-results";
+type SectionKey = "overview" | "properties" | "projects" | "news" | "users" | "broker-plans" | "exams" | "exam-results";
 export type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
 export type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 export type NewsPostRow = Database["public"]["Tables"]["news_posts"]["Row"];
@@ -386,12 +395,17 @@ const systemNavItems: { key: SectionKey; label: string; icon: any; category: str
   { key: "news", label: "Tin tức & Sự kiện", icon: Newspaper, category: "system" },
 ];
 
+const accountNavItems: { key: SectionKey; label: string; icon: any; category: string }[] = [
+  { key: "users", label: "Danh sách Thành viên", icon: Users, category: "account" },
+  { key: "broker-plans", label: "Gói cước & Xác thực Môi giới", icon: BadgeCheck, category: "account" },
+];
+
 const examNavItems: { key: SectionKey; label: string; icon: any; category: string }[] = [
   { key: "exams", label: "Quản lý Đề thi & Câu hỏi", icon: FileText, category: "exam" },
   { key: "exam-results", label: "Kết quả & Người thi", icon: Users, category: "exam" },
 ];
 
-const navItems = [...systemNavItems, ...examNavItems];
+const navItems = [...systemNavItems, ...accountNavItems, ...examNavItems];
 
 function AdminPage() {
   const { user: realUser, role, isAdmin, isBroker, isCollaborator, isGuest, loading: authLoading } = useAuth();
@@ -496,6 +510,7 @@ function AdminPage() {
   });
 
   const filteredSystemItems = filteredNavItems.filter((item) => item.category === "system");
+  const filteredAccountItems = filteredNavItems.filter((item) => item.category === "account");
   const filteredExamItems = filteredNavItems.filter((item) => item.category === "exam");
 
   const currentNavKeys = filteredNavItems.map(item => item.key);
@@ -553,12 +568,47 @@ function AdminPage() {
         </div>
 
         {/* Sidebar Content (Navigation) */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar-dark px-3 py-3 space-y-6">
           {filteredSystemItems.length > 0 && (
             <div className="space-y-1">
               <div className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">QUẢN LÝ HỆ THỐNG</div>
               <nav className="space-y-1">
                 {filteredSystemItems.map((item) => {
+                  const isActive = activeSection === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => {
+                        setSection(item.key);
+                        setMobileOpen(false);
+                      }}
+                      className={`
+                        w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group
+                        ${isActive 
+                          ? "bg-blue-600/10 text-blue-400 border-l-4 border-blue-500 pl-2 font-semibold" 
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"}
+                      `}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon className={`size-4.5 transition-colors ${isActive ? "text-blue-400" : "text-slate-400 group-hover:text-slate-300"}`} />
+                        <span>{item.label}</span>
+                      </div>
+                      <ChevronRight className={`size-3.5 transition-transform duration-200 opacity-0 group-hover:opacity-100 ${isActive ? "opacity-100 text-blue-400 translate-x-0.5" : "text-slate-500"}`} />
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          )}
+
+          {filteredAccountItems.length > 0 && (
+            <div className="space-y-1">
+              <div className="px-3 text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-1.5 font-bold">
+                <UserCheck className="size-3.5 text-blue-400" />
+                <span>QUẢN LÝ TÀI KHOẢN</span>
+              </div>
+              <nav className="space-y-1">
+                {filteredAccountItems.map((item) => {
                   const isActive = activeSection === item.key;
                   return (
                     <button
@@ -698,6 +748,8 @@ function AdminPage() {
           {activeSection === "properties" && <PropertiesManager isMock={isMock} />}
           {activeSection === "projects" && <ProjectsManager isMock={isMock} />}
           {activeSection === "news" && <NewsManager isMock={isMock} />}
+          {activeSection === "users" && <UsersManager isMock={isMock} />}
+          {activeSection === "broker-plans" && <BrokerPlansManager isMock={isMock} />}
           {activeSection === "exams" && <ExamsManager isMock={isMock} />}
           {activeSection === "exam-results" && <ExamResultsManager isMock={isMock} />}
         </main>
@@ -3323,6 +3375,543 @@ function ExamResultsManager({ isMock }: { isMock: boolean }) {
         </div>
       )}
 
+    </div>
+  );
+}
+
+/* ---------- USERS & BROKER MANAGEMENT COMPONENT ---------- */
+function UsersManager({ isMock }: { isMock: boolean }) {
+  const [users, setUsers] = useState<UserAccount[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [verificationFilter, setVerificationFilter] = useState<string>("all");
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<UserAccount | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = () => {
+    const list = LOCAL_USERS_DB.getUsers();
+    setUsers(list);
+  };
+
+  const handleSaveUser = (updated: UserAccount) => {
+    const newList = LOCAL_USERS_DB.saveUser(updated);
+    setUsers(newList);
+  };
+
+  const handleToggleLock = (user: UserAccount) => {
+    const isCurrentlyLocked = user.status === "locked";
+    const newList = LOCAL_USERS_DB.toggleLockStatus(user.id);
+    setUsers(newList);
+    if (isCurrentlyLocked) {
+      toast.success(`Đã mở khóa tài khoản cho ${user.name}`);
+    } else {
+      toast.warning(`Đã khóa tài khoản của ${user.name}`);
+    }
+  };
+
+  const handleDeleteUser = (user: UserAccount) => {
+    if (confirm(`Bạn có chắc chắn muốn xóa tài khoản "${user.name}"?`)) {
+      const newList = LOCAL_USERS_DB.deleteUser(user.id);
+      setUsers(newList);
+      toast.success(`Đã xóa tài khoản ${user.name}`);
+    }
+  };
+
+  // 4 Top Stat Cards
+  const totalUsers = users.length;
+  const brokerCount = users.filter((u) => u.role === "broker").length;
+  const pendingBrokerCount = users.filter((u) => u.role === "broker" && !u.isVerified).length;
+  const custAndCollabCount = users.filter((u) => u.role === "user" || u.role === "collaborator").length;
+
+  // Filtered Users List
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch =
+      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.phone.includes(searchTerm);
+
+    const matchesRole = roleFilter === "all" || u.role === roleFilter;
+
+    let matchesVerification = true;
+    if (verificationFilter === "verified") {
+      matchesVerification = u.isVerified === true;
+    } else if (verificationFilter === "unverified") {
+      matchesVerification = u.isVerified === false && u.status === "active";
+    } else if (verificationFilter === "locked") {
+      matchesVerification = u.status === "locked";
+    }
+
+    return matchesSearch && matchesRole && matchesVerification;
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* HEADER TITLE */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <Users className="size-6 text-blue-600" /> Quản lý Thành viên & Phân quyền
+          </h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Quản lý tài khoản Admin, Nhà Môi Giới, Cộng tác viên, Khách hàng và cấp Huy hiệu Xác thực (Tick Xanh)
+          </p>
+        </div>
+      </div>
+
+      {/* 4 TOP STAT CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1 */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs font-semibold text-slate-500">Tổng Thành viên</span>
+            <div className="text-2xl font-extrabold text-slate-900">{totalUsers}</div>
+            <span className="text-[11px] text-emerald-600 font-medium">Đang hoạt động trên hệ thống</span>
+          </div>
+          <div className="size-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+            <Users className="size-6" />
+          </div>
+        </div>
+
+        {/* Card 2 */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs font-semibold text-slate-500">Môi giới (Broker)</span>
+            <div className="text-2xl font-extrabold text-blue-600">{brokerCount}</div>
+            <span className="text-[11px] text-blue-600 font-medium">Chuyên gia BĐS Đà Nẵng</span>
+          </div>
+          <div className="size-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+            <BadgeCheck className="size-6 text-blue-600" />
+          </div>
+        </div>
+
+        {/* Card 3 */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs font-semibold text-slate-500">Chờ xác thực Tick Xanh</span>
+            <div className="text-2xl font-extrabold text-amber-600">{pendingBrokerCount}</div>
+            <span className="text-[11px] text-amber-600 font-medium">Cần kiểm duyệt hồ sơ</span>
+          </div>
+          <div className="size-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+            <ShieldAlert className="size-6" />
+          </div>
+        </div>
+
+        {/* Card 4 */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs font-semibold text-slate-500">Khách hàng & CTV</span>
+            <div className="text-2xl font-extrabold text-teal-600">{custAndCollabCount}</div>
+            <span className="text-[11px] text-teal-600 font-medium">Khách tìm mua / Đăng bài</span>
+          </div>
+          <div className="size-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+            <UserCheck className="size-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* SEARCH & FILTERS BAR */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row items-center gap-3">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+          <Input
+            placeholder="Tìm theo Tên, Email, Số điện thoại người dùng..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-slate-50/50 border-slate-200 text-xs h-10"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+          {/* Role Filter */}
+          <div className="flex-1 md:w-48">
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Tất cả Vai trò (Role)</option>
+              <option value="admin">👑 Admin (Quản trị)</option>
+              <option value="broker">💎 Môi giới (Broker)</option>
+              <option value="collaborator">🟧 Cộng tác viên (CTV)</option>
+              <option value="user">👤 Khách hàng thông thường</option>
+            </select>
+          </div>
+
+          {/* Verification Status Filter */}
+          <div className="flex-1 md:w-52">
+            <select
+              value={verificationFilter}
+              onChange={(e) => setVerificationFilter(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Tất cả Trạng thái</option>
+              <option value="verified">✅ Đã xác minh (Tick Xanh)</option>
+              <option value="unverified">⚠️ Chưa xác minh / Chờ duyệt</option>
+              <option value="locked">🔒 Tài khoản bị khóa</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* USER TABLE */}
+      <Card className="bg-white border-slate-200 shadow-sm overflow-hidden rounded-2xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <tr>
+                <th className="py-3.5 px-4">Thông tin người dùng</th>
+                <th className="py-3.5 px-4">Phân loại / Vai trò</th>
+                <th className="py-3.5 px-4">Trạng thái Môi giới</th>
+                <th className="py-3.5 px-4">Số dư ví / Gói tin</th>
+                <th className="py-3.5 px-4">Ngày tham gia</th>
+                <th className="py-3.5 px-4 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 font-medium">
+              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-12 text-slate-400">
+                    Không tìm thấy thành viên phù hợp với bộ lọc.
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-50/60 transition-colors">
+                    {/* Col 1: User Info */}
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative shrink-0">
+                          <img
+                            src={u.avatar}
+                            alt={u.name}
+                            className="size-10 rounded-full object-cover border border-slate-200"
+                          />
+                          {u.status === "locked" && (
+                            <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-0.5 shadow-sm">
+                              <Lock className="size-3" />
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5 truncate">
+                            {u.name}
+                            {u.isVerified && (
+                              <BadgeCheck className="size-3.5 text-blue-600 fill-blue-100 shrink-0" />
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-400 truncate">{u.email}</div>
+                          <div className="text-[10px] text-slate-500 font-mono mt-0.5">{u.phone}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Col 2: Role Badge */}
+                    <td className="py-3.5 px-4">
+                      {u.role === "admin" && (
+                        <Badge className="bg-purple-100 text-purple-800 border-purple-200 font-bold hover:bg-purple-100 text-[11px] px-2.5 py-0.5">
+                          👑 Admin
+                        </Badge>
+                      )}
+                      {u.role === "broker" && (
+                        <Badge className="bg-blue-100 text-blue-800 border-blue-200 font-bold hover:bg-blue-100 text-[11px] px-2.5 py-0.5">
+                          💎 Môi giới
+                        </Badge>
+                      )}
+                      {u.role === "collaborator" && (
+                        <Badge className="bg-amber-100 text-amber-800 border-amber-200 font-bold hover:bg-amber-100 text-[11px] px-2.5 py-0.5">
+                          🟧 Cộng tác viên
+                        </Badge>
+                      )}
+                      {u.role === "user" && (
+                        <Badge className="bg-slate-100 text-slate-700 border-slate-200 font-medium hover:bg-slate-100 text-[11px] px-2.5 py-0.5">
+                          👤 Khách hàng
+                        </Badge>
+                      )}
+                    </td>
+
+                    {/* Col 3: Broker Verification */}
+                    <td className="py-3.5 px-4">
+                      {u.role === "broker" ? (
+                        u.isVerified ? (
+                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50 text-[11px] font-semibold flex items-center gap-1 w-fit">
+                            <BadgeCheck className="size-3 text-emerald-600" /> Đã xác minh
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50 text-[11px] font-semibold flex items-center gap-1 w-fit">
+                            <Clock className="size-3 text-amber-600" /> Chưa xác thực / Chờ duyệt
+                          </Badge>
+                        )
+                      ) : (
+                        <span className="text-slate-400 text-[11px]">—</span>
+                      )}
+                    </td>
+
+                    {/* Col 4: Wallet / Post Balance */}
+                    <td className="py-3.5 px-4">
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-bold text-slate-800">
+                          Còn <span className="text-blue-600 font-extrabold">{u.remainingPosts}</span> tin
+                        </div>
+                        {u.activePlan && u.activePlan !== "free" && (
+                          <div className="text-[10px] text-teal-600 font-semibold flex items-center gap-1">
+                            <Award className="size-3" /> Gói {u.activePlan.toUpperCase()} (Hạn: {u.planExpiry || "2026-12-31"})
+                          </div>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Col 5: Join Date */}
+                    <td className="py-3.5 px-4 text-[11px] text-slate-500">
+                      {new Date(u.createdAt).toLocaleDateString("vi-VN")}
+                    </td>
+
+                    {/* Col 6: Actions */}
+                    <td className="py-3.5 px-4 text-right space-x-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUserForEdit(u);
+                          setIsEditModalOpen(true);
+                        }}
+                        className="h-8 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold"
+                      >
+                        <Edit2 className="size-3.5 mr-1" /> Sửa / Phân quyền
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleLock(u)}
+                        className={`h-8 text-xs font-semibold ${
+                          u.status === "locked"
+                            ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                            : "border-red-200 text-red-600 hover:bg-red-50"
+                        }`}
+                      >
+                        {u.status === "locked" ? (
+                          <>
+                            <Unlock className="size-3.5 mr-1" /> Mở khóa
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="size-3.5 mr-1" /> Khóa
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteUser(u)}
+                        className="h-8 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* EDIT & PERMISSION MODAL */}
+      <UserEditModal
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        user={selectedUserForEdit}
+        onSave={handleSaveUser}
+      />
+    </div>
+  );
+}
+
+/* ---------- BROKER PLANS & VERIFICATION QUEUE COMPONENT ---------- */
+function BrokerPlansManager({ isMock }: { isMock: boolean }) {
+  const [users, setUsers] = useState<UserAccount[]>([]);
+
+  useEffect(() => {
+    setUsers(LOCAL_USERS_DB.getUsers());
+  }, []);
+
+  const pendingVerificationList = users.filter(
+    (u) => u.role === "broker" && !u.isVerified
+  );
+
+  const handleApproveVerification = (id: string, name: string) => {
+    const updatedUsers = LOCAL_USERS_DB.approveVerification(id);
+    setUsers(updatedUsers);
+    toast.success(`Đã phê duyệt Tick Xanh xác minh danh tính cho Môi giới ${name}!`);
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* TITLE */}
+      <div>
+        <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+          <BadgeCheck className="size-6 text-blue-600 fill-blue-100" /> Quản lý Gói cước & Xác thực Môi giới
+        </h2>
+        <p className="text-xs text-slate-500 mt-1">
+          Cấu hình gói hội viên PRO/VIP và Phê duyệt hồ sơ xác thực tick xanh cho chuyên gia Môi giới
+        </p>
+      </div>
+
+      {/* 1. BROKER MEMBER PLAN TIERS OVERVIEW */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Plan 1 */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Badge className="bg-slate-100 text-slate-700 border-slate-200">Gói Cơ Bản</Badge>
+              <span className="text-xs text-slate-400 font-semibold">Miễn phí</span>
+            </div>
+            <div>
+              <div className="text-2xl font-extrabold text-slate-900">0 VNĐ <span className="text-xs text-slate-400 font-normal">/tháng</span></div>
+              <p className="text-xs text-slate-500 mt-1">Dành cho Khách hàng & Môi giới cá nhân mới bắt đầu</p>
+            </div>
+            <ul className="space-y-2 text-xs text-slate-600 pt-2 border-t border-slate-100">
+              <li className="flex items-center gap-2">
+                <Check className="size-4 text-emerald-600 shrink-0" /> Cho phép đăng tối đa 5 tin/tháng
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="size-4 text-emerald-600 shrink-0" /> Hiển thị cơ bản trên danh sách tìm kiếm
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Plan 2: PRO */}
+        <div className="bg-gradient-to-b from-blue-900 to-slate-900 text-white p-6 rounded-2xl border border-blue-800 shadow-xl relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute -top-3 -right-3 bg-blue-500 text-white text-[10px] font-extrabold px-6 py-1 rotate-12 uppercase shadow-md">
+            Phổ biến nhất
+          </div>
+          <div className="space-y-4 relative z-10">
+            <div className="flex items-center justify-between">
+              <Badge className="bg-blue-500/20 text-blue-300 border border-blue-500/30 font-bold">Gói PRO Broker</Badge>
+            </div>
+            <div>
+              <div className="text-2xl font-extrabold text-white">500.000 VNĐ <span className="text-xs text-slate-300 font-normal">/tháng</span></div>
+              <p className="text-xs text-slate-300 mt-1">Dành cho Nhà Môi giới chuyên nghiệp tại Đà Nẵng</p>
+            </div>
+            <ul className="space-y-2 text-xs text-slate-200 pt-2 border-t border-slate-800">
+              <li className="flex items-center gap-2">
+                <Check className="size-4 text-teal-400 shrink-0" /> Đăng 20 tin đăng cao cấp/tháng
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="size-4 text-teal-400 shrink-0" /> Badge Tick Xanh Xác thực chính chủ
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="size-4 text-teal-400 shrink-0" /> Ưu tiên xuất hiện top đầu danh bạ /moi-gioi
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Plan 3: VIP */}
+        <div className="bg-white p-6 rounded-2xl border border-purple-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Badge className="bg-purple-100 text-purple-800 border-purple-200 font-bold">Gói VIP Broker</Badge>
+            </div>
+            <div>
+              <div className="text-2xl font-extrabold text-purple-900">1.200.000 VNĐ <span className="text-xs text-slate-400 font-normal">/tháng</span></div>
+              <p className="text-xs text-slate-500 mt-1">Gói cao cấp nhất dành cho Sàn giao dịch & Team BĐS</p>
+            </div>
+            <ul className="space-y-2 text-xs text-slate-600 pt-2 border-t border-slate-100">
+              <li className="flex items-center gap-2">
+                <Check className="size-4 text-purple-600 shrink-0" /> Đăng tin KHÔNG GIỚI HẠN
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="size-4 text-purple-600 shrink-0" /> Tự động đẩy tin HOT mỗi ngày
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="size-4 text-purple-600 shrink-0" /> Huy hiệu VIP độc quyền trên tất cả bài viết
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. PENDING BROKER IDENTITY VERIFICATION QUEUE */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+            <ShieldAlert className="size-5 text-amber-600" /> Hồ sơ Môi giới chờ Duyệt Tick Xanh ({pendingVerificationList.length})
+          </h3>
+        </div>
+
+        <Card className="bg-white border-slate-200 shadow-sm overflow-hidden rounded-2xl">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th className="py-3.5 px-4">Môi giới</th>
+                  <th className="py-3.5 px-4">Khu vực hoạt động</th>
+                  <th className="py-3.5 px-4">Gói cước hiện tại</th>
+                  <th className="py-3.5 px-4">Ngày yêu cầu</th>
+                  <th className="py-3.5 px-4 text-right">Thao tác duyệt</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {pendingVerificationList.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-10 text-slate-400">
+                      Hiện tại không có yêu cầu xác minh danh tính nào đang chờ duyệt.
+                    </td>
+                  </tr>
+                ) : (
+                  pendingVerificationList.map((broker) => (
+                    <tr key={broker.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={broker.avatar}
+                            alt={broker.name}
+                            className="size-10 rounded-full object-cover border border-slate-200"
+                          />
+                          <div>
+                            <div className="font-bold text-slate-900 text-xs">{broker.name}</div>
+                            <div className="text-[11px] text-slate-400">{broker.email} · {broker.phone}</div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-xs font-semibold text-slate-700">
+                        {broker.district || "Đà Nẵng"}
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <Badge className="bg-blue-50 text-blue-700 border-blue-200 uppercase font-bold text-[10px]">
+                          {broker.activePlan}
+                        </Badge>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-slate-500 text-[11px]">
+                        {broker.verificationRequestDate
+                          ? new Date(broker.verificationRequestDate).toLocaleDateString("vi-VN")
+                          : "Gần đây"}
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right">
+                        <Button
+                          onClick={() => handleApproveVerification(broker.id, broker.name)}
+                          className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs h-8 px-4 rounded-lg shadow-sm shadow-blue-500/10 flex items-center gap-1.5 ml-auto"
+                        >
+                          <BadgeCheck className="size-4" /> Duyệt Tick Xanh
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   BadgeCheck,
@@ -22,11 +22,7 @@ import {
 } from "@/components/ui/select";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
-
-import b1 from "@/assets/broker-1.jpg";
-import b2 from "@/assets/broker-2.jpg";
-import b3 from "@/assets/broker-3.jpg";
-import b4 from "@/assets/broker-4.jpg";
+import { LOCAL_USERS_DB, UserAccount } from "@/data/mockUsersData";
 
 export const Route = createFileRoute("/moi-gioi/")({
   component: BrokersPage,
@@ -48,7 +44,8 @@ export const Route = createFileRoute("/moi-gioi/")({
   }),
 });
 
-type Broker = {
+type BrokerDisplay = {
+  id: string;
   img: string;
   name: string;
   years: number;
@@ -56,51 +53,10 @@ type Broker = {
   district: string;
   rating: number;
   reviews: number;
-  verified?: boolean;
+  verified: boolean;
+  phone: string;
+  email: string;
 };
-
-const brokers: Broker[] = [
-  {
-    img: b1,
-    name: "Nguyễn Văn Nam",
-    years: 5,
-    specialties: ["Chuyên căn hộ cao cấp", "Hải Châu"],
-    district: "Hải Châu",
-    rating: 4.9,
-    reviews: 128,
-    verified: true,
-  },
-  {
-    img: b2,
-    name: "Trần Thị Minh",
-    years: 8,
-    specialties: ["Biệt thự biển", "Sơn Trà"],
-    district: "Sơn Trà",
-    rating: 5.0,
-    reviews: 245,
-    verified: true,
-  },
-  {
-    img: b3,
-    name: "Lê Hoàng Long",
-    years: 3,
-    specialties: ["Đất nền dự án", "Ngũ Hành Sơn"],
-    district: "Ngũ Hành Sơn",
-    rating: 4.7,
-    reviews: 89,
-    verified: true,
-  },
-  {
-    img: b4,
-    name: "Phạm Ngọc Lan",
-    years: 12,
-    specialties: ["Đầu tư quy mô lớn", "Toàn thành phố"],
-    district: "Toàn thành phố",
-    rating: 5.0,
-    reviews: 512,
-    verified: false, // Demo Chưa xác thực
-  },
-];
 
 function BrokersHero() {
   return (
@@ -170,8 +126,8 @@ function BrokersHero() {
   );
 }
 
-function BrokerCard({ b }: { b: Broker }) {
-  const isVerified = b.verified ?? true;
+function BrokerCard({ b }: { b: BrokerDisplay }) {
+  const isVerified = b.verified;
   return (
     <article className="group bg-card rounded-xl overflow-hidden border border-border/60 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300">
       <div className="relative aspect-[4/5] overflow-hidden bg-muted">
@@ -188,7 +144,7 @@ function BrokerCard({ b }: { b: Broker }) {
             <BadgeCheck className="h-3.5 w-3.5" /> Đã xác minh
           </span>
         ) : (
-          <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-red-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
+          <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-amber-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
             <AlertCircle className="h-3.5 w-3.5" /> Chưa xác thực
           </span>
         )}
@@ -251,12 +207,38 @@ function BrokerCard({ b }: { b: Broker }) {
 }
 
 function BrokerGrid() {
+  const [brokers, setBrokers] = useState<BrokerDisplay[]>([]);
+
+  useEffect(() => {
+    const rawUsers = LOCAL_USERS_DB.getUsers();
+    // Filter only brokers who are not locked
+    const brokerUsers = rawUsers.filter(
+      (u) => u.role === "broker" && u.status !== "locked"
+    );
+
+    const formatted: BrokerDisplay[] = brokerUsers.map((u) => ({
+      id: u.id,
+      img: u.avatar,
+      name: u.name,
+      years: u.yearsExperience || u.yearsExp || 5,
+      specialties: u.specialties || ["Môi giới BĐS", u.district || "Đà Nẵng"],
+      district: u.district || "Toàn thành phố",
+      rating: u.rating || 5.0,
+      reviews: u.reviewsCount || u.reviews || 100,
+      verified: !!u.isVerified,
+      phone: u.phone,
+      email: u.email,
+    }));
+
+    setBrokers(formatted);
+  }, []);
+
   return (
     <section className="py-12">
       <div className="container-page">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {brokers.map((b) => (
-            <BrokerCard key={b.name} b={b} />
+            <BrokerCard key={b.id} b={b} />
           ))}
         </div>
 
