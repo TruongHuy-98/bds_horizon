@@ -11,6 +11,7 @@ import {
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
+import { VisitorTracker } from "@/components/site/VisitorTracker";
 
 function NotFoundComponent() {
   return (
@@ -119,6 +120,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <VisitorTracker />
       <Outlet />
       <Toaster richColors position="top-right" />
     </QueryClientProvider>

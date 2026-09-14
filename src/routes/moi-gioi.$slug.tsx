@@ -1,9 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { BadgeCheck, Star, Phone, Mail, Search, MapPin, Heart, AlertCircle } from "lucide-react";
+import {
+  BadgeCheck,
+  Star,
+  Phone,
+  Mail,
+  Search,
+  MapPin,
+  Heart,
+  AlertCircle,
+  CreditCard,
+  Award,
+  ShieldCheck,
+  CheckCircle2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
+import { LOCAL_USERS_DB } from "@/data/mockUsersData";
 
 import heroBg from "@/assets/hero-danang.jpg";
 import b1 from "@/assets/broker-1.jpg";
@@ -38,6 +52,16 @@ type BrokerDetail = {
   phone: string;
   specialties: string[];
   verified?: boolean;
+  district?: string;
+  years?: number;
+  email?: string;
+  idCardNumber?: string;
+  idCardPlace?: string;
+  licenseNumber?: string;
+  licenseIssuer?: string;
+  licenseIssueDate?: string;
+  licenseExpiryDate?: string;
+  licenseImageUrl?: string;
 };
 
 const brokerMap: Record<string, BrokerDetail> = {
@@ -49,6 +73,13 @@ const brokerMap: Record<string, BrokerDetail> = {
     phone: "0905 xxx xxx",
     specialties: ["Đất nền Nam Hòa Xuân", "Căn hộ Sơn Trà"],
     verified: true,
+    licenseNumber: "ĐN-02849",
+    licenseIssuer: "Sở Xây dựng TP. Đà Nẵng",
+    licenseIssueDate: "15/04/2022",
+    licenseExpiryDate: "15/04/2027",
+    idCardNumber: "048092008765",
+    idCardPlace: "Cục Cảnh sát QLHC về TTXH",
+    licenseImageUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80",
   },
   "tran-thi-minh": {
     name: "Trần Thị Minh",
@@ -231,16 +262,15 @@ function BrokerHero({ b }: { b: BrokerDetail }) {
   );
 }
 
-function Tabs() {
+function Tabs({ active, onChange }: { active: number; onChange: (i: number) => void }) {
   const items = ["Tin đất đang quản lý", "Đánh giá từ khách hàng", "Giới thiệu & Chứng chỉ"];
-  const [active, setActive] = useState(0);
   return (
     <div className="container-page mt-10 border-b border-border/60">
       <div className="flex flex-wrap gap-8 text-sm">
         {items.map((t, i) => (
           <button
             key={t}
-            onClick={() => setActive(i)}
+            onClick={() => onChange(i)}
             className={`pb-3 -mb-px transition-colors ${
               active === i
                 ? "text-primary font-semibold border-b-2 border-primary"
@@ -252,6 +282,112 @@ function Tabs() {
         ))}
       </div>
     </div>
+  );
+}
+
+function BrokerCertificationSection({ b }: { b: BrokerDetail }) {
+  return (
+    <section className="py-10">
+      <div className="container-page max-w-5xl space-y-8">
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Card 1: Chứng chỉ hành nghề BĐS */}
+          <div className="bg-card p-6 rounded-2xl border border-border/80 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="size-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Award className="size-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-foreground">Chứng chỉ Hành nghề Môi giới BĐS</h3>
+                  <p className="text-xs text-muted-foreground">Theo quy chuẩn của Bộ Xây dựng & Luật Kinh doanh BĐS</p>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-200">
+                <BadgeCheck className="size-3.5" /> Đã xác thực
+              </span>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between py-1.5 border-b border-border/40">
+                <span className="text-muted-foreground">Số chứng chỉ:</span>
+                <span className="font-mono font-bold text-foreground">{b.licenseNumber || "ĐN-02849"}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-border/40">
+                <span className="text-muted-foreground">Đơn vị cấp:</span>
+                <span className="font-semibold text-foreground">{b.licenseIssuer || "Sở Xây dựng TP. Đà Nẵng"}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-border/40">
+                <span className="text-muted-foreground">Ngày cấp:</span>
+                <span className="text-foreground">{b.licenseIssueDate || "15/04/2022"}</span>
+              </div>
+              <div className="flex justify-between py-1.5">
+                <span className="text-muted-foreground">Thời hạn hiệu lực:</span>
+                <span className="font-semibold text-emerald-600">Đến {b.licenseExpiryDate || "15/04/2027"} (Hợp lệ)</span>
+              </div>
+            </div>
+
+            {b.licenseImageUrl && (
+              <div className="pt-2">
+                <span className="text-xs text-muted-foreground mb-2 block font-medium">Bản sao Chứng chỉ hành nghề:</span>
+                <div className="aspect-[16/9] rounded-xl overflow-hidden border border-border/60 bg-muted/30">
+                  <img src={b.licenseImageUrl} alt="Chứng chỉ hành nghề BĐS" className="w-full h-full object-cover" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Card 2: Xác thực Danh tính (CCCD) */}
+          <div className="bg-card p-6 rounded-2xl border border-border/80 shadow-sm space-y-4 flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
+                    <CreditCard className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-foreground">Xác thực Định danh (CCCD)</h3>
+                    <p className="text-xs text-muted-foreground">Đối soát căn cước công dân gắn chip chính chủ</p>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1 bg-cyan-50 text-cyan-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-cyan-200">
+                  <ShieldCheck className="size-3.5" /> Định danh cấp độ 2
+                </span>
+              </div>
+
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between py-1.5 border-b border-border/40">
+                  <span className="text-muted-foreground">Tình trạng định danh:</span>
+                  <span className="font-semibold text-emerald-600 flex items-center gap-1">
+                    <CheckCircle2 className="size-4" /> Đã xác thực căn cước công dân
+                  </span>
+                </div>
+                <div className="flex justify-between py-1.5 border-b border-border/40">
+                  <span className="text-muted-foreground">Nơi cấp:</span>
+                  <span className="text-foreground">{b.idCardPlace || "Cục Cảnh sát QLHC về TTXH"}</span>
+                </div>
+                <div className="flex justify-between py-1.5 border-b border-border/40">
+                  <span className="text-muted-foreground">Quốc tịch:</span>
+                  <span className="text-foreground">Việt Nam</span>
+                </div>
+                <div className="flex justify-between py-1.5">
+                  <span className="text-muted-foreground">Mã định danh:</span>
+                  <span className="font-mono text-muted-foreground">Đã mã hóa bảo mật (****)</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-muted/40 border border-border/60 text-xs text-muted-foreground space-y-1.5">
+              <div className="font-semibold text-foreground flex items-center gap-1.5">
+                <ShieldCheck className="size-4 text-primary" /> Cam kết an toàn & Pháp lý
+              </div>
+              <p>
+                Môi giới đã hoàn tất thủ tục xác minh danh tính và được cấp phép hoạt động tư vấn môi giới bất động sản tại địa bàn TP. Đà Nẵng theo đúng quy định pháp luật.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -318,14 +454,66 @@ function Listings() {
 
 function BrokerDetailPage() {
   const { slug } = Route.useParams();
-  const broker = brokerMap[slug] ?? brokerMap["nguyen-van-nam"];
+  const [activeTab, setActiveTab] = useState(0);
+
+  // Try static brokerMap first
+  let broker: BrokerDetail | undefined = brokerMap[slug];
+
+  // If not found in static map, find in dynamic LOCAL_USERS_DB
+  if (!broker && typeof window !== "undefined") {
+    const users = LOCAL_USERS_DB.getUsers();
+    const foundUser = users.find((u) => {
+      const uSlug = u.name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      return uSlug === slug || u.id === slug;
+    });
+
+    if (foundUser) {
+      broker = {
+        name: foundUser.name,
+        img: foundUser.avatar,
+        rating: foundUser.rating || 5.0,
+        reviews: foundUser.reviewsCount || foundUser.reviews || 80,
+        phone: foundUser.phone,
+        specialties: foundUser.specialties || [foundUser.district || "Đà Nẵng", "Môi giới BĐS"],
+        verified: !!foundUser.isVerified,
+        district: foundUser.district,
+        years: foundUser.yearsExperience || foundUser.yearsExp || 3,
+        email: foundUser.email,
+        idCardNumber: foundUser.id_card_number,
+        idCardPlace: foundUser.id_card_place,
+        licenseNumber: foundUser.license_number,
+        licenseIssuer: foundUser.license_issuer,
+        licenseIssueDate: foundUser.license_issue_date,
+        licenseExpiryDate: foundUser.license_expiry_date,
+        licenseImageUrl: foundUser.license_image_url,
+      };
+    }
+  }
+
+  // Fallback to first broker if still not found
+  if (!broker) {
+    broker = brokerMap["nguyen-van-nam"];
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main>
         <BrokerHero b={broker} />
-        <Tabs />
-        <Listings />
+        <Tabs active={activeTab} onChange={setActiveTab} />
+        {activeTab === 0 && <Listings />}
+        {activeTab === 1 && (
+          <div className="container-page py-10 text-center text-muted-foreground text-sm">
+            Hiện tại có {broker.reviews} lượt đánh giá từ khách hàng đã giao dịch thành công với {broker.name}.
+          </div>
+        )}
+        {activeTab === 2 && <BrokerCertificationSection b={broker} />}
       </main>
       <Footer />
     </div>

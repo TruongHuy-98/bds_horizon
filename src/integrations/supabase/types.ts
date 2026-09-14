@@ -206,6 +206,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      visitor_logs: {
+        Row: {
+          browser: string | null;
+          device: string | null;
+          id: string;
+          ip_address: string | null;
+          location: string | null;
+          page_path: string;
+          user_agent: string | null;
+          visited_at: string;
+        };
+        Insert: {
+          browser?: string | null;
+          device?: string | null;
+          id?: string;
+          ip_address?: string | null;
+          location?: string | null;
+          page_path: string;
+          user_agent?: string | null;
+          visited_at?: string;
+        };
+        Update: {
+          browser?: string | null;
+          device?: string | null;
+          id?: string;
+          ip_address?: string | null;
+          location?: string | null;
+          page_path?: string;
+          user_agent?: string | null;
+          visited_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

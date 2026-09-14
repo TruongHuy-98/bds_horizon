@@ -25,6 +25,19 @@ export interface UserAccount {
   yearsExp?: number;
   yearsExperience?: number;
   verificationRequestDate?: string;
+  // CCCD and Real Estate License Verification fields
+  id_card_number?: string;
+  id_card_date?: string;
+  id_card_place?: string;
+  id_card_nationality?: string;
+  id_card_front_url?: string;
+  id_card_back_url?: string;
+  license_number?: string;
+  license_issuer?: string;
+  license_issue_date?: string;
+  license_expiry_date?: string;
+  license_image_url?: string;
+  verification_status?: "verified" | "pending" | "unverified";
 }
 
 export const INITIAL_MOCK_USERS: UserAccount[] = [
@@ -50,6 +63,7 @@ export const INITIAL_MOCK_USERS: UserAccount[] = [
     avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&auto=format&fit=crop&q=80",
     role: "broker",
     isVerified: true,
+    verification_status: "verified",
     activePlan: "vip",
     planExpiry: "2026-12-30",
     remainingPosts: 45,
@@ -60,6 +74,17 @@ export const INITIAL_MOCK_USERS: UserAccount[] = [
     rating: 4.9,
     reviews: 128,
     yearsExp: 5,
+    id_card_number: "048092008765",
+    id_card_date: "2021-07-10",
+    id_card_place: "Cục Cảnh sát QLHC về TTXH",
+    id_card_nationality: "Việt Nam",
+    id_card_front_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
+    id_card_back_url: "https://images.unsplash.com/photo-1633409361618-c73427e4e206?w=800&auto=format&fit=crop&q=80",
+    license_number: "ĐN-02849",
+    license_issuer: "Sở Xây dựng TP. Đà Nẵng",
+    license_issue_date: "2022-04-15",
+    license_expiry_date: "2027-04-15",
+    license_image_url: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80",
   },
   {
     id: "usr-broker-2",
@@ -69,6 +94,7 @@ export const INITIAL_MOCK_USERS: UserAccount[] = [
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80",
     role: "broker",
     isVerified: true,
+    verification_status: "verified",
     activePlan: "pro",
     planExpiry: "2026-10-15",
     remainingPosts: 18,
@@ -79,6 +105,17 @@ export const INITIAL_MOCK_USERS: UserAccount[] = [
     rating: 5.0,
     reviews: 245,
     yearsExp: 8,
+    id_card_number: "048195003412",
+    id_card_date: "2021-09-20",
+    id_card_place: "Cục Cảnh sát QLHC về TTXH",
+    id_card_nationality: "Việt Nam",
+    id_card_front_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
+    id_card_back_url: "https://images.unsplash.com/photo-1633409361618-c73427e4e206?w=800&auto=format&fit=crop&q=80",
+    license_number: "ĐN-03912",
+    license_issuer: "Sở Xây dựng TP. Đà Nẵng",
+    license_issue_date: "2021-11-10",
+    license_expiry_date: "2026-11-10",
+    license_image_url: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80",
   },
   {
     id: "usr-broker-3",
@@ -88,6 +125,7 @@ export const INITIAL_MOCK_USERS: UserAccount[] = [
     avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80",
     role: "broker",
     isVerified: false,
+    verification_status: "pending",
     activePlan: "free",
     remainingPosts: 3,
     createdAt: "2025-06-01T11:15:00.000Z",
@@ -98,6 +136,17 @@ export const INITIAL_MOCK_USERS: UserAccount[] = [
     reviews: 89,
     yearsExp: 3,
     verificationRequestDate: "2026-07-20T10:00:00.000Z",
+    id_card_number: "048096001298",
+    id_card_date: "2022-03-05",
+    id_card_place: "Cục Cảnh sát QLHC về TTXH",
+    id_card_nationality: "Việt Nam",
+    id_card_front_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
+    id_card_back_url: "https://images.unsplash.com/photo-1633409361618-c73427e4e206?w=800&auto=format&fit=crop&q=80",
+    license_number: "HN-05182",
+    license_issuer: "Sở Xây dựng TP. Hà Nội",
+    license_issue_date: "2024-01-12",
+    license_expiry_date: "2029-01-12",
+    license_image_url: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80",
   },
   {
     id: "usr-broker-4",
@@ -107,6 +156,7 @@ export const INITIAL_MOCK_USERS: UserAccount[] = [
     avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&auto=format&fit=crop&q=80",
     role: "broker",
     isVerified: false,
+    verification_status: "unverified",
     activePlan: "pro",
     planExpiry: "2026-08-20",
     remainingPosts: 12,
