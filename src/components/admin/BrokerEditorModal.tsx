@@ -277,8 +277,50 @@ export function BrokerEditorModal({
     }
   };
 
-  // Generic local file reader helper
-  const handleLocalFile = (
+// Helper to downscale and compress images to prevent localStorage QuotaExceededError
+const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith("image/")) {
+      reject(new Error("Tệp không phải là hình ảnh hợp lệ"));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (readerEvent) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxWidth) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxWidth) / height);
+            height = maxWidth;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(readerEvent.target?.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(compressedDataUrl);
+      };
+      img.onerror = () => resolve(readerEvent.target?.result as string);
+      img.src = readerEvent.target?.result as string;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
+  // Generic local file reader helper with automatic downscale/compression
+  const handleLocalFile = async (
     e: React.ChangeEvent<HTMLInputElement>,
     onSuccess: (dataUrl: string) => void,
     label: string
@@ -286,18 +328,28 @@ export function BrokerEditorModal({
     const files = e.target.files;
     if (!files || files.length === 0) return;
     const file = files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        onSuccess(reader.result);
-        toast.success(`Đã tải ảnh ${label} lên thành công!`);
-      }
-    };
-    reader.readAsDataURL(file);
+    const toastId = toast.loading(`Đang tải ảnh ${label}...`);
+    try {
+      const compressedDataUrl = await compressImageFile(file, 800, 0.75);
+      onSuccess(compressedDataUrl);
+      toast.success(`Đã tải và tối ưu ảnh ${label}!`, { id: toastId });
+    } catch (err: any) {
+      console.warn(`Lỗi nén ảnh ${label}, dùng bản gốc:`, err);
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          onSuccess(reader.result);
+          toast.success(`Đã tải ảnh ${label}!`, { id: toastId });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
 
     if (!name.trim()) {
       toast.error("Vui lòng nhập họ và tên môi giới!");
@@ -319,53 +371,57 @@ export function BrokerEditorModal({
 
     setSaving(true);
 
-    const isVerifiedFinal = verificationStatus === "verified";
+    try {
+      const isVerifiedFinal = verificationStatus === "verified";
 
-    const brokerData: UserAccount = {
-      id: broker?.id || "usr-broker-" + Math.random().toString(36).substring(2, 9),
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      phone: phone.trim(),
-      avatar: avatar || PRESET_AVATARS[0].url,
-      role: "broker",
-      isVerified: isVerifiedFinal,
-      verification_status: verificationStatus,
-      activePlan,
-      planExpiry: activePlan !== "free" ? planExpiry : undefined,
-      remainingPosts: Number(remainingPosts) || 0,
-      createdAt: broker?.createdAt || new Date().toISOString(),
-      status,
-      district,
-      specialties,
-      rating: Number(rating) || 5.0,
-      reviews: Number(reviews) || 0,
-      reviewsCount: Number(reviews) || 0,
-      yearsExp: Number(yearsExp) || 1,
-      yearsExperience: Number(yearsExp) || 1,
-      // CCCD & Real Estate License fields
-      id_card_number: idCardNumber.trim() || undefined,
-      id_card_date: idCardDate || undefined,
-      id_card_place: idCardPlace.trim() || undefined,
-      id_card_nationality: idCardNationality.trim() || "Việt Nam",
-      id_card_front_url: idCardFrontUrl || undefined,
-      id_card_back_url: idCardBackUrl || undefined,
-      license_number: licenseNumber.trim() || undefined,
-      license_issuer: licenseIssuer.trim() || undefined,
-      license_issue_date: licenseIssueDate || undefined,
-      license_expiry_date: licenseExpiryDate || undefined,
-      license_image_url: licenseImageUrl || undefined,
-    };
+      const brokerData: UserAccount = {
+        id: broker?.id || "usr-broker-" + Math.random().toString(36).substring(2, 9),
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        avatar: avatar || PRESET_AVATARS[0].url,
+        role: "broker",
+        isVerified: isVerifiedFinal,
+        verification_status: verificationStatus,
+        activePlan,
+        planExpiry: activePlan !== "free" ? planExpiry : undefined,
+        remainingPosts: Number(remainingPosts) || 0,
+        createdAt: broker?.createdAt || new Date().toISOString(),
+        status,
+        district,
+        specialties,
+        rating: Number(rating) || 5.0,
+        reviews: Number(reviews) || 0,
+        reviewsCount: Number(reviews) || 0,
+        yearsExp: Number(yearsExp) || 1,
+        yearsExperience: Number(yearsExp) || 1,
+        // CCCD & Real Estate License fields
+        id_card_number: idCardNumber.trim() || undefined,
+        id_card_date: idCardDate || undefined,
+        id_card_place: idCardPlace.trim() || undefined,
+        id_card_nationality: idCardNationality.trim() || "Việt Nam",
+        id_card_front_url: idCardFrontUrl || undefined,
+        id_card_back_url: idCardBackUrl || undefined,
+        license_number: licenseNumber.trim() || undefined,
+        license_issuer: licenseIssuer.trim() || undefined,
+        license_issue_date: licenseIssueDate || undefined,
+        license_expiry_date: licenseExpiryDate || undefined,
+        license_image_url: licenseImageUrl || undefined,
+      };
 
-    setTimeout(() => {
       onSave(brokerData);
-      setSaving(false);
-      onClose();
       toast.success(
         isEdit
           ? `Đã cập nhật thông tin môi giới ${brokerData.name}!`
           : `Thêm mới môi giới ${brokerData.name} thành công!`
       );
-    }, 250);
+      onClose();
+    } catch (err: any) {
+      console.error("Lỗi khi lưu môi giới:", err);
+      toast.error("Không thể lưu: " + (err?.message || "Đã xảy ra lỗi khi lưu thông tin."));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -436,7 +492,8 @@ export function BrokerEditorModal({
               Hủy bỏ
             </Button>
             <Button
-              onClick={handleSubmit}
+              type="button"
+              onClick={() => handleSubmit()}
               disabled={saving}
               className="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md shadow-blue-500/15 px-5 h-9 flex items-center gap-1.5"
             >

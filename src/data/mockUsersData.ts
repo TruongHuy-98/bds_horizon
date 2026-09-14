@@ -275,7 +275,27 @@ export const LOCAL_USERS_DB = {
       };
       users.unshift(newUser);
     }
-    localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(users));
+    try {
+      localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(users));
+    } catch (e) {
+      console.warn("localStorage quota exceeded when saving user, attempting to prune large images:", e);
+      // Prune base64 data URLs from older users to free up storage
+      const pruned = users.map((u, i) => {
+        if (i === 0) return u; // Keep newest intact
+        return {
+          ...u,
+          avatar: u.avatar?.startsWith("data:") ? "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&auto=format&fit=crop&q=80" : u.avatar,
+          id_card_front_url: u.id_card_front_url?.startsWith("data:") ? undefined : u.id_card_front_url,
+          id_card_back_url: u.id_card_back_url?.startsWith("data:") ? undefined : u.id_card_back_url,
+          license_image_url: u.license_image_url?.startsWith("data:") ? undefined : u.license_image_url,
+        };
+      });
+      try {
+        localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(pruned));
+      } catch (e2) {
+        console.error("Could not save to localStorage even after pruning:", e2);
+      }
+    }
     return users;
   },
 
@@ -290,7 +310,11 @@ export const LOCAL_USERS_DB = {
       } else if (isLocked) {
         delete users[index].lockReason;
       }
-      localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(users));
+      try {
+        localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(users));
+      } catch (e) {
+        console.error("Error saving lock status to localStorage:", e);
+      }
     }
     return users;
   },
@@ -300,15 +324,24 @@ export const LOCAL_USERS_DB = {
     const index = users.findIndex((u) => u.id === id);
     if (index !== -1) {
       users[index].isVerified = true;
+      users[index].verification_status = "verified";
       delete users[index].verificationRequestDate;
-      localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(users));
+      try {
+        localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(users));
+      } catch (e) {
+        console.error("Error saving verification to localStorage:", e);
+      }
     }
     return users;
   },
 
   deleteUser: (id: string): UserAccount[] => {
     const users = LOCAL_USERS_DB.getUsers().filter((u) => u.id !== id);
-    localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(users));
+    try {
+      localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(users));
+    } catch (e) {
+      console.error("Error deleting user from localStorage:", e);
+    }
     return users;
   },
 };
