@@ -145,6 +145,8 @@ export function BrokerEditorModal({
   const [remainingPosts, setRemainingPosts] = useState(20);
   const [status, setStatus] = useState<UserStatus>("active");
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // 2. Section: CCCD / Identity Verification
   const [idCardNumber, setIdCardNumber] = useState("");
@@ -165,6 +167,10 @@ export function BrokerEditorModal({
 
   // Reset or populate fields when modal opens
   useEffect(() => {
+    setSaving(false);
+    setFormError("");
+    setFieldErrors({});
+
     if (broker) {
       setName(broker.name || "");
       setEmail(broker.email || "");
@@ -351,24 +357,61 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
       e.preventDefault();
     }
 
+    console.group("🚀 [ADMIN BROKER] Đang xử lý Lưu Môi Giới");
+    console.log("📋 Dữ liệu form hiện tại:", {
+      name,
+      phone,
+      email,
+      district,
+      activePlan,
+      verificationStatus,
+      idCardNumber,
+      licenseNumber,
+      avatarLength: avatar?.length,
+      idCardFrontLength: idCardFrontUrl?.length,
+      idCardBackLength: idCardBackUrl?.length,
+      licenseImageLength: licenseImageUrl?.length,
+    });
+
+    const newErrors: Record<string, string> = {};
+    const missing: string[] = [];
+
     if (!name.trim()) {
-      toast.error("Vui lòng nhập họ và tên môi giới!");
-      return;
+      newErrors.name = "Vui lòng nhập họ và tên môi giới!";
+      missing.push("Họ và tên");
     }
     if (!phone.trim()) {
-      toast.error("Vui lòng nhập số điện thoại liên hệ!");
-      return;
+      newErrors.phone = "Vui lòng nhập số điện thoại liên hệ!";
+      missing.push("Số điện thoại");
     }
     if (!email.trim()) {
-      toast.error("Vui lòng nhập email môi giới!");
-      return;
+      newErrors.email = "Vui lòng nhập email môi giới!";
+      missing.push("Email");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = "Email không đúng định dạng!";
+      missing.push("Email hợp lệ");
     }
 
     // Validate CCCD format if entered
-    if (idCardNumber && idCardNumber.length !== 12 && idCardNumber.length !== 9) {
-      toast.warning("Lưu ý: Số CCCD chuẩn hiện hành gồm 12 chữ số.");
+    if (idCardNumber.trim() && idCardNumber.trim().length !== 12 && idCardNumber.trim().length !== 9) {
+      newErrors.idCardNumber = "Số CCCD chuẩn gồm 12 chữ số (hoặc CMND 9 số)";
+      missing.push("Định dạng CCCD hợp lệ");
+      console.warn("⚠️ [ADMIN BROKER] CCCD không đủ 12 số:", idCardNumber);
     }
 
+    if (Object.keys(newErrors).length > 0) {
+      const msg = `Chưa thể lưu! ${missing.length > 0 ? "Thiếu hoặc sai thông tin: " + missing.join(", ") : "Vui lòng kiểm tra lại các trường được đánh dấu đỏ."}`;
+      setFieldErrors(newErrors);
+      setFormError(msg);
+      setSaving(false);
+      toast.error(msg);
+      console.warn("⚠️ [ADMIN BROKER] Lỗi xác thực biểu mẫu:", { missing, newErrors });
+      console.groupEnd();
+      return;
+    }
+
+    setFieldErrors(newErrors);
+    setFormError("");
     setSaving(true);
 
     try {
@@ -409,7 +452,11 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
         license_image_url: licenseImageUrl || undefined,
       };
 
+      console.log("💾 [ADMIN BROKER] Gọi hàm onSave với payload:", brokerData);
       onSave(brokerData);
+      console.log("✅ [ADMIN BROKER] onSave thành công!");
+      console.groupEnd();
+
       toast.success(
         isEdit
           ? `Đã cập nhật thông tin môi giới ${brokerData.name}!`
@@ -417,8 +464,11 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
       );
       onClose();
     } catch (err: any) {
-      console.error("Lỗi khi lưu môi giới:", err);
-      toast.error("Không thể lưu: " + (err?.message || "Đã xảy ra lỗi khi lưu thông tin."));
+      console.error("❌ [ADMIN BROKER] Lỗi ngoại lệ khi lưu:", err);
+      console.groupEnd();
+      const errText = err?.message || "Đã xảy ra lỗi khi ghi dữ liệu. Vui lòng thử lại!";
+      setFormError(`Lỗi khi lưu: ${errText}`);
+      toast.error(`Lỗi: ${errText}`);
     } finally {
       setSaving(false);
     }
@@ -506,6 +556,20 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
         {/* BODY (Scrollable Container) */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* THÔNG BÁO LỖI NẾU THIẾU THÔNG TIN HOẶC LỖI HỆ THỐNG */}
+            {formError && (
+              <div className="p-4 bg-red-50/95 border-2 border-red-300 rounded-2xl text-xs text-red-800 flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-2">
+                <AlertCircle className="size-5 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-1">
+                  <div className="font-bold text-sm text-red-900">Không thể hoàn tất thao tác lưu</div>
+                  <p className="font-semibold text-red-700">{formError}</p>
+                  <p className="text-[11px] text-red-600/85">
+                    💡 <strong>Xem nhật ký lỗi chi tiết:</strong> Nhấn <kbd className="px-1.5 py-0.5 bg-red-100 rounded border border-red-300 font-mono text-[10px]">F12</kbd> (hoặc chuột phải &gt; <em>Kiểm tra / Inspect</em>) &gt; chọn thẻ <strong>Console</strong> để xem log dữ liệu chi tiết của <code>[ADMIN BROKER]</code>.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* 1. THÔNG TIN CÁ NHÂN & LIÊN HỆ */}
             <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
               <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -520,10 +584,21 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                   <Input
                     placeholder="VD: Nguyễn Văn Nam"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: "" }));
+                      if (formError) setFormError("");
+                    }}
                     required
-                    className="h-10 text-xs bg-slate-50 border-slate-200 font-semibold"
+                    className={`h-10 text-xs bg-slate-50 border-slate-200 font-semibold ${
+                      fieldErrors.name ? "border-red-500 ring-1 ring-red-500 bg-red-50/20" : ""
+                    }`}
                   />
+                  {fieldErrors.name && (
+                    <p className="text-[11px] text-red-600 font-medium flex items-center gap-1 mt-1">
+                      <AlertCircle className="size-3 shrink-0" /> {fieldErrors.name}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-1">
@@ -535,11 +610,22 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                     <Input
                       placeholder="VD: 0914 888 999"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        if (fieldErrors.phone) setFieldErrors((prev) => ({ ...prev, phone: "" }));
+                        if (formError) setFormError("");
+                      }}
                       required
-                      className="pl-8 h-10 text-xs bg-slate-50 border-slate-200 font-medium"
+                      className={`pl-8 h-10 text-xs bg-slate-50 border-slate-200 font-medium ${
+                        fieldErrors.phone ? "border-red-500 ring-1 ring-red-500 bg-red-50/20" : ""
+                      }`}
                     />
                   </div>
+                  {fieldErrors.phone && (
+                    <p className="text-[11px] text-red-600 font-medium flex items-center gap-1 mt-1">
+                      <AlertCircle className="size-3 shrink-0" /> {fieldErrors.phone}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-1">
@@ -552,11 +638,22 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                       type="email"
                       placeholder="VD: nam.nguyen@horizon.vn"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: "" }));
+                        if (formError) setFormError("");
+                      }}
                       required
-                      className="pl-8 h-10 text-xs bg-slate-50 border-slate-200"
+                      className={`pl-8 h-10 text-xs bg-slate-50 border-slate-200 ${
+                        fieldErrors.email ? "border-red-500 ring-1 ring-red-500 bg-red-50/20" : ""
+                      }`}
                     />
                   </div>
+                  {fieldErrors.email && (
+                    <p className="text-[11px] text-red-600 font-medium flex items-center gap-1 mt-1">
+                      <AlertCircle className="size-3 shrink-0" /> {fieldErrors.email}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -649,7 +746,7 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                 <div className="space-y-1.5 sm:col-span-1">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-bold text-slate-700">
-                      Số CCCD / CMND <span className="text-red-500">*</span>
+                      Số CCCD / CMND (Tùy chọn)
                     </Label>
                     {idCardNumber && (
                       <span
@@ -667,10 +764,20 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                       placeholder="VD: 048092008765"
                       value={idCardNumber}
                       maxLength={12}
-                      onChange={(e) => setIdCardNumber(e.target.value.replace(/\D/g, ""))}
-                      className="pl-8 h-10 text-xs bg-slate-50 border-slate-200 font-mono font-semibold"
+                      onChange={(e) => {
+                        setIdCardNumber(e.target.value.replace(/\D/g, ""));
+                        if (fieldErrors.idCardNumber) setFieldErrors((prev) => ({ ...prev, idCardNumber: "" }));
+                      }}
+                      className={`pl-8 h-10 text-xs bg-slate-50 border-slate-200 font-mono font-semibold ${
+                        fieldErrors.idCardNumber ? "border-red-500 ring-1 ring-red-500 bg-red-50/20" : ""
+                      }`}
                     />
                   </div>
+                  {fieldErrors.idCardNumber && (
+                    <p className="text-[11px] text-red-600 font-medium flex items-center gap-1 mt-1">
+                      <AlertCircle className="size-3 shrink-0" /> {fieldErrors.idCardNumber}
+                    </p>
+                  )}
                 </div>
 
                 {/* Ngày cấp */}
