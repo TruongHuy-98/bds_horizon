@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { HeaderProfileDropdown } from "@/components/profile/HeaderProfileDropdown";
 import { toast } from "sonner";
 import {
   Trash2,
@@ -35,6 +37,7 @@ import {
   DollarSign,
   Maximize2,
   User,
+  UserCog,
   Activity,
   ArrowLeft,
   Eye,
@@ -429,7 +432,7 @@ const examNavItems: { key: SectionKey; label: string; icon: any; category: strin
 const navItems = [...systemNavItems, ...accountNavItems, ...examNavItems];
 
 function AdminPage() {
-  const { user: realUser, role, isAdmin, isBroker, isCollaborator, isGuest, loading: authLoading } = useAuth();
+  const { user: realUser, role, profile, isAdmin, isBroker, isCollaborator, isGuest, loading: authLoading, openProfileModal } = useAuth();
   const navigate = useNavigate();
   const [grantingSelf, setGrantingSelf] = useState(false);
   const [section, setSection] = useState<SectionKey>("overview");
@@ -575,17 +578,30 @@ function AdminPage() {
         </div>
 
         {/* Admin Card */}
-        <div className="p-4 mx-4 my-3 bg-slate-800/40 border border-slate-800/50 rounded-xl flex items-center gap-3">
-          <div className="size-10 rounded-full bg-gradient-to-tr from-blue-600/30 to-teal-500/20 flex items-center justify-center text-blue-400 font-semibold border border-blue-500/20">
-            {role.charAt(0).toUpperCase()}
+        <div 
+          onClick={openProfileModal}
+          className="p-3 mx-4 my-3 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500/40 rounded-xl flex items-center gap-3 cursor-pointer transition-all duration-200 group shadow-sm"
+          title="Bấm để xem và chỉnh sửa hồ sơ cá nhân"
+        >
+          <div className="relative shrink-0">
+            <Avatar className="size-10 ring-1 ring-blue-500/30 group-hover:ring-blue-400/60 transition-all">
+              <AvatarImage src={profile?.avatar} alt={profile?.name} className="object-cover" />
+              <AvatarFallback className="bg-gradient-to-tr from-blue-600 to-teal-500 text-white font-bold text-xs">
+                {profile?.name?.charAt(0).toUpperCase() || role.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-slate-200 truncate">{isMock ? `Mock ${roleLabel}` : user?.email}</div>
+            <div className="text-xs font-semibold text-slate-200 truncate group-hover:text-white transition-colors">
+              {profile?.name || (isMock ? `Mock ${roleLabel}` : user?.email)}
+            </div>
             <div className="text-[10px] text-teal-400 flex items-center gap-1 font-medium mt-0.5">
               <span className="size-1.5 rounded-full bg-teal-400 animate-pulse"></span>
-              {isMock ? "Mock Mode (Local)" : roleLabel}
+              {roleLabel}
             </div>
           </div>
+          <UserCog className="size-4 text-slate-400 group-hover:text-blue-400 transition-colors shrink-0" />
         </div>
 
         {/* Sidebar Content (Navigation) */}
@@ -754,12 +770,7 @@ function AdminPage() {
               <span>{new Date().toLocaleDateString("vi-VN", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
             </div>
             <div className="h-8 w-px bg-slate-200"></div>
-            <div className="flex items-center gap-2">
-              <div className="size-8 rounded-full bg-gradient-to-tr from-blue-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
-                {role.charAt(0).toUpperCase()}
-              </div>
-              <span className="hidden md:inline-block text-xs font-bold text-slate-700">{isMock ? `Mock ${roleLabel}` : user?.email?.split('@')[0]}</span>
-            </div>
+            <HeaderProfileDropdown align="end" />
           </div>
         </header>
 

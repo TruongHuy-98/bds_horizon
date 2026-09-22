@@ -38,6 +38,16 @@ export interface UserAccount {
   license_expiry_date?: string;
   license_image_url?: string;
   verification_status?: "verified" | "pending" | "unverified";
+  // Extra fields for collaborators (CTV)
+  bank_name?: string;
+  bank_account_number?: string;
+  bank_account_holder?: string;
+  referral_code?: string;
+  tax_code?: string;
+  // Extra fields for admins
+  admin_title?: string;
+  admin_department?: string;
+  two_factor_enabled?: boolean;
 }
 
 export const INITIAL_MOCK_USERS: UserAccount[] = [
@@ -54,6 +64,9 @@ export const INITIAL_MOCK_USERS: UserAccount[] = [
     remainingPosts: 999,
     createdAt: "2025-01-01T08:00:00.000Z",
     status: "active",
+    admin_title: "Quản trị viên Cấp cao",
+    admin_department: "Ban Điều Hành & Quản Trị Hệ Thống",
+    two_factor_enabled: true,
   },
   {
     id: "usr-broker-1",
@@ -181,6 +194,12 @@ export const INITIAL_MOCK_USERS: UserAccount[] = [
     remainingPosts: 10,
     createdAt: "2025-04-12T10:00:00.000Z",
     status: "active",
+    bank_name: "Vietcombank",
+    bank_account_number: "0071001234567",
+    bank_account_holder: "VU DINH TRONG",
+    referral_code: "CTV-HORIZON-99",
+    tax_code: "8392817291",
+    id_card_number: "048095006789",
   },
   {
     id: "usr-collab-2",
@@ -345,3 +364,13 @@ export const LOCAL_USERS_DB = {
     return users;
   },
 };
+
+export function getProfileForRole(role: UserRole): UserAccount {
+  const users = LOCAL_USERS_DB.getUsers();
+  const found = users.find((u) => u.role === role);
+  if (found) return found;
+  const initial = INITIAL_MOCK_USERS.find((u) => u.role === role);
+  if (initial) return initial;
+  return INITIAL_MOCK_USERS[0];
+}
+

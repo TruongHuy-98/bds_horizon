@@ -12,6 +12,8 @@ import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { VisitorTracker } from "@/components/site/VisitorTracker";
+import { AuthProvider } from "@/hooks/use-auth";
+import { UserProfileModal } from "@/components/profile/UserProfileModal";
 
 function NotFoundComponent() {
   return (
@@ -120,9 +122,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <VisitorTracker />
-      <Outlet />
-      <Toaster richColors position="top-right" />
+      <AuthProvider>
+        <VisitorTracker />
+        <Outlet />
+        <UserProfileModal />
+        <Toaster richColors position="top-right" />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
