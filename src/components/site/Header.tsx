@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Menu, X, User, ShieldCheck, Building2, Award, LogOut, Sparkles } from "lucide-react";
+import { Menu, X, User, ShieldCheck, Building2, Award, LogOut, Sparkles, PlusCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { HeaderProfileDropdown } from "@/components/profile/HeaderProfileDropdown";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 
 function Logo() {
   return (
-    <Link to="/" className="flex items-center gap-2">
+    <Link to="/" className="flex items-center gap-2 shrink-0">
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
         <path d="M16 4L28 26H4L16 4Z" fill="var(--primary)" />
         <path d="M16 12L24 26H8L16 12Z" fill="var(--teal)" opacity="0.85" />
@@ -40,19 +40,19 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border/60">
-      <div className="container-page flex h-16 items-center justify-between">
+      <div className="container-page flex h-16 items-center justify-between gap-4">
         {/* Logo + Desktop Nav */}
-        <div className="flex items-center gap-10">
+        <div className="flex items-center gap-6 xl:gap-8 min-w-0">
           <Logo />
-          <nav className="hidden md:flex items-center gap-7">
+          <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
             {nav.map((n) =>
               n.to ? (
                 <Link
                   key={n.label}
                   to={n.to}
-                  className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+                  className="text-[13px] xl:text-sm font-medium text-foreground/80 hover:text-primary transition-colors whitespace-nowrap"
                   activeProps={{
-                    className: "text-sm font-medium text-primary border-b-2 border-primary pb-1",
+                    className: "text-[13px] xl:text-sm font-semibold text-primary border-b-2 border-primary pb-1",
                   }}
                   activeOptions={{ exact: true }}
                 >
@@ -62,7 +62,7 @@ export default function Header() {
                 <a
                   key={n.label}
                   href={n.href}
-                  className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+                  className="text-[13px] xl:text-sm font-medium text-foreground/80 hover:text-primary transition-colors whitespace-nowrap"
                 >
                   {n.label}
                 </a>
@@ -72,51 +72,48 @@ export default function Header() {
         </div>
 
         {/* Desktop Right Actions */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-2.5 xl:gap-3 shrink-0">
           {!isGuest ? (
             <>
-              {role !== "user" && (
-                <Link
-                  to="/admin"
-                  className="text-sm font-semibold text-foreground/80 hover:text-primary transition-colors"
-                >
-                  Bảng Quản Trị
-                </Link>
-              )}
-
               {(role === "admin" || role === "broker") && (
                 <Button
                   asChild
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md h-9 px-4 font-medium transition-all shadow-sm text-xs"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg h-9 px-3.5 font-medium transition-all shadow-sm text-xs gap-1.5"
                 >
-                  <Link to="/admin">Đăng tin</Link>
+                  <Link to="/admin">
+                    <PlusCircle className="size-3.5" />
+                    Đăng tin
+                  </Link>
                 </Button>
               )}
 
-              <HeaderProfileDropdown align="end" />
+              <HeaderProfileDropdown align="end" compact={true} />
             </>
           ) : (
             <>
               <Link
                 to="/auth"
-                className="text-sm font-semibold text-foreground/80 hover:text-primary transition-colors"
+                className="text-xs xl:text-sm font-semibold text-foreground/80 hover:text-primary transition-colors whitespace-nowrap px-1"
               >
                 Đăng nhập
               </Link>
               <Button
                 asChild
-                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md h-10 px-5 font-medium transition-all shadow-sm"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg h-9 px-3.5 font-medium transition-all shadow-sm text-xs gap-1.5"
               >
-                <Link to="/auth">Đăng tin</Link>
+                <Link to="/auth">
+                  <PlusCircle className="size-3.5" />
+                  Đăng tin
+                </Link>
               </Button>
             </>
           )}
         </div>
 
         {/* Mobile: Actions + Hamburger */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex lg:hidden items-center gap-2">
           {!isGuest ? (
-            <HeaderProfileDropdown align="end" showNameOnMobile={false} />
+            <HeaderProfileDropdown align="end" compact={true} showNameOnMobile={false} />
           ) : (
             <Button
               asChild
@@ -128,7 +125,7 @@ export default function Header() {
 
           <button
             onClick={() => setMobileOpen((v) => !v)}
-            className="h-9 w-9 flex items-center justify-center rounded-md border border-border bg-card hover:bg-muted transition-colors"
+            className="h-9 w-9 flex items-center justify-center rounded-md border border-border bg-card hover:bg-muted transition-colors cursor-pointer"
             aria-label="Toggle menu"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -138,7 +135,7 @@ export default function Header() {
 
       {/* Mobile Dropdown Menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-md max-h-[85vh] overflow-y-auto">
+        <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-md max-h-[85vh] overflow-y-auto">
           <nav className="container-page py-4 flex flex-col gap-1">
             {/* If logged in on mobile, show rich user card */}
             {!isGuest && (

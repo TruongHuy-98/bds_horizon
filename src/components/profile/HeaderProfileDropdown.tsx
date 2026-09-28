@@ -33,6 +33,7 @@ import { useAuth, UserRole } from "@/hooks/use-auth";
 interface HeaderProfileDropdownProps {
   align?: "end" | "start" | "center";
   showNameOnMobile?: boolean;
+  compact?: boolean;
 }
 
 const ROLE_INFO: Record<
@@ -73,6 +74,7 @@ const ROLE_INFO: Record<
 export function HeaderProfileDropdown({
   align = "end",
   showNameOnMobile = false,
+  compact = false,
 }: HeaderProfileDropdownProps) {
   const { role, profile, user, openProfileModal, switchMockRole, logout, isMock } =
     useAuth();
@@ -106,11 +108,16 @@ export function HeaderProfileDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="group flex items-center gap-2.5 p-1 pl-1.5 pr-2.5 rounded-full border border-border/80 bg-background/60 hover:bg-accent/70 hover:border-primary/40 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className={
+            compact
+              ? "group flex items-center gap-1.5 p-1 pr-1.5 rounded-full border border-border/70 bg-background/80 hover:bg-accent/80 hover:border-primary/50 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              : "group flex items-center gap-2.5 p-1 pl-1.5 pr-2.5 rounded-full border border-border/80 bg-background/60 hover:bg-accent/70 hover:border-primary/40 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+          }
           aria-label="Menu tài khoản"
+          title={`${displayName} (${roleMeta.label})`}
         >
           <div className="relative">
-            <Avatar className="size-8 ring-1 ring-border group-hover:ring-primary/40 transition-all">
+            <Avatar className="size-8 ring-1 ring-border group-hover:ring-2 group-hover:ring-primary/40 transition-all">
               <AvatarImage src={avatarUrl} alt={displayName} className="object-cover" />
               <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                 {displayName.charAt(0).toUpperCase()}
@@ -119,30 +126,36 @@ export function HeaderProfileDropdown({
             <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
           </div>
 
-          <div
-            className={`flex flex-col text-left leading-none ${
-              showNameOnMobile ? "flex" : "hidden sm:flex"
-            }`}
-          >
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors max-w-[120px] truncate">
-                {displayName}
-              </span>
-              {profile?.isVerified && (
-                <span
-                  title="Tài khoản đã xác minh"
-                  className="size-3 text-sky-500 inline-flex items-center justify-center font-bold text-[9px]"
-                >
-                  ✓
+          {!compact && (
+            <div
+              className={`flex flex-col text-left leading-none ${
+                showNameOnMobile ? "flex" : "hidden sm:flex"
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors max-w-[120px] truncate">
+                  {displayName}
                 </span>
-              )}
+                {profile?.isVerified && (
+                  <span
+                    title="Tài khoản đã xác minh"
+                    className="size-3 text-sky-500 inline-flex items-center justify-center font-bold text-[9px]"
+                  >
+                    ✓
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                {roleMeta.label}
+              </span>
             </div>
-            <span className="text-[10px] text-muted-foreground mt-0.5 font-medium">
-              {roleMeta.label}
-            </span>
-          </div>
+          )}
 
-          <ChevronDown className="size-3.5 text-muted-foreground group-hover:text-foreground transition-colors ml-0.5" />
+          <ChevronDown
+            className={`text-muted-foreground group-hover:text-foreground transition-colors ${
+              compact ? "size-3.5" : "size-3.5 ml-0.5"
+            }`}
+          />
         </button>
       </DropdownMenuTrigger>
 
