@@ -13,6 +13,8 @@ import {
   MessageCircle,
   Send,
   MessageSquare,
+  Scale,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -329,6 +331,22 @@ function NewsDetailPage() {
             <h1 className="mt-4 text-2xl md:text-3xl font-extrabold leading-tight tracking-tight text-primary">
               {post.title}
             </h1>
+
+            {post.category === "Pháp lý" && (
+              <div className="mt-4 p-4 rounded-xl bg-blue-50/80 border border-blue-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-blue-900 font-semibold">
+                  <Scale className="size-4 text-blue-600 shrink-0" />
+                  <span>Bài viết thuộc Chuyên đề Pháp lý BĐS chuyên sâu</span>
+                </div>
+                <Link
+                  to="/phap-ly/$slug"
+                  params={{ slug: post.slug }}
+                  className="font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 shrink-0"
+                >
+                  Xem giao diện Pháp lý chuyên sâu <ArrowRight className="size-3.5" />
+                </Link>
+              </div>
+            )}
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-border/60 py-4">
               <div className="flex items-center gap-3">

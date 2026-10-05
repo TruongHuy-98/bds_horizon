@@ -32,6 +32,7 @@ export default function Header() {
     { label: "Nhà đất bán", to: "/nha-dat-ban" },
     { label: "Nhà đất cho thuê", to: "/nha-dat-cho-thue" },
     { label: "Dự án", to: "/du-an" },
+    { label: "Pháp lý", to: "/phap-ly" },
     { label: "Check Quy Hoạch", to: "/check-quy-hoach" },
     { label: "Luyện thi", to: "/on-thi" },
     { label: "Danh bạ Môi giới", to: "/moi-gioi" },

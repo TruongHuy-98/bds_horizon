@@ -18,9 +18,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TinTucIndexRouteImport } from './routes/tin-tuc.index'
+import { Route as PhapLyIndexRouteImport } from './routes/phap-ly.index'
 import { Route as MoiGioiIndexRouteImport } from './routes/moi-gioi.index'
 import { Route as DuAnIndexRouteImport } from './routes/du-an.index'
 import { Route as TinTucSlugRouteImport } from './routes/tin-tuc.$slug'
+import { Route as PhapLySlugRouteImport } from './routes/phap-ly.$slug'
 import { Route as MoiGioiSlugRouteImport } from './routes/moi-gioi.$slug'
 import { Route as DuAnSlugRouteImport } from './routes/du-an.$slug'
 
@@ -69,6 +71,11 @@ const TinTucIndexRoute = TinTucIndexRouteImport.update({
   path: '/tin-tuc/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PhapLyIndexRoute = PhapLyIndexRouteImport.update({
+  id: '/phap-ly/',
+  path: '/phap-ly/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MoiGioiIndexRoute = MoiGioiIndexRouteImport.update({
   id: '/moi-gioi/',
   path: '/moi-gioi/',
@@ -82,6 +89,11 @@ const DuAnIndexRoute = DuAnIndexRouteImport.update({
 const TinTucSlugRoute = TinTucSlugRouteImport.update({
   id: '/tin-tuc/$slug',
   path: '/tin-tuc/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PhapLySlugRoute = PhapLySlugRouteImport.update({
+  id: '/phap-ly/$slug',
+  path: '/phap-ly/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MoiGioiSlugRoute = MoiGioiSlugRouteImport.update({
@@ -106,9 +118,11 @@ export interface FileRoutesByFullPath {
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
+  '/phap-ly/$slug': typeof PhapLySlugRoute
   '/tin-tuc/$slug': typeof TinTucSlugRoute
   '/du-an/': typeof DuAnIndexRoute
   '/moi-gioi/': typeof MoiGioiIndexRoute
+  '/phap-ly/': typeof PhapLyIndexRoute
   '/tin-tuc/': typeof TinTucIndexRoute
 }
 export interface FileRoutesByTo {
@@ -122,9 +136,11 @@ export interface FileRoutesByTo {
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
+  '/phap-ly/$slug': typeof PhapLySlugRoute
   '/tin-tuc/$slug': typeof TinTucSlugRoute
   '/du-an': typeof DuAnIndexRoute
   '/moi-gioi': typeof MoiGioiIndexRoute
+  '/phap-ly': typeof PhapLyIndexRoute
   '/tin-tuc': typeof TinTucIndexRoute
 }
 export interface FileRoutesById {
@@ -139,9 +155,11 @@ export interface FileRoutesById {
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
+  '/phap-ly/$slug': typeof PhapLySlugRoute
   '/tin-tuc/$slug': typeof TinTucSlugRoute
   '/du-an/': typeof DuAnIndexRoute
   '/moi-gioi/': typeof MoiGioiIndexRoute
+  '/phap-ly/': typeof PhapLyIndexRoute
   '/tin-tuc/': typeof TinTucIndexRoute
 }
 export interface FileRouteTypes {
@@ -157,9 +175,11 @@ export interface FileRouteTypes {
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
+    | '/phap-ly/$slug'
     | '/tin-tuc/$slug'
     | '/du-an/'
     | '/moi-gioi/'
+    | '/phap-ly/'
     | '/tin-tuc/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -173,9 +193,11 @@ export interface FileRouteTypes {
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
+    | '/phap-ly/$slug'
     | '/tin-tuc/$slug'
     | '/du-an'
     | '/moi-gioi'
+    | '/phap-ly'
     | '/tin-tuc'
   id:
     | '__root__'
@@ -189,9 +211,11 @@ export interface FileRouteTypes {
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
+    | '/phap-ly/$slug'
     | '/tin-tuc/$slug'
     | '/du-an/'
     | '/moi-gioi/'
+    | '/phap-ly/'
     | '/tin-tuc/'
   fileRoutesById: FileRoutesById
 }
@@ -206,9 +230,11 @@ export interface RootRouteChildren {
   OnThiRoute: typeof OnThiRoute
   DuAnSlugRoute: typeof DuAnSlugRoute
   MoiGioiSlugRoute: typeof MoiGioiSlugRoute
+  PhapLySlugRoute: typeof PhapLySlugRoute
   TinTucSlugRoute: typeof TinTucSlugRoute
   DuAnIndexRoute: typeof DuAnIndexRoute
   MoiGioiIndexRoute: typeof MoiGioiIndexRoute
+  PhapLyIndexRoute: typeof PhapLyIndexRoute
   TinTucIndexRoute: typeof TinTucIndexRoute
 }
 
@@ -277,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TinTucIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/phap-ly/': {
+      id: '/phap-ly/'
+      path: '/phap-ly'
+      fullPath: '/phap-ly/'
+      preLoaderRoute: typeof PhapLyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/moi-gioi/': {
       id: '/moi-gioi/'
       path: '/moi-gioi'
@@ -296,6 +329,13 @@ declare module '@tanstack/react-router' {
       path: '/tin-tuc/$slug'
       fullPath: '/tin-tuc/$slug'
       preLoaderRoute: typeof TinTucSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/phap-ly/$slug': {
+      id: '/phap-ly/$slug'
+      path: '/phap-ly/$slug'
+      fullPath: '/phap-ly/$slug'
+      preLoaderRoute: typeof PhapLySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/moi-gioi/$slug': {
@@ -326,9 +366,11 @@ const rootRouteChildren: RootRouteChildren = {
   OnThiRoute: OnThiRoute,
   DuAnSlugRoute: DuAnSlugRoute,
   MoiGioiSlugRoute: MoiGioiSlugRoute,
+  PhapLySlugRoute: PhapLySlugRoute,
   TinTucSlugRoute: TinTucSlugRoute,
   DuAnIndexRoute: DuAnIndexRoute,
   MoiGioiIndexRoute: MoiGioiIndexRoute,
+  PhapLyIndexRoute: PhapLyIndexRoute,
   TinTucIndexRoute: TinTucIndexRoute,
 }
 export const routeTree = rootRouteImport

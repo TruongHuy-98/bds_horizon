@@ -7,6 +7,7 @@ import {
   Map as MapIcon,
   TrendingUp,
   TrendingDown,
+  Scale,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/tin-tuc/")({
 
 type Category =
   | "Tất cả"
+  | "Pháp lý"
   | "Thị trường Đà Nẵng"
   | "Tiến độ Hạ tầng"
   | "Quy hoạch & Pháp lý"
@@ -46,6 +48,7 @@ type Category =
 
 const CATEGORIES: Category[] = [
   "Tất cả",
+  "Pháp lý",
   "Thị trường Đà Nẵng",
   "Tiến độ Hạ tầng",
   "Quy hoạch & Pháp lý",
@@ -317,6 +320,25 @@ function PlanningCTA() {
   );
 }
 
+function LegalCTA() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 p-6 text-white shadow-card space-y-3">
+      <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
+        <Scale className="size-4" /> Chuyên trang Pháp lý BĐS
+      </div>
+      <h3 className="text-sm font-bold text-white leading-snug">
+        Vướng mắc sổ đỏ, tranh chấp & thẩm định pháp lý dự án?
+      </h3>
+      <p className="text-xs text-slate-300 leading-relaxed">
+        Nhận tư vấn trực tiếp từ đội ngũ Luật sư bất động sản chuyên sâu tại Đà Nẵng.
+      </p>
+      <Button asChild className="w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-sm">
+        <Link to="/phap-ly">TƯ VẤN PHÁP LÝ NGAY</Link>
+      </Button>
+    </div>
+  );
+}
+
 
 
 function NewsPage() {
@@ -404,6 +426,7 @@ function NewsPage() {
             </div>
             <aside className="space-y-6">
               <SideHighlights posts={posts} />
+              <LegalCTA />
               <PriceMovementCard />
               <MostViewedCard posts={posts} />
               <PlanningCTA />

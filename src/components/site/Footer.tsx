@@ -74,6 +74,11 @@ export default function Footer() {
           <h4 className="font-semibold text-sm text-foreground">Khám phá & Tiện ích</h4>
           <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
             <li>
+              <Link to="/phap-ly" className="hover:text-primary transition-colors">
+                Tư vấn Pháp lý BĐS
+              </Link>
+            </li>
+            <li>
               <Link to="/tin-tuc" className="hover:text-primary transition-colors">
                 Tin tức thị trường
               </Link>

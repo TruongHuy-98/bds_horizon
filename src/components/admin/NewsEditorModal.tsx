@@ -14,6 +14,10 @@ import {
   Sparkles,
   ArrowLeft,
   Eye,
+  PlusCircle,
+  Plus,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import {
   Dialog,
@@ -33,6 +37,8 @@ import SeoPreviewBlock from "./SeoPreviewBlock";
 import ImageUploader from "./ImageUploader";
 import { NewsPostRow } from "@/routes/admin";
 import { slugify } from "@/lib/utils";
+import { CategoryItem, fetchCategories, createCategory } from "@/lib/categories";
+import { toast } from "sonner";
 
 export interface NewsFormData {
   id?: string;
@@ -42,6 +48,7 @@ export interface NewsFormData {
   content: string;
   author: string;
   category: string;
+  category_id?: string | null;
   cover_image: string;
   images: string[];
   publishStatus: "public" | "draft" | "scheduled";
@@ -70,6 +77,15 @@ export default function NewsEditorModal({
   const [saving, setSaving] = useState(false);
   const [tagInput, setTagInput] = useState("");
 
+  // Categories list & quick-add states
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [loadingCats, setLoadingCats] = useState(false);
+  const [showQuickAddCat, setShowQuickAddCat] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatSlug, setNewCatSlug] = useState("");
+  const [newCatDesc, setNewCatDesc] = useState("");
+  const [savingCat, setSavingCat] = useState(false);
+
   const [form, setForm] = useState<NewsFormData>({
     title: "",
     slug: "",
@@ -77,6 +93,7 @@ export default function NewsEditorModal({
     content: "",
     author: "Ban Biên Tập",
     category: "Thị trường BĐS",
+    category_id: null,
     cover_image: "",
     images: [],
     publishStatus: "public",
@@ -86,6 +103,18 @@ export default function NewsEditorModal({
     seoTitle: "",
     seoDescription: "",
   });
+
+  // Load categories whenever modal opens
+  useEffect(() => {
+    if (open) {
+      setLoadingCats(true);
+      fetchCategories(isMock)
+        .then((cats) => {
+          setCategories(cats);
+        })
+        .finally(() => setLoadingCats(false));
+    }
+  }, [open, isMock]);
 
   useEffect(() => {
     if (editingItem) {
@@ -119,6 +148,7 @@ export default function NewsEditorModal({
         content: editingItem.content || "",
         author: editingItem.author || "Ban Biên Tập",
         category: editingItem.category || "Thị trường BĐS",
+        category_id: (editingItem as any).category_id || null,
         cover_image: editingItem.cover_image || "",
         images: Array.isArray(editingItem.images) ? (editingItem.images as string[]) : editingItem.cover_image ? [editingItem.cover_image] : [],
         publishStatus: isSched ? "scheduled" : isPub ? "public" : "draft",
@@ -138,6 +168,7 @@ export default function NewsEditorModal({
         content: "",
         author: "Ban Biên Tập",
         category: "Thị trường BĐS",
+        category_id: null,
         cover_image: "",
         images: [],
         publishStatus: "public",
@@ -149,6 +180,50 @@ export default function NewsEditorModal({
       });
     }
   }, [editingItem, open]);
+
+  const handleQuickAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCatName.trim()) {
+      toast.error("Vui lòng nhập tên chuyên mục!");
+      return;
+    }
+
+    try {
+      setSavingCat(true);
+      const created = await createCategory(
+        {
+          name: newCatName.trim(),
+          slug: newCatSlug.trim() || slugify(newCatName),
+          description: newCatDesc.trim() || undefined,
+        },
+        isMock
+      );
+
+      // Add to list if not already there
+      setCategories((prev) => {
+        const exists = prev.some((c) => c.id === created.id || c.slug === created.slug);
+        if (exists) return prev;
+        return [...prev, created];
+      });
+
+      // Automatically select the new category
+      setForm((prev) => ({
+        ...prev,
+        category: created.name,
+        category_id: created.id,
+      }));
+
+      toast.success(`Đã tạo và chọn chuyên mục "${created.name}"!`);
+      setNewCatName("");
+      setNewCatSlug("");
+      setNewCatDesc("");
+      setShowQuickAddCat(false);
+    } catch (err: any) {
+      toast.error(`Không thể tạo chuyên mục: ${err.message || err}`);
+    } finally {
+      setSavingCat(false);
+    }
+  };
 
   // Handle Title change & Auto Slug
   const handleTitleChange = (val: string) => {
@@ -433,24 +508,170 @@ export default function NewsEditorModal({
 
               {/* CARD 3: CATEGORY & AUTHOR */}
               <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
-                <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <FolderOpen className="size-4 text-purple-600" /> Chuyên mục & Tác giả
-                </h3>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-2">
+                    <FolderOpen className="size-4 text-purple-600" /> Chuyên mục & Tác giả
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickAddCat(!showQuickAddCat)}
+                    className="text-[11px] font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 hover:underline transition-all cursor-pointer"
+                  >
+                    <PlusCircle className="size-3.5" />
+                    {showQuickAddCat ? "Đóng form" : "Thêm nhanh chuyên mục"}
+                  </button>
+                </div>
 
+                {/* Quick Add Category Drawer / Inline form */}
+                {showQuickAddCat && (
+                  <div className="p-3.5 bg-purple-50/70 border border-purple-200 rounded-xl space-y-2.5 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                        <Plus className="size-3.5 text-purple-600" /> Thêm nhanh chuyên mục mới
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowQuickAddCat(false)}
+                        className="text-purple-500 hover:text-purple-800 p-0.5 rounded cursor-pointer"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-medium text-purple-900">Tên chuyên mục *</Label>
+                      <Input
+                        placeholder="Ví dụ: Pháp lý, Thủ tục Đất đai..."
+                        value={newCatName}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewCatName(val);
+                          setNewCatSlug(slugify(val));
+                        }}
+                        className="h-8 text-xs bg-white border-purple-200 focus-visible:ring-purple-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-medium text-purple-900">Slug đường dẫn</Label>
+                      <div className="flex items-center gap-1 text-[11px] text-purple-700 font-mono bg-white px-2 py-1 rounded border border-purple-200">
+                        <span>/</span>
+                        <input
+                          value={newCatSlug}
+                          onChange={(e) => setNewCatSlug(e.target.value)}
+                          placeholder="phap-ly"
+                          className="w-full text-xs font-mono outline-none bg-transparent"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-medium text-purple-900">Mô tả tóm tắt (tùy chọn)</Label>
+                      <Input
+                        placeholder="Mô tả nội dung chuyên mục..."
+                        value={newCatDesc}
+                        onChange={(e) => setNewCatDesc(e.target.value)}
+                        className="h-8 text-xs bg-white border-purple-200 focus-visible:ring-purple-400"
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      disabled={savingCat || !newCatName.trim()}
+                      onClick={handleQuickAddCategory}
+                      className="w-full h-8 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow-sm cursor-pointer"
+                    >
+                      {savingCat ? "Đang lưu..." : "Lưu & Chọn chuyên mục này"}
+                    </Button>
+                  </div>
+                )}
+
+                {/* CATEGORY SELECTOR DROPDOWN */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-slate-700">Chuyên mục tin tức</Label>
-                  <Input
-                    placeholder="Ví dụ: Thị trường BĐS, Quy hoạch..."
-                    value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    className="text-xs border-slate-200"
-                  />
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold text-slate-700">Chuyên mục bài viết *</Label>
+                    {loadingCats && (
+                      <span className="text-[10px] text-slate-400">Đang tải danh mục...</span>
+                    )}
+                  </div>
+
+                  <div className="relative">
+                    <select
+                      value={
+                        categories.find((c) => c.id === form.category_id || c.name === form.category)?.id ||
+                        form.category
+                      }
+                      onChange={(e) => {
+                        const selectedVal = e.target.value;
+                        const found = categories.find((c) => c.id === selectedVal || c.name === selectedVal);
+                        if (found) {
+                          setForm((prev) => ({
+                            ...prev,
+                            category: found.name,
+                            category_id: found.id,
+                          }));
+                        } else {
+                          setForm((prev) => ({
+                            ...prev,
+                            category: selectedVal,
+                            category_id: null,
+                          }));
+                        }
+                      }}
+                      className="w-full h-9 px-3 pr-8 text-xs font-medium text-slate-800 bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer"
+                    >
+                      <option value="" disabled>-- Chọn chuyên mục bài viết --</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} {c.slug ? `(slug: /${c.slug})` : ""}
+                        </option>
+                      ))}
+                      {/* Fallback if form.category is not in categories list */}
+                      {form.category && !categories.some((c) => c.name === form.category) && (
+                        <option value={form.category}>{form.category} (Tự chọn)</option>
+                      )}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400 pointer-events-none" />
+                  </div>
+
+                  {/* QUICK CATEGORY CHIPS */}
+                  <div className="pt-1">
+                    <span className="text-[11px] font-medium text-slate-500 block mb-1.5">
+                      Chọn nhanh chuyên mục:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {categories.map((cat) => {
+                        const isSelected = form.category === cat.name || form.category_id === cat.id;
+                        return (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() =>
+                              setForm((prev) => ({
+                                ...prev,
+                                category: cat.name,
+                                category_id: cat.id,
+                              }))
+                            }
+                            className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition-all flex items-center gap-1 cursor-pointer ${
+                              isSelected
+                                ? "bg-purple-600 text-white border-purple-600 shadow-sm"
+                                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300"
+                            }`}
+                          >
+                            {isSelected && <Check className="size-3" />}
+                            {cat.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold text-slate-700">Tác giả bài viết</Label>
                   <Input
-                    placeholder="Ví dụ: Ban Biên Tập, Nguyễn Văn A..."
+                    placeholder="Ví dụ: Ban Biên Tập, Luật sư Nguyễn Văn A..."
                     value={form.author}
                     onChange={(e) => setForm({ ...form, author: e.target.value })}
                     className="text-xs border-slate-200"

@@ -8,10 +8,49 @@ export type Database = {
   };
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          name: string;
+          parent_id: string | null;
+          slug: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          name: string;
+          parent_id?: string | null;
+          slug: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          name?: string;
+          parent_id?: string | null;
+          slug?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey";
+            columns: ["parent_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       news_posts: {
         Row: {
           author: string | null;
           category: string | null;
+          category_id: string | null;
           content: string | null;
           cover_image: string | null;
           created_at: string;
@@ -28,6 +67,7 @@ export type Database = {
         Insert: {
           author?: string | null;
           category?: string | null;
+          category_id?: string | null;
           content?: string | null;
           cover_image?: string | null;
           created_at?: string;
@@ -44,6 +84,7 @@ export type Database = {
         Update: {
           author?: string | null;
           category?: string | null;
+          category_id?: string | null;
           content?: string | null;
           cover_image?: string | null;
           created_at?: string;
@@ -57,7 +98,15 @@ export type Database = {
           title?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "news_posts_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       projects: {
         Row: {
