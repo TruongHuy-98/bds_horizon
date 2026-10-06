@@ -19,6 +19,84 @@ export interface LegalPostItem {
 
 export const DEFAULT_LEGAL_POSTS: LegalPostItem[] = [
   {
+    id: "news-pl-0",
+    title: "Dịch vụ Tư vấn & Xử lý vướng mắc pháp lý dự án Bất động sản: Tháo gỡ điểm nghẽn, khơi thông dòng vốn",
+    slug: "tu-van-va-xu-ly-vuong-mac-phap-ly-du-an-bat-dong-san",
+    excerpt: "Giải pháp pháp lý dự án toàn diện cho Chủ đầu tư: Tháo gỡ chấp thuận chủ trương đầu tư, quy hoạch 1/500, định giá và tính tiền sử dụng đất, GPXD, nghiệm thu PCCC và điều kiện mở bán theo Luật Đất đai mới.",
+    content: `Trong bối cảnh hệ sinh thái pháp luật bất động sản bước vào giai đoạn chuyển tiếp mang tính lịch sử với việc thực thi đồng bộ Luật Đất đai 2024, Luật Nhà ở 2023 và Luật Kinh doanh Bất động sản 2023, pháp lý dự án tiếp tục là mắt xích quyết định sự thành bại của mọi doanh nghiệp phát triển địa ốc. Thực tế cho thấy, hàng trăm dự án trên cả nước đang rơi vào trạng thái đình trệ kéo dài: hồ sơ chấp thuận chủ trương đầu tư ách tắc, quy hoạch chi tiết 1/500 xung đột với quy hoạch phân khu, chậm xác định giá đất để tính tiền sử dụng đất, hoặc gặp rào cản trong khâu cấp phép xây dựng và nghiệm thu phòng cháy chữa cháy.
+
+Mỗi tháng dự án bị chậm trễ không chỉ làm gia tăng cấp số nhân gánh nặng lãi vay, mà còn làm xói mòn uy tín thương hiệu của Chủ đầu tư đối với đối tác và khách hàng. Thấu hiểu những trăn trở cốt lõi đó, Dịch vụ Tư vấn & Xử lý vướng mắc pháp lý dự án Bất động sản của chúng tôi mang đến giải pháp thực chiến toàn diện, giúp doanh nghiệp bóc tách từng nút thắt, tái cấu trúc pháp lý và đưa dự án về đích an toàn, đúng luật.
+
+## 1. Các điểm nghẽn pháp lý dự án bất động sản phổ biến hiện nay
+
+Thực tiễn thẩm định hồ sơ dự án cho thấy sự giao thoa phức tạp giữa Luật Đầu tư, Luật Đất đai, Luật Xây dựng, Luật Quy hoạch đô thị và Luật Đấu thầu tạo nên 5 nhóm rào cản phổ biến:
+
+### 1.1. Chấp thuận chủ trương đầu tư & Lựa chọn nhà đầu tư
+- Xung đột hình thức lựa chọn nhà đầu tư: Đấu giá quyền sử dụng đất, đấu thầu lựa chọn nhà đầu tư hay chấp thuận nhà đầu tư có quyền sử dụng đất theo quy định mới.
+- Dự án có quỹ đất công xen kẹt, đất có nguồn gốc cổ phần hóa doanh nghiệp nhà nước hoặc đất quốc phòng - an ninh chuyển giao chưa hoàn tất thủ tục sắp xếp tài sản công.
+- Hồ sơ đề xuất dự án bị ách tắc kéo dài do chưa đồng bộ với Quy hoạch tỉnh và Kế hoạch sử dụng đất cấp huyện.
+
+### 1.2. Phê duyệt Quy hoạch chi tiết 1/500 & Điều chỉnh chỉ tiêu kiến trúc
+- Sự không thống nhất giữa Quy hoạch phân khu (tỷ lệ 1/2000) và Quy hoạch chi tiết xây dựng (tỷ lệ 1/500) dẫn đến việc hồ sơ bị trả lại để xin ý kiến nhiều cấp.
+- Khó khăn trong việc xin điều chỉnh cục bộ quy hoạch chi tiết: Tăng hệ số sử dụng đất, nâng tầng cao, điều chỉnh cơ cấu căn hộ hoặc bổ sung diện tích sàn thương mại dịch vụ.
+
+### 1.3. Định giá đất & Tính tiền sử dụng đất dự án
+- Đây là “nút thắt cổ chai” nan giải nhất khiến dự án không thể hoàn tất nghĩa vụ tài chính để được cấp Giấy phép xây dựng hoặc cấp Sổ hồng cho cư dân.
+- Bất đồng trong việc áp dụng phương pháp định giá đất (phương pháp thặng dư, so sánh, hệ số điều chỉnh giá đất) giữa các cơ quan ban ngành và đơn vị tư vấn thẩm định giá.
+- Thủ tục ban hành Quyết định giao đất, cho thuê đất và Thông báo nộp tiền sử dụng đất bị kéo dài qua nhiều chu kỳ ngân sách.
+
+### 1.4. Thẩm định thiết kế cơ sở, Giấy phép xây dựng & Nghiệm thu PCCC
+- Báo cáo đánh giá tác động môi trường (ĐTM) hoặc Giấy phép môi trường bị siết chặt tiêu chí kỹ thuật theo quy định mới.
+- Quy chuẩn Phòng cháy chữa cháy (QCVN 06:2022/BXD và văn bản sửa đổi) có sự thay đổi liên tục, đòi hỏi hồ sơ thiết kế cơ sở phải điều chỉnh nhiều lần.
+- Điều kiện khởi công công trình và nghiệm thu phần móng để đủ điều kiện ký hợp đồng mua bán nhà ở hình thành trong tương lai.
+
+## 2. Vì sao Chủ đầu tư cần Đơn vị tư vấn pháp lý chuyên sâu thay vì tự xử lý?
+
+Dù sở hữu bộ phận pháp chế nội bộ, nhiều Chủ đầu tư vẫn ưu tiên hợp tác cùng đơn vị tư vấn độc lập chuyên trách bởi các lợi thế vượt trội:
+
+- Am hiểu cơ chế chuyển tiếp luật mới: Giai đoạn giao thời áp dụng Luật Đất đai 2024 tiềm ẩn nguy cơ hồi tố hoặc thiếu thông tư hướng dẫn. Đội ngũ luật sư chuyên trách sở hữu góc nhìn liên ngành sâu rộng, biết rõ điểm tựa pháp lý vững chắc nhất để bảo vệ hồ sơ.
+- Thẩm định rủi ro độc lập (Legal Due Diligence): Cung cấp bức tranh toàn cảnh khách quan về "bệnh án pháp lý" của dự án, phát hiện kịp thời các rủi ro tiềm ẩn mà đội ngũ nội bộ có thể bỏ sót.
+- Tiết kiệm chi phí cơ hội và tối ưu dòng vốn: Mỗi quý dự án được đẩy nhanh tiến độ sẽ giúp doanh nghiệp tiết kiệm hàng tỷ đồng chi phí vốn vay và nhanh chóng kích hoạt dòng tiền mở bán.
+- Kỹ năng giải trình chuyên sâu: Xây dựng hệ thống văn bản kiến nghị, công văn giải trình với lập luận thuyết phục, viện dẫn các tiền lệ xử lý tương đương đã được cơ quan nhà nước chấp thuận.
+
+## 3. Quy trình 5 bước tư vấn & tháo gỡ vướng mắc dự án BĐS
+
+Chúng tôi thiết lập quy trình giải quyết hồ sơ chặt chẽ, bảo mật và đo lường kết quả theo từng cột mốc:
+
+- Bước 1: Tiếp nhận hồ sơ & Ký kết Thỏa thuận bảo mật thông tin (NDA) tuyệt đối trước khi tiếp cận tài liệu.
+- Bước 2: Thẩm định pháp lý chuyên sâu (Legal Due Diligence), bóc tách toàn diện các văn bản hành chính đã ban hành.
+- Bước 3: Lập Báo cáo thẩm định rủi ro & Hoạch định Phương án giải quyết (bao gồm Kịch bản tối ưu và Kịch bản dự phòng).
+- Bước 4: Soạn thảo hồ sơ giải trình chuẩn mực, đồng hành cùng Chủ đầu tư làm việc với các Sở, Ban, Ngành và UBND cấp tỉnh.
+- Bước 5: Bàn giao văn bản chấp thuận đã tháo gỡ, tiếp tục hỗ trợ pháp lý cho các giai đoạn thi công, mở bán tiếp theo.
+
+## 4. Các gói giải pháp pháp lý dự án chúng tôi cung cấp
+
+Tùy theo nhu cầu và giai đoạn phát triển dự án, doanh nghiệp có thể lựa chọn các gói dịch vụ chuyên biệt:
+
+- Gói 1: Tháo gỡ Chấp thuận chủ trương đầu tư, điều chỉnh tiến độ và gia hạn dự án đầu tư.
+- Gói 2: Tư vấn pháp lý đất đai, giải phóng mặt bằng, chuyển mục đích sử dụng đất và giải quyết vướng mắc tính tiền sử dụng đất.
+- Gói 3: Thẩm định pháp lý M&A, chuyển nhượng dự án, tái cấu trúc tài sản bảo đảm và thẩm định bên mua/bên bán.
+- Gói 4: Chuẩn hóa pháp lý kinh doanh: Rà soát Hợp đồng mua bán, hoàn tất thủ tục bảo lãnh ngân hàng và văn bản đủ điều kiện mở bán.
+- Gói 5: Đại diện giải quyết tranh chấp hợp đồng hợp tác kinh doanh (BCC) và xử lý khiếu nại quyết định hành chính liên quan đến dự án.
+
+## 5. Cam kết đồng hành: Khả thi - Bảo mật - Tối ưu thời gian
+
+- Cam kết tính khả thi thực tế: Mọi giải pháp pháp lý đều gắn liền với tính thực thi, không tư vấn lý thuyết chung chung.
+- Bảo mật thông tin tuyệt đối: Bảo vệ 100% dữ liệu dự án, hồ sơ tài chính và chiến lược kinh doanh của khách hàng.
+- Đồng hành đến khi có kết quả: Sát cánh cùng Ban Lãnh đạo Chủ đầu tư trong toàn bộ quá trình thẩm định và phê duyệt hồ sơ.`,
+    author: "ThS. Luật sư Trần Đình Thắng & Ban Pháp Chế Horizon",
+    category: "Pháp lý",
+    category_id: "cat-phap-ly",
+    cover_image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
+    published: true,
+    published_at: "2026-10-06T08:00:00.000Z",
+    created_at: "2026-10-06T08:00:00.000Z",
+    tags: ["Pháp lý dự án", "Chủ đầu tư", "Thẩm định pháp lý", "Tiền sử dụng đất", "Quy hoạch 1/500", "Luật Đất đai 2024"],
+    focus_keyword: "tư vấn xử lý vướng mắc pháp lý dự án bất động sản",
+    seo_title: "Dịch Vụ Tư Vấn & Xử Lý Vướng Mắc Pháp Lý Dự Án Bất Động Sản Toàn Diện",
+    seo_description: "Giải pháp tư vấn và tháo gỡ điểm nghẽn pháp lý dự án BĐS: Chấp thuận chủ trương đầu tư, quy hoạch 1/500, tính tiền sử dụng đất, GPXD theo Luật Đất đai 2024."
+  },
+  {
     id: "news-pl-1",
     title: "Hướng dẫn chi tiết quy trình sang tên sổ đỏ tại Đà Nẵng mới nhất 2026",
     slug: "huong-dan-chi-tiet-quy-trinh-sang-ten-so-do-tai-da-nang-2026",

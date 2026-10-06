@@ -114,7 +114,8 @@ export default function LegalDetailPage() {
       }
     }
 
-    setPost(currentPost);
+    const foundPost = currentPost || DEFAULT_LEGAL_POSTS.find((p) => p.slug === slug) || null;
+    setPost(foundPost);
 
     // Filter related posts in Legal category
     const legalRelated = allPosts.filter(
@@ -125,9 +126,15 @@ export default function LegalDetailPage() {
           p.category_id === "cat-phap-ly")
     );
 
-    setRelatedPosts(legalRelated.length > 0 ? legalRelated.slice(0, 3) : allPosts.slice(0, 3));
+    const mergedRelated = [
+      ...legalRelated,
+      ...DEFAULT_LEGAL_POSTS.filter((p) => p.slug !== slug && !legalRelated.some((lr) => lr.slug === p.slug)),
+    ];
+
+    setRelatedPosts(mergedRelated.slice(0, 3));
     setLoading(false);
   };
+
 
   useEffect(() => {
     loadData();
@@ -256,6 +263,23 @@ export default function LegalDetailPage() {
       );
     }
 
+    const renderInline = (str: string) => {
+      if (str.includes("**")) {
+        const parts = str.split(/(\*\*[^*]+\*\*)/g);
+        return parts.map((part, i) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return (
+              <strong key={i} className="font-bold text-slate-900">
+                {part.slice(2, -2)}
+              </strong>
+            );
+          }
+          return part;
+        });
+      }
+      return str;
+    };
+
     // Markdown content parsing
     const blocks = content.split("\n\n");
     return (
@@ -299,23 +323,51 @@ export default function LegalDetailPage() {
             );
           }
 
+          if (trimmed.startsWith("> ")) {
+            const quoteText = trimmed.replace(/^>\s*/gm, "").trim();
+            return (
+              <div
+                key={idx}
+                className="my-5 p-4 bg-blue-50/80 border-l-4 border-blue-600 rounded-r-xl text-slate-800 text-sm italic"
+              >
+                {renderInline(quoteText)}
+              </div>
+            );
+          }
+
           if (trimmed.startsWith("- ")) {
             const items = trimmed.split("\n").map((item) => item.replace("- ", "").trim());
             return (
-              <ul key={idx} className="space-y-2 my-4 pl-2">
-                {items.map((it, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-slate-700">
-                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0 mt-1" />
-                    <span>{it}</span>
-                  </li>
-                ))}
+              <ul key={idx} className="space-y-2.5 my-4 pl-1">
+                {items.map((it, i) => {
+                  const colonIndex = it.indexOf(":");
+                  if (colonIndex > 0 && colonIndex < 40) {
+                    const label = it.slice(0, colonIndex);
+                    const desc = it.slice(colonIndex + 1);
+                    return (
+                      <li key={i} className="flex items-start gap-2.5 text-slate-700">
+                        <CheckCircle2 className="size-4 text-emerald-600 shrink-0 mt-1" />
+                        <span>
+                          <strong className="font-bold text-slate-900">{label}:</strong>
+                          {renderInline(desc)}
+                        </span>
+                      </li>
+                    );
+                  }
+                  return (
+                    <li key={i} className="flex items-start gap-2.5 text-slate-700">
+                      <CheckCircle2 className="size-4 text-emerald-600 shrink-0 mt-1" />
+                      <span>{renderInline(it)}</span>
+                    </li>
+                  );
+                })}
               </ul>
             );
           }
 
           return (
             <p key={idx} className="text-slate-700 leading-relaxed">
-              {trimmed}
+              {renderInline(trimmed)}
             </p>
           );
         })}

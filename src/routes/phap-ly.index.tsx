@@ -112,12 +112,16 @@ export default function LegalCategoryPage() {
         (Array.isArray(p.tags) && p.tags.some((t: string) => t.toLowerCase().includes("pháp lý")))
     );
 
-    // If no specific legal posts found in mock, fallback to first few posts with legal labeling
-    if (legalPosts.length === 0 && allNews.length > 0) {
-      setPosts(allNews.slice(0, 4));
-    } else {
-      setPosts(legalPosts);
-    }
+    // Merge database posts with default legal posts (avoiding duplicate slugs)
+    const combined = [
+      ...legalPosts,
+      ...DEFAULT_LEGAL_POSTS.filter(
+        (dp) => !legalPosts.some((lp) => lp.slug === dp.slug || lp.id === dp.id)
+      ),
+    ];
+
+    setPosts(combined);
+
 
     setLoading(false);
   };
