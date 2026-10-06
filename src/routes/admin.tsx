@@ -63,6 +63,7 @@ import {
   Phone,
   Mail,
   CreditCard,
+  FolderOpen,
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import ImageUploader from "@/components/admin/ImageUploader";
