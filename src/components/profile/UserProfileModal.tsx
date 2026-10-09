@@ -49,6 +49,15 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { UserAccount } from "@/data/mockUsersData";
+import { validateCCCD } from "@/lib/cccd";
+import { preloadCccdOcr, type CccdSide } from "@/lib/cccdOcr";
+import { useCccdScan } from "@/hooks/use-cccd-scan";
+import {
+  CccdNumberHint,
+  CccdScanOverlay,
+  CccdScanStatus,
+  cccdInputErrorClass,
+} from "@/components/cccd/CccdScanFeedback";
 
 const PRESET_AVATARS = [
   {
@@ -175,6 +184,21 @@ export function UserProfileModal() {
   const idBackInputRef = useRef<HTMLInputElement>(null);
   const licenseInputRef = useRef<HTMLInputElement>(null);
 
+  // CCCD validation + OCR
+  const [idCardTouched, setIdCardTouched] = useState(false);
+  const frontScan = useCccdScan("front");
+  const backScan = useCccdScan("back");
+  const idCardNumberRef = useRef(idCardNumber);
+  idCardNumberRef.current = idCardNumber;
+
+  useEffect(() => {
+    setIdCardTouched(false);
+    frontScan.reset();
+    backScan.reset();
+    if (isProfileModalOpen && (role === "broker" || role === "collaborator")) preloadCccdOcr();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isProfileModalOpen, role]);
+
   // Populate data when modal opens or profile changes
   useEffect(() => {
     if (profile) {
@@ -261,6 +285,58 @@ export function UserProfileModal() {
     reader.readAsDataURL(file);
   };
 
+  // Tự động điền / so khớp Số CCCD bóc tách từ ảnh
+  const applyExtractedCccd = (num?: string | null) => {
+    if (!num) return;
+    const current = idCardNumberRef.current.trim();
+    if (!current) {
+      setIdCardNumber(num);
+      setIdCardTouched(true);
+      toast.info(`Đã tự động điền Số CCCD ${num} từ ảnh.`);
+    } else if (current !== num) {
+      toast.warning(`Số CCCD trên ảnh (${num}) không khớp với số đã nhập (${current}).`);
+    }
+  };
+
+  // Upload ảnh CCCD: quét OCR xác minh đúng mặt trước khi chấp nhận
+  const handleCccdUpload = async (e: React.ChangeEvent<HTMLInputElement>, side: CccdSide) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    input.value = ""; // xóa file tạm khỏi input để có thể chọn lại
+    if (!file) return;
+
+    const setUrl = side === "front" ? setIdCardFrontUrl : setIdCardBackUrl;
+    const scanner = side === "front" ? frontScan : backScan;
+    const label = side === "front" ? "CCCD Mặt trước" : "CCCD Mặt sau";
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Tệp không phải là hình ảnh hợp lệ.");
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error("Ảnh quá lớn. Vui lòng chọn ảnh dưới 4MB.");
+      return;
+    }
+
+    const result = await scanner.scan(file);
+    if (!result) return; // đã có lượt chọn ảnh mới hơn
+    if (!result.ok) {
+      setUrl(undefined);
+      toast.error(result.message);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setUrl(reader.result);
+        toast.success(`Đã xác minh và tải ảnh ${label} thành công!`);
+      }
+    };
+    reader.readAsDataURL(file);
+    applyExtractedCccd(result.cccdNumber);
+  };
+
   // Toggle specialty tag
   const toggleSpecialty = (tag: string) => {
     if (specialties.includes(tag)) {
@@ -318,6 +394,19 @@ export function UserProfileModal() {
   const handleSave = async () => {
     if (!name.trim()) {
       toast.error("Vui lòng nhập Họ và tên.");
+      return;
+    }
+
+    if (idCardNumber.trim()) {
+      const cccdCheck = validateCCCD(idCardNumber);
+      if (!cccdCheck.valid) {
+        setIdCardTouched(true);
+        toast.error(`Số CCCD không hợp lệ: ${cccdCheck.error}`);
+        return;
+      }
+    }
+    if (frontScan.isScanning || backScan.isScanning) {
+      toast.warning("Đang quét OCR ảnh CCCD, vui lòng đợi hoàn tất trước khi lưu.");
       return;
     }
 
@@ -737,10 +826,14 @@ export function UserProfileModal() {
                         <Label className="text-[11px] text-muted-foreground">Số CCCD (12 số)</Label>
                         <Input
                           value={idCardNumber}
-                          onChange={(e) => setIdCardNumber(e.target.value)}
+                          onChange={(e) => setIdCardNumber(e.target.value.replace(/\D/g, ""))}
+                          onBlur={() => setIdCardTouched(true)}
+                          inputMode="numeric"
+                          maxLength={12}
                           placeholder="048092008765"
-                          className="h-9 text-xs"
+                          className={`h-9 text-xs font-mono ${cccdInputErrorClass(idCardNumber, idCardTouched)}`}
                         />
+                        <CccdNumberHint value={idCardNumber} touched={idCardTouched} />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[11px] text-muted-foreground">Ngày cấp</Label>
@@ -784,14 +877,23 @@ export function UserProfileModal() {
                               <span className="text-xs">Tải ảnh mặt trước</span>
                             </div>
                           )}
+                          <CccdScanOverlay state={frontScan.state} />
                           <input
                             ref={idFrontInputRef}
                             type="file"
                             accept="image/*"
                             className="hidden"
-                            onChange={(e) => handleDocFileUpload(e, setIdCardFrontUrl, "CCCD Mặt trước")}
+                            onChange={(e) => handleCccdUpload(e, "front")}
                           />
                         </div>
+                        <CccdScanStatus
+                          state={frontScan.state}
+                          currentNumber={idCardNumber}
+                          onApplyNumber={(num) => {
+                            setIdCardNumber(num);
+                            setIdCardTouched(true);
+                          }}
+                        />
                       </div>
 
                       {/* Mặt sau */}
@@ -814,14 +916,23 @@ export function UserProfileModal() {
                               <span className="text-xs">Tải ảnh mặt sau</span>
                             </div>
                           )}
+                          <CccdScanOverlay state={backScan.state} />
                           <input
                             ref={idBackInputRef}
                             type="file"
                             accept="image/*"
                             className="hidden"
-                            onChange={(e) => handleDocFileUpload(e, setIdCardBackUrl, "CCCD Mặt sau")}
+                            onChange={(e) => handleCccdUpload(e, "back")}
                           />
                         </div>
+                        <CccdScanStatus
+                          state={backScan.state}
+                          currentNumber={idCardNumber}
+                          onApplyNumber={(num) => {
+                            setIdCardNumber(num);
+                            setIdCardTouched(true);
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -1033,10 +1144,14 @@ export function UserProfileModal() {
                       <Label className="text-xs font-semibold">Số CCCD / Định danh cá nhân</Label>
                       <Input
                         value={idCardNumber}
-                        onChange={(e) => setIdCardNumber(e.target.value)}
+                        onChange={(e) => setIdCardNumber(e.target.value.replace(/\D/g, ""))}
+                        onBlur={() => setIdCardTouched(true)}
+                        inputMode="numeric"
+                        maxLength={12}
                         placeholder="048095006789"
-                        className="h-10 text-sm font-mono"
+                        className={`h-10 text-sm font-mono ${cccdInputErrorClass(idCardNumber, idCardTouched)}`}
                       />
+                      <CccdNumberHint value={idCardNumber} touched={idCardTouched} />
                     </div>
                   </div>
                 </div>

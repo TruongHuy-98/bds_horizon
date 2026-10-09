@@ -9,51 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as OnThiRouteImport } from './routes/on-thi'
-import { Route as NhaDatChoThueRouteImport } from './routes/nha-dat-cho-thue'
-import { Route as NhaDatBanRouteImport } from './routes/nha-dat-ban'
-import { Route as CheckQuyHoachRouteImport } from './routes/check-quy-hoach'
-import { Route as BanDatRouteImport } from './routes/ban-dat'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TinTucIndexRouteImport } from './routes/tin-tuc.index'
-import { Route as PhapLyIndexRouteImport } from './routes/phap-ly.index'
-import { Route as MoiGioiIndexRouteImport } from './routes/moi-gioi.index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BanDatRouteImport } from './routes/ban-dat'
+import { Route as CheckQuyHoachRouteImport } from './routes/check-quy-hoach'
+import { Route as NhaDatBanRouteImport } from './routes/nha-dat-ban'
+import { Route as NhaDatChoThueRouteImport } from './routes/nha-dat-cho-thue'
+import { Route as OnThiRouteImport } from './routes/on-thi'
 import { Route as DuAnIndexRouteImport } from './routes/du-an.index'
-import { Route as TinTucSlugRouteImport } from './routes/tin-tuc.$slug'
-import { Route as PhapLySlugRouteImport } from './routes/phap-ly.$slug'
-import { Route as MoiGioiSlugRouteImport } from './routes/moi-gioi.$slug'
 import { Route as DuAnSlugRouteImport } from './routes/du-an.$slug'
+import { Route as MoiGioiIndexRouteImport } from './routes/moi-gioi.index'
+import { Route as MoiGioiSlugRouteImport } from './routes/moi-gioi.$slug'
+import { Route as PhapLyIndexRouteImport } from './routes/phap-ly.index'
+import { Route as PhapLySlugRouteImport } from './routes/phap-ly.$slug'
+import { Route as TinTucIndexRouteImport } from './routes/tin-tuc.index'
+import { Route as TinTucSlugRouteImport } from './routes/tin-tuc.$slug'
 
-const OnThiRoute = OnThiRouteImport.update({
-  id: '/on-thi',
-  path: '/on-thi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NhaDatChoThueRoute = NhaDatChoThueRouteImport.update({
-  id: '/nha-dat-cho-thue',
-  path: '/nha-dat-cho-thue',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NhaDatBanRoute = NhaDatBanRouteImport.update({
-  id: '/nha-dat-ban',
-  path: '/nha-dat-ban',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CheckQuyHoachRoute = CheckQuyHoachRouteImport.update({
-  id: '/check-quy-hoach',
-  path: '/check-quy-hoach',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BanDatRoute = BanDatRouteImport.update({
-  id: '/ban-dat',
-  path: '/ban-dat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -61,24 +36,34 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TinTucIndexRoute = TinTucIndexRouteImport.update({
-  id: '/tin-tuc/',
-  path: '/tin-tuc/',
+const BanDatRoute = BanDatRouteImport.update({
+  id: '/ban-dat',
+  path: '/ban-dat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PhapLyIndexRoute = PhapLyIndexRouteImport.update({
-  id: '/phap-ly/',
-  path: '/phap-ly/',
+const CheckQuyHoachRoute = CheckQuyHoachRouteImport.update({
+  id: '/check-quy-hoach',
+  path: '/check-quy-hoach',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MoiGioiIndexRoute = MoiGioiIndexRouteImport.update({
-  id: '/moi-gioi/',
-  path: '/moi-gioi/',
+const NhaDatBanRoute = NhaDatBanRouteImport.update({
+  id: '/nha-dat-ban',
+  path: '/nha-dat-ban',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NhaDatChoThueRoute = NhaDatChoThueRouteImport.update({
+  id: '/nha-dat-cho-thue',
+  path: '/nha-dat-cho-thue',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnThiRoute = OnThiRouteImport.update({
+  id: '/on-thi',
+  path: '/on-thi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DuAnIndexRoute = DuAnIndexRouteImport.update({
@@ -86,14 +71,14 @@ const DuAnIndexRoute = DuAnIndexRouteImport.update({
   path: '/du-an/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TinTucSlugRoute = TinTucSlugRouteImport.update({
-  id: '/tin-tuc/$slug',
-  path: '/tin-tuc/$slug',
+const DuAnSlugRoute = DuAnSlugRouteImport.update({
+  id: '/du-an/$slug',
+  path: '/du-an/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PhapLySlugRoute = PhapLySlugRouteImport.update({
-  id: '/phap-ly/$slug',
-  path: '/phap-ly/$slug',
+const MoiGioiIndexRoute = MoiGioiIndexRouteImport.update({
+  id: '/moi-gioi/',
+  path: '/moi-gioi/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MoiGioiSlugRoute = MoiGioiSlugRouteImport.update({
@@ -101,9 +86,24 @@ const MoiGioiSlugRoute = MoiGioiSlugRouteImport.update({
   path: '/moi-gioi/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DuAnSlugRoute = DuAnSlugRouteImport.update({
-  id: '/du-an/$slug',
-  path: '/du-an/$slug',
+const PhapLyIndexRoute = PhapLyIndexRouteImport.update({
+  id: '/phap-ly/',
+  path: '/phap-ly/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PhapLySlugRoute = PhapLySlugRouteImport.update({
+  id: '/phap-ly/$slug',
+  path: '/phap-ly/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TinTucIndexRoute = TinTucIndexRouteImport.update({
+  id: '/tin-tuc/',
+  path: '/tin-tuc/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TinTucSlugRoute = TinTucSlugRouteImport.update({
+  id: '/tin-tuc/$slug',
+  path: '/tin-tuc/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -240,46 +240,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/on-thi': {
-      id: '/on-thi'
-      path: '/on-thi'
-      fullPath: '/on-thi'
-      preLoaderRoute: typeof OnThiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/nha-dat-cho-thue': {
-      id: '/nha-dat-cho-thue'
-      path: '/nha-dat-cho-thue'
-      fullPath: '/nha-dat-cho-thue'
-      preLoaderRoute: typeof NhaDatChoThueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/nha-dat-ban': {
-      id: '/nha-dat-ban'
-      path: '/nha-dat-ban'
-      fullPath: '/nha-dat-ban'
-      preLoaderRoute: typeof NhaDatBanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/check-quy-hoach': {
-      id: '/check-quy-hoach'
-      path: '/check-quy-hoach'
-      fullPath: '/check-quy-hoach'
-      preLoaderRoute: typeof CheckQuyHoachRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ban-dat': {
-      id: '/ban-dat'
-      path: '/ban-dat'
-      fullPath: '/ban-dat'
-      preLoaderRoute: typeof BanDatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -289,32 +254,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tin-tuc/': {
-      id: '/tin-tuc/'
-      path: '/tin-tuc'
-      fullPath: '/tin-tuc/'
-      preLoaderRoute: typeof TinTucIndexRouteImport
+    '/ban-dat': {
+      id: '/ban-dat'
+      path: '/ban-dat'
+      fullPath: '/ban-dat'
+      preLoaderRoute: typeof BanDatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/phap-ly/': {
-      id: '/phap-ly/'
-      path: '/phap-ly'
-      fullPath: '/phap-ly/'
-      preLoaderRoute: typeof PhapLyIndexRouteImport
+    '/check-quy-hoach': {
+      id: '/check-quy-hoach'
+      path: '/check-quy-hoach'
+      fullPath: '/check-quy-hoach'
+      preLoaderRoute: typeof CheckQuyHoachRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/moi-gioi/': {
-      id: '/moi-gioi/'
-      path: '/moi-gioi'
-      fullPath: '/moi-gioi/'
-      preLoaderRoute: typeof MoiGioiIndexRouteImport
+    '/nha-dat-ban': {
+      id: '/nha-dat-ban'
+      path: '/nha-dat-ban'
+      fullPath: '/nha-dat-ban'
+      preLoaderRoute: typeof NhaDatBanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nha-dat-cho-thue': {
+      id: '/nha-dat-cho-thue'
+      path: '/nha-dat-cho-thue'
+      fullPath: '/nha-dat-cho-thue'
+      preLoaderRoute: typeof NhaDatChoThueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/on-thi': {
+      id: '/on-thi'
+      path: '/on-thi'
+      fullPath: '/on-thi'
+      preLoaderRoute: typeof OnThiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/du-an/': {
@@ -324,18 +303,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DuAnIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tin-tuc/$slug': {
-      id: '/tin-tuc/$slug'
-      path: '/tin-tuc/$slug'
-      fullPath: '/tin-tuc/$slug'
-      preLoaderRoute: typeof TinTucSlugRouteImport
+    '/du-an/$slug': {
+      id: '/du-an/$slug'
+      path: '/du-an/$slug'
+      fullPath: '/du-an/$slug'
+      preLoaderRoute: typeof DuAnSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/phap-ly/$slug': {
-      id: '/phap-ly/$slug'
-      path: '/phap-ly/$slug'
-      fullPath: '/phap-ly/$slug'
-      preLoaderRoute: typeof PhapLySlugRouteImport
+    '/moi-gioi/': {
+      id: '/moi-gioi/'
+      path: '/moi-gioi'
+      fullPath: '/moi-gioi/'
+      preLoaderRoute: typeof MoiGioiIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/moi-gioi/$slug': {
@@ -345,11 +324,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MoiGioiSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/du-an/$slug': {
-      id: '/du-an/$slug'
-      path: '/du-an/$slug'
-      fullPath: '/du-an/$slug'
-      preLoaderRoute: typeof DuAnSlugRouteImport
+    '/phap-ly/': {
+      id: '/phap-ly/'
+      path: '/phap-ly'
+      fullPath: '/phap-ly/'
+      preLoaderRoute: typeof PhapLyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/phap-ly/$slug': {
+      id: '/phap-ly/$slug'
+      path: '/phap-ly/$slug'
+      fullPath: '/phap-ly/$slug'
+      preLoaderRoute: typeof PhapLySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tin-tuc/': {
+      id: '/tin-tuc/'
+      path: '/tin-tuc'
+      fullPath: '/tin-tuc/'
+      preLoaderRoute: typeof TinTucIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tin-tuc/$slug': {
+      id: '/tin-tuc/$slug'
+      path: '/tin-tuc/$slug'
+      fullPath: '/tin-tuc/$slug'
+      preLoaderRoute: typeof TinTucSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

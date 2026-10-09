@@ -48,6 +48,15 @@ import {
 } from "@/components/ui/select";
 import { UserAccount, BrokerPlanType, UserStatus } from "@/data/mockUsersData";
 import { toast } from "sonner";
+import { validateCCCD } from "@/lib/cccd";
+import { preloadCccdOcr, type CccdSide } from "@/lib/cccdOcr";
+import { useCccdScan } from "@/hooks/use-cccd-scan";
+import {
+  CccdNumberHint,
+  CccdScanOverlay,
+  CccdScanStatus,
+  cccdInputErrorClass,
+} from "@/components/cccd/CccdScanFeedback";
 
 interface BrokerEditorModalProps {
   open: boolean;
@@ -107,13 +116,6 @@ const PRESET_AVATARS = [
   },
 ];
 
-// Presets for Mock ID Card and License images
-const PRESET_DOCUMENTS = {
-  idCardFront: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
-  idCardBack: "https://images.unsplash.com/photo-1633409361618-c73427e4e206?w=800&auto=format&fit=crop&q=80",
-  licenseImage: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80",
-};
-
 export function BrokerEditorModal({
   open,
   onClose,
@@ -155,6 +157,11 @@ export function BrokerEditorModal({
   const [idCardNationality, setIdCardNationality] = useState("Việt Nam");
   const [idCardFrontUrl, setIdCardFrontUrl] = useState("");
   const [idCardBackUrl, setIdCardBackUrl] = useState("");
+  const [idCardTouched, setIdCardTouched] = useState(false);
+  const frontScan = useCccdScan("front");
+  const backScan = useCccdScan("back");
+  const idCardNumberRef = useRef(idCardNumber);
+  idCardNumberRef.current = idCardNumber;
 
   // 3. Section: Real Estate Broker License
   const [licenseNumber, setLicenseNumber] = useState("");
@@ -170,6 +177,10 @@ export function BrokerEditorModal({
     setSaving(false);
     setFormError("");
     setFieldErrors({});
+    setIdCardTouched(false);
+    frontScan.reset();
+    backScan.reset();
+    if (open) preloadCccdOcr();
 
     if (broker) {
       setName(broker.name || "");
@@ -195,15 +206,15 @@ export function BrokerEditorModal({
       setIdCardDate(broker.id_card_date || "2021-07-10");
       setIdCardPlace(broker.id_card_place || "Cục Cảnh sát QLHC về TTXH");
       setIdCardNationality(broker.id_card_nationality || "Việt Nam");
-      setIdCardFrontUrl(broker.id_card_front_url || PRESET_DOCUMENTS.idCardFront);
-      setIdCardBackUrl(broker.id_card_back_url || PRESET_DOCUMENTS.idCardBack);
+      setIdCardFrontUrl(broker.id_card_front_url || "");
+      setIdCardBackUrl(broker.id_card_back_url || "");
 
       // Populate License fields
       setLicenseNumber(broker.license_number || "ĐN-02849");
       setLicenseIssuer(broker.license_issuer || "Sở Xây dựng TP. Đà Nẵng");
       setLicenseIssueDate(broker.license_issue_date || "2022-04-15");
       setLicenseExpiryDate(broker.license_expiry_date || "2027-04-15");
-      setLicenseImageUrl(broker.license_image_url || PRESET_DOCUMENTS.licenseImage);
+      setLicenseImageUrl(broker.license_image_url || "");
 
       const vStat = broker.verification_status || (broker.isVerified ? "verified" : "unverified");
       setVerificationStatus(vStat);
@@ -352,6 +363,48 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
     }
   };
 
+  // Tự động điền / so khớp Số CCCD bóc tách được từ ảnh
+  const applyExtractedCccd = (num?: string | null) => {
+    if (!num) return;
+    const current = idCardNumberRef.current.trim();
+    if (!current) {
+      setIdCardNumber(num);
+      setIdCardTouched(true);
+      setFieldErrors((prev) => ({ ...prev, idCardNumber: "" }));
+      toast.info(`Đã tự động điền Số CCCD ${num} từ ảnh.`);
+    } else if (current !== num) {
+      toast.warning(`Số CCCD trên ảnh (${num}) không khớp với số đã nhập (${current}).`);
+    }
+  };
+
+  // Upload ảnh CCCD: quét OCR kiểm tra đúng mặt trước khi chấp nhận
+  const handleCccdUpload = async (e: React.ChangeEvent<HTMLInputElement>, side: CccdSide) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    input.value = ""; // xóa file tạm khỏi input để có thể chọn lại
+    if (!file) return;
+
+    const setUrl = side === "front" ? setIdCardFrontUrl : setIdCardBackUrl;
+    const scanner = side === "front" ? frontScan : backScan;
+    const label = side === "front" ? "CCCD mặt trước" : "CCCD mặt sau";
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Tệp không phải là hình ảnh hợp lệ.");
+      return;
+    }
+
+    const result = await scanner.scan(file);
+    if (!result) return; // đã có lượt chọn ảnh mới hơn
+    if (!result.ok) {
+      setUrl("");
+      toast.error(result.message);
+      return;
+    }
+
+    await handleLocalFile({ target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>, setUrl, label);
+    applyExtractedCccd(result.cccdNumber);
+  };
+
   const handleSubmit = (e?: React.FormEvent) => {
     if (e && e.preventDefault) {
       e.preventDefault();
@@ -392,11 +445,19 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
       missing.push("Email hợp lệ");
     }
 
-    // Validate CCCD format if entered
-    if (idCardNumber.trim() && idCardNumber.trim().length !== 12 && idCardNumber.trim().length !== 9) {
-      newErrors.idCardNumber = "Số CCCD chuẩn gồm 12 chữ số (hoặc CMND 9 số)";
+    // Validate CCCD format if entered (mã tỉnh, mã giới tính/thế kỷ, năm sinh ≥ 18 tuổi)
+    const cccdCheck = validateCCCD(idCardNumber, { allowLegacyCmnd: true });
+    if (idCardNumber.trim() && !cccdCheck.valid) {
+      newErrors.idCardNumber = cccdCheck.error;
       missing.push("Định dạng CCCD hợp lệ");
-      console.warn("⚠️ [ADMIN BROKER] CCCD không đủ 12 số:", idCardNumber);
+      setIdCardTouched(true);
+      console.warn("⚠️ [ADMIN BROKER] CCCD không hợp lệ:", idCardNumber, cccdCheck.error);
+    }
+
+    if (frontScan.isScanning || backScan.isScanning) {
+      toast.warning("Đang quét OCR ảnh CCCD, vui lòng đợi hoàn tất trước khi lưu.");
+      console.groupEnd();
+      return;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -768,16 +829,22 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                         setIdCardNumber(e.target.value.replace(/\D/g, ""));
                         if (fieldErrors.idCardNumber) setFieldErrors((prev) => ({ ...prev, idCardNumber: "" }));
                       }}
-                      className={`pl-8 h-10 text-xs bg-slate-50 border-slate-200 font-mono font-semibold ${
-                        fieldErrors.idCardNumber ? "border-red-500 ring-1 ring-red-500 bg-red-50/20" : ""
-                      }`}
+                      onBlur={() => setIdCardTouched(true)}
+                      aria-invalid={!!fieldErrors.idCardNumber}
+                      className={`pl-8 h-10 text-xs bg-slate-50 border-slate-200 font-mono font-semibold ${cccdInputErrorClass(
+                        idCardNumber,
+                        idCardTouched,
+                        fieldErrors.idCardNumber,
+                        { allowLegacyCmnd: true },
+                      )}`}
                     />
                   </div>
-                  {fieldErrors.idCardNumber && (
-                    <p className="text-[11px] text-red-600 font-medium flex items-center gap-1 mt-1">
-                      <AlertCircle className="size-3 shrink-0" /> {fieldErrors.idCardNumber}
-                    </p>
-                  )}
+                  <CccdNumberHint
+                    value={idCardNumber}
+                    touched={idCardTouched}
+                    forcedError={fieldErrors.idCardNumber}
+                    options={{ allowLegacyCmnd: true }}
+                  />
                 </div>
 
                 {/* Ngày cấp */}
@@ -837,17 +904,10 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                         <input
                           type="file"
                           ref={cccdFrontInputRef}
-                          onChange={(e) => handleLocalFile(e, setIdCardFrontUrl, "CCCD mặt trước")}
+                          onChange={(e) => handleCccdUpload(e, "front")}
                           accept="image/*"
                           className="hidden"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setIdCardFrontUrl(PRESET_DOCUMENTS.idCardFront)}
-                          className="text-[11px] text-blue-600 hover:underline font-medium"
-                        >
-                          Dùng mẫu
-                        </button>
                         <Button
                           type="button"
                           variant="outline"
@@ -862,6 +922,7 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
 
                     {/* Preview box */}
                     <div className="relative aspect-[16/10] rounded-lg border border-slate-200 bg-white overflow-hidden flex items-center justify-center group">
+                      <CccdScanOverlay state={frontScan.state} />
                       {idCardFrontUrl ? (
                         <>
                           <img
@@ -881,7 +942,10 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                             </a>
                             <button
                               type="button"
-                              onClick={() => setIdCardFrontUrl("")}
+                              onClick={() => {
+                                setIdCardFrontUrl("");
+                                frontScan.reset();
+                              }}
                               className="size-7 rounded-full bg-red-600 text-white flex items-center justify-center shadow-xs hover:bg-red-700"
                               title="Gỡ ảnh"
                             >
@@ -901,11 +965,14 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                       )}
                     </div>
 
-                    <Input
-                      placeholder="Hoặc dán URL ảnh mặt trước..."
-                      value={idCardFrontUrl}
-                      onChange={(e) => setIdCardFrontUrl(e.target.value)}
-                      className="h-7.5 text-[11px] bg-white border-slate-200"
+                    <CccdScanStatus
+                      state={frontScan.state}
+                      currentNumber={idCardNumber}
+                      onApplyNumber={(num) => {
+                        setIdCardNumber(num);
+                        setIdCardTouched(true);
+                        setFieldErrors((prev) => ({ ...prev, idCardNumber: "" }));
+                      }}
                     />
                   </div>
 
@@ -919,17 +986,10 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                         <input
                           type="file"
                           ref={cccdBackInputRef}
-                          onChange={(e) => handleLocalFile(e, setIdCardBackUrl, "CCCD mặt sau")}
+                          onChange={(e) => handleCccdUpload(e, "back")}
                           accept="image/*"
                           className="hidden"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setIdCardBackUrl(PRESET_DOCUMENTS.idCardBack)}
-                          className="text-[11px] text-blue-600 hover:underline font-medium"
-                        >
-                          Dùng mẫu
-                        </button>
                         <Button
                           type="button"
                           variant="outline"
@@ -944,6 +1004,7 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
 
                     {/* Preview box */}
                     <div className="relative aspect-[16/10] rounded-lg border border-slate-200 bg-white overflow-hidden flex items-center justify-center group">
+                      <CccdScanOverlay state={backScan.state} />
                       {idCardBackUrl ? (
                         <>
                           <img
@@ -963,7 +1024,10 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                             </a>
                             <button
                               type="button"
-                              onClick={() => setIdCardBackUrl("")}
+                              onClick={() => {
+                                setIdCardBackUrl("");
+                                backScan.reset();
+                              }}
                               className="size-7 rounded-full bg-red-600 text-white flex items-center justify-center shadow-xs hover:bg-red-700"
                               title="Gỡ ảnh"
                             >
@@ -983,11 +1047,14 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                       )}
                     </div>
 
-                    <Input
-                      placeholder="Hoặc dán URL ảnh mặt sau..."
-                      value={idCardBackUrl}
-                      onChange={(e) => setIdCardBackUrl(e.target.value)}
-                      className="h-7.5 text-[11px] bg-white border-slate-200"
+                    <CccdScanStatus
+                      state={backScan.state}
+                      currentNumber={idCardNumber}
+                      onApplyNumber={(num) => {
+                        setIdCardNumber(num);
+                        setIdCardTouched(true);
+                        setFieldErrors((prev) => ({ ...prev, idCardNumber: "" }));
+                      }}
                     />
                   </div>
                 </div>
@@ -1090,13 +1157,6 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                       accept="image/*"
                       className="hidden"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setLicenseImageUrl(PRESET_DOCUMENTS.licenseImage)}
-                      className="text-[11px] text-teal-600 hover:underline font-medium"
-                    >
-                      Dùng mẫu
-                    </button>
                     <Button
                       type="button"
                       variant="outline"
@@ -1148,18 +1208,11 @@ const compressImageFile = (file: File, maxWidth = 800, quality = 0.75): Promise<
                           Ảnh chụp Giấy chứng nhận / Chứng chỉ hành nghề
                         </span>
                         <span className="text-[10px] text-slate-400 mt-0.5">
-                          Nhấn vào đây để tải file ảnh từ máy tính hoặc dán link bên dưới
+                          Nhấn vào đây để tải file ảnh từ máy tính
                         </span>
                       </div>
                     )}
                   </div>
-
-                  <Input
-                    placeholder="Hoặc dán URL hình ảnh chứng chỉ hành nghề..."
-                    value={licenseImageUrl}
-                    onChange={(e) => setLicenseImageUrl(e.target.value)}
-                    className="h-8 text-xs bg-white border-slate-200"
-                  />
                 </div>
               </div>
 
