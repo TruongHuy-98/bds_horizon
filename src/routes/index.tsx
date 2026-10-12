@@ -30,6 +30,9 @@ import {
 } from "@/components/ui/select";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
+import { DistrictSection } from "@/components/site/DistrictSection";
+import { ProjectsSlider } from "@/components/site/ProjectsSlider";
+import { NewsSection } from "@/components/site/NewsSection";
 import {
   Dialog,
   DialogContent,
@@ -726,8 +729,11 @@ function HomePage() {
       <Header />
       <main>
         <Hero />
+        <DistrictSection />
         <PlanningCheck />
         <FeaturedProperties />
+        <ProjectsSlider />
+        <NewsSection />
         <TopAgents />
       </main>
       <Footer />
