@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Heart, MapPin, Phone, CalendarDays, Compass, MoveHorizontal, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Heart, MapPin, Phone, CalendarDays, Compass, MoveHorizontal, CheckCircle2, ShieldCheck, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ListingItem } from "@/data/listingsData";
 import { toast } from "sonner";
@@ -13,7 +14,10 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
   const [isSaved, setIsSaved] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
 
+  const detailPath = item.listingType === "rent" ? "/nha-dat-cho-thue/$slug" : "/nha-dat-ban/$slug";
+
   const handlePhoneClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     if (!showPhone) {
       setShowPhone(true);
@@ -25,6 +29,7 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
   };
 
   const handleToggleSave = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setIsSaved(!isSaved);
     if (!isSaved) {
@@ -34,22 +39,33 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
     }
   };
 
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onSelect) {
+      onSelect(item);
+    }
+  };
+
   return (
-    <article
-      onClick={() => onSelect && onSelect(item)}
-      className="group bg-card rounded-xl border border-border/70 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row cursor-pointer"
-    >
+    <article className="group bg-card rounded-xl border border-border/70 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row relative">
       {/* Thumbnail Image Container */}
       <div className="relative sm:w-64 md:w-72 shrink-0 aspect-[4/3] sm:aspect-auto overflow-hidden bg-muted">
-        <img
-          src={item.images[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60"}
-          alt={item.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          loading="lazy"
-        />
+        <Link
+          to={detailPath}
+          params={{ slug: item.slug }}
+          className="block w-full h-full"
+        >
+          <img
+            src={item.images[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60"}
+            alt={item.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        </Link>
         
         {/* Badges */}
-        <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10">
+        <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10 pointer-events-none">
           {item.isVip && (
             <span className="bg-amber-500 text-white font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded shadow-sm">
               VIP
@@ -67,27 +83,45 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
           )}
         </div>
 
-        {/* Save button floating over image */}
-        <button
-          onClick={handleToggleSave}
-          className={`absolute top-2.5 right-2.5 h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
-            isSaved
-              ? "bg-rose-500 text-white"
-              : "bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm"
-          }`}
-          title={isSaved ? "Bỏ lưu" : "Lưu tin"}
-        >
-          <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
-        </button>
+        {/* Top Right Floating Actions */}
+        <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10">
+          {onSelect && (
+            <button
+              onClick={handleQuickView}
+              className="h-8 px-2 rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-sm flex items-center gap-1 text-[11px] font-medium transition-colors shadow"
+              title="Xem nhanh popup"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              <span className="hidden xs:inline">Xem nhanh</span>
+            </button>
+          )}
+          <button
+            onClick={handleToggleSave}
+            className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors shadow backdrop-blur-sm ${
+              isSaved
+                ? "bg-rose-500 text-white"
+                : "bg-black/50 hover:bg-black/75 text-white"
+            }`}
+            title={isSaved ? "Bỏ lưu" : "Lưu tin"}
+          >
+            <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
+          </button>
+        </div>
       </div>
 
       {/* Details Container */}
       <div className="p-4 flex-1 flex flex-col justify-between">
         <div>
-          {/* Title */}
-          <h3 className="font-bold text-base md:text-lg text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-            {item.title}
-          </h3>
+          {/* Title as Link */}
+          <Link
+            to={detailPath}
+            params={{ slug: item.slug }}
+            className="block"
+          >
+            <h3 className="font-bold text-base md:text-lg text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+              {item.title}
+            </h3>
+          </Link>
 
           {/* Key Metrics: Price & Area */}
           <div className="mt-2.5 flex flex-wrap items-baseline gap-3">
@@ -135,7 +169,7 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
           </p>
         </div>
 
-        {/* Footer: Broker Info & Action Button */}
+        {/* Footer: Broker Info & Action Buttons */}
         <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <img
@@ -151,14 +185,30 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
             </div>
           </div>
 
-          <Button
-            onClick={handlePhoneClick}
-            size="sm"
-            className="bg-teal hover:bg-teal/90 text-teal-foreground font-semibold h-9 px-3 text-xs rounded-md shrink-0 flex items-center gap-1.5 shadow-xs"
-          >
-            <Phone className="h-3.5 w-3.5 fill-current" />
-            <span>{showPhone ? item.brokerPhone : `${item.brokerPhone.slice(0, 4)} *** ***`}</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link
+              to={detailPath}
+              params={{ slug: item.slug }}
+              className="hidden sm:inline-flex"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 px-3 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5 rounded-md"
+              >
+                Chi tiết
+              </Button>
+            </Link>
+
+            <Button
+              onClick={handlePhoneClick}
+              size="sm"
+              className="bg-teal hover:bg-teal/90 text-teal-foreground font-semibold h-9 px-3 text-xs rounded-md shrink-0 flex items-center gap-1.5 shadow-xs"
+            >
+              <Phone className="h-3.5 w-3.5 fill-current" />
+              <span>{showPhone ? item.brokerPhone : `${item.brokerPhone.slice(0, 4)} *** ***`}</span>
+            </Button>
+          </div>
         </div>
       </div>
     </article>

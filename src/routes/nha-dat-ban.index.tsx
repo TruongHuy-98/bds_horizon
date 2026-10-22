@@ -39,7 +39,7 @@ interface NhaDatBanSearch {
   bedrooms?: string;
 }
 
-export const Route = createFileRoute("/nha-dat-ban")({
+export const Route = createFileRoute("/nha-dat-ban/")({
   validateSearch: (search: Record<string, unknown>): NhaDatBanSearch => ({
     keyword: typeof search.keyword === "string" ? search.keyword : undefined,
     city: typeof search.city === "string" ? search.city : undefined,

@@ -39,7 +39,7 @@ interface NhaDatChoThueSearch {
   bedrooms?: string;
 }
 
-export const Route = createFileRoute("/nha-dat-cho-thue")({
+export const Route = createFileRoute("/nha-dat-cho-thue/")({
   validateSearch: (search: Record<string, unknown>): NhaDatChoThueSearch => ({
     keyword: typeof search.keyword === "string" ? search.keyword : undefined,
     city: typeof search.city === "string" ? search.city : undefined,

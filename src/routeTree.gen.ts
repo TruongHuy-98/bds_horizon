@@ -14,13 +14,15 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BanDatRouteImport } from './routes/ban-dat'
 import { Route as CheckQuyHoachRouteImport } from './routes/check-quy-hoach'
-import { Route as NhaDatBanRouteImport } from './routes/nha-dat-ban'
-import { Route as NhaDatChoThueRouteImport } from './routes/nha-dat-cho-thue'
 import { Route as OnThiRouteImport } from './routes/on-thi'
 import { Route as DuAnIndexRouteImport } from './routes/du-an.index'
 import { Route as DuAnSlugRouteImport } from './routes/du-an.$slug'
 import { Route as MoiGioiIndexRouteImport } from './routes/moi-gioi.index'
 import { Route as MoiGioiSlugRouteImport } from './routes/moi-gioi.$slug'
+import { Route as NhaDatBanIndexRouteImport } from './routes/nha-dat-ban.index'
+import { Route as NhaDatBanSlugRouteImport } from './routes/nha-dat-ban.$slug'
+import { Route as NhaDatChoThueIndexRouteImport } from './routes/nha-dat-cho-thue.index'
+import { Route as NhaDatChoThueSlugRouteImport } from './routes/nha-dat-cho-thue.$slug'
 import { Route as PhapLyIndexRouteImport } from './routes/phap-ly.index'
 import { Route as PhapLySlugRouteImport } from './routes/phap-ly.$slug'
 import { Route as TinTucIndexRouteImport } from './routes/tin-tuc.index'
@@ -51,16 +53,6 @@ const CheckQuyHoachRoute = CheckQuyHoachRouteImport.update({
   path: '/check-quy-hoach',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NhaDatBanRoute = NhaDatBanRouteImport.update({
-  id: '/nha-dat-ban',
-  path: '/nha-dat-ban',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NhaDatChoThueRoute = NhaDatChoThueRouteImport.update({
-  id: '/nha-dat-cho-thue',
-  path: '/nha-dat-cho-thue',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OnThiRoute = OnThiRouteImport.update({
   id: '/on-thi',
   path: '/on-thi',
@@ -85,6 +77,26 @@ const MoiGioiSlugRoute = MoiGioiSlugRouteImport.update({
   id: '/moi-gioi/$slug',
   path: '/moi-gioi/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const NhaDatBanIndexRoute = NhaDatBanIndexRouteImport.update({
+  id: '/nha-dat-ban/',
+  path: '/nha-dat-ban/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NhaDatBanSlugRoute = NhaDatBanSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => NhaDatBanRoute,
+} as any)
+const NhaDatChoThueIndexRoute = NhaDatChoThueIndexRouteImport.update({
+  id: '/nha-dat-cho-thue/',
+  path: '/nha-dat-cho-thue/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NhaDatChoThueSlugRoute = NhaDatChoThueSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => NhaDatChoThueRoute,
 } as any)
 const PhapLyIndexRoute = PhapLyIndexRouteImport.update({
   id: '/phap-ly/',
@@ -113,15 +125,17 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/ban-dat': typeof BanDatRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
-  '/nha-dat-ban': typeof NhaDatBanRoute
-  '/nha-dat-cho-thue': typeof NhaDatChoThueRoute
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
+  '/nha-dat-ban/$slug': typeof NhaDatBanSlugRoute
+  '/nha-dat-cho-thue/$slug': typeof NhaDatChoThueSlugRoute
   '/phap-ly/$slug': typeof PhapLySlugRoute
   '/tin-tuc/$slug': typeof TinTucSlugRoute
   '/du-an/': typeof DuAnIndexRoute
   '/moi-gioi/': typeof MoiGioiIndexRoute
+  '/nha-dat-ban/': typeof NhaDatBanIndexRoute
+  '/nha-dat-cho-thue/': typeof NhaDatChoThueIndexRoute
   '/phap-ly/': typeof PhapLyIndexRoute
   '/tin-tuc/': typeof TinTucIndexRoute
 }
@@ -131,15 +145,17 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/ban-dat': typeof BanDatRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
-  '/nha-dat-ban': typeof NhaDatBanRoute
-  '/nha-dat-cho-thue': typeof NhaDatChoThueRoute
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
+  '/nha-dat-ban/$slug': typeof NhaDatBanSlugRoute
+  '/nha-dat-cho-thue/$slug': typeof NhaDatChoThueSlugRoute
   '/phap-ly/$slug': typeof PhapLySlugRoute
   '/tin-tuc/$slug': typeof TinTucSlugRoute
   '/du-an': typeof DuAnIndexRoute
   '/moi-gioi': typeof MoiGioiIndexRoute
+  '/nha-dat-ban': typeof NhaDatBanIndexRoute
+  '/nha-dat-cho-thue': typeof NhaDatChoThueIndexRoute
   '/phap-ly': typeof PhapLyIndexRoute
   '/tin-tuc': typeof TinTucIndexRoute
 }
@@ -150,15 +166,17 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/ban-dat': typeof BanDatRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
-  '/nha-dat-ban': typeof NhaDatBanRoute
-  '/nha-dat-cho-thue': typeof NhaDatChoThueRoute
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
+  '/nha-dat-ban/$slug': typeof NhaDatBanSlugRoute
+  '/nha-dat-cho-thue/$slug': typeof NhaDatChoThueSlugRoute
   '/phap-ly/$slug': typeof PhapLySlugRoute
   '/tin-tuc/$slug': typeof TinTucSlugRoute
   '/du-an/': typeof DuAnIndexRoute
   '/moi-gioi/': typeof MoiGioiIndexRoute
+  '/nha-dat-ban/': typeof NhaDatBanIndexRoute
+  '/nha-dat-cho-thue/': typeof NhaDatChoThueIndexRoute
   '/phap-ly/': typeof PhapLyIndexRoute
   '/tin-tuc/': typeof TinTucIndexRoute
 }
@@ -170,15 +188,17 @@ export interface FileRouteTypes {
     | '/auth'
     | '/ban-dat'
     | '/check-quy-hoach'
-    | '/nha-dat-ban'
-    | '/nha-dat-cho-thue'
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
+    | '/nha-dat-ban/$slug'
+    | '/nha-dat-cho-thue/$slug'
     | '/phap-ly/$slug'
     | '/tin-tuc/$slug'
     | '/du-an/'
     | '/moi-gioi/'
+    | '/nha-dat-ban/'
+    | '/nha-dat-cho-thue/'
     | '/phap-ly/'
     | '/tin-tuc/'
   fileRoutesByTo: FileRoutesByTo
@@ -188,15 +208,17 @@ export interface FileRouteTypes {
     | '/auth'
     | '/ban-dat'
     | '/check-quy-hoach'
-    | '/nha-dat-ban'
-    | '/nha-dat-cho-thue'
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
+    | '/nha-dat-ban/$slug'
+    | '/nha-dat-cho-thue/$slug'
     | '/phap-ly/$slug'
     | '/tin-tuc/$slug'
     | '/du-an'
     | '/moi-gioi'
+    | '/nha-dat-ban'
+    | '/nha-dat-cho-thue'
     | '/phap-ly'
     | '/tin-tuc'
   id:
@@ -206,15 +228,17 @@ export interface FileRouteTypes {
     | '/auth'
     | '/ban-dat'
     | '/check-quy-hoach'
-    | '/nha-dat-ban'
-    | '/nha-dat-cho-thue'
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
+    | '/nha-dat-ban/$slug'
+    | '/nha-dat-cho-thue/$slug'
     | '/phap-ly/$slug'
     | '/tin-tuc/$slug'
     | '/du-an/'
     | '/moi-gioi/'
+    | '/nha-dat-ban/'
+    | '/nha-dat-cho-thue/'
     | '/phap-ly/'
     | '/tin-tuc/'
   fileRoutesById: FileRoutesById
@@ -225,8 +249,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BanDatRoute: typeof BanDatRoute
   CheckQuyHoachRoute: typeof CheckQuyHoachRoute
-  NhaDatBanRoute: typeof NhaDatBanRoute
-  NhaDatChoThueRoute: typeof NhaDatChoThueRoute
   OnThiRoute: typeof OnThiRoute
   DuAnSlugRoute: typeof DuAnSlugRoute
   MoiGioiSlugRoute: typeof MoiGioiSlugRoute
@@ -234,6 +256,8 @@ export interface RootRouteChildren {
   TinTucSlugRoute: typeof TinTucSlugRoute
   DuAnIndexRoute: typeof DuAnIndexRoute
   MoiGioiIndexRoute: typeof MoiGioiIndexRoute
+  NhaDatBanIndexRoute: typeof NhaDatBanIndexRoute
+  NhaDatChoThueIndexRoute: typeof NhaDatChoThueIndexRoute
   PhapLyIndexRoute: typeof PhapLyIndexRoute
   TinTucIndexRoute: typeof TinTucIndexRoute
 }
@@ -275,20 +299,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckQuyHoachRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/nha-dat-ban': {
-      id: '/nha-dat-ban'
-      path: '/nha-dat-ban'
-      fullPath: '/nha-dat-ban'
-      preLoaderRoute: typeof NhaDatBanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/nha-dat-cho-thue': {
-      id: '/nha-dat-cho-thue'
-      path: '/nha-dat-cho-thue'
-      fullPath: '/nha-dat-cho-thue'
-      preLoaderRoute: typeof NhaDatChoThueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/on-thi': {
       id: '/on-thi'
       path: '/on-thi'
@@ -323,6 +333,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/moi-gioi/$slug'
       preLoaderRoute: typeof MoiGioiSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/nha-dat-ban/': {
+      id: '/nha-dat-ban/'
+      path: '/nha-dat-ban'
+      fullPath: '/nha-dat-ban/'
+      preLoaderRoute: typeof NhaDatBanIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nha-dat-ban/$slug': {
+      id: '/nha-dat-ban/$slug'
+      path: '/$slug'
+      fullPath: '/nha-dat-ban/$slug'
+      preLoaderRoute: typeof NhaDatBanSlugRouteImport
+      parentRoute: typeof NhaDatBanRoute
+    }
+    '/nha-dat-cho-thue/': {
+      id: '/nha-dat-cho-thue/'
+      path: '/nha-dat-cho-thue'
+      fullPath: '/nha-dat-cho-thue/'
+      preLoaderRoute: typeof NhaDatChoThueIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nha-dat-cho-thue/$slug': {
+      id: '/nha-dat-cho-thue/$slug'
+      path: '/$slug'
+      fullPath: '/nha-dat-cho-thue/$slug'
+      preLoaderRoute: typeof NhaDatChoThueSlugRouteImport
+      parentRoute: typeof NhaDatChoThueRoute
     }
     '/phap-ly/': {
       id: '/phap-ly/'
@@ -361,8 +399,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BanDatRoute: BanDatRoute,
   CheckQuyHoachRoute: CheckQuyHoachRoute,
-  NhaDatBanRoute: NhaDatBanRoute,
-  NhaDatChoThueRoute: NhaDatChoThueRoute,
   OnThiRoute: OnThiRoute,
   DuAnSlugRoute: DuAnSlugRoute,
   MoiGioiSlugRoute: MoiGioiSlugRoute,
@@ -370,6 +406,8 @@ const rootRouteChildren: RootRouteChildren = {
   TinTucSlugRoute: TinTucSlugRoute,
   DuAnIndexRoute: DuAnIndexRoute,
   MoiGioiIndexRoute: MoiGioiIndexRoute,
+  NhaDatBanIndexRoute: NhaDatBanIndexRoute,
+  NhaDatChoThueIndexRoute: NhaDatChoThueIndexRoute,
   PhapLyIndexRoute: PhapLyIndexRoute,
   TinTucIndexRoute: TinTucIndexRoute,
 }
