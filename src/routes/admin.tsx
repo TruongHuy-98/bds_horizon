@@ -64,6 +64,7 @@ import {
   Mail,
   CreditCard,
   FolderOpen,
+  RotateCcw,
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import ImageUploader from "@/components/admin/ImageUploader";
@@ -84,6 +85,7 @@ import {
   recordVisitorLog,
   getVisitorStats,
 } from "@/lib/visitorTracking";
+import { compressDataUrl, compressImagesArray } from "@/lib/imageCompression";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -108,6 +110,49 @@ export type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 export type NewsPostRow = Database["public"]["Tables"]["news_posts"]["Row"];
 
 /* ---------- Local DB Mock Helper for Offline Mode ---------- */
+const safeSetLocalStorage = (key: string, list: any[]) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(list));
+  } catch (err: any) {
+    console.warn(`LocalStorage quota exceeded when saving "${key}". Auto-pruning old heavy mock entries...`, err);
+
+    // Prune oversized base64 in the current list
+    const pruned = list.slice(0, 15).map((item, idx) => {
+      if (idx >= 2) {
+        const copy = { ...item };
+        if (typeof copy.image_url === "string" && copy.image_url.startsWith("data:image/") && copy.image_url.length > 30000) {
+          copy.image_url = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60";
+        }
+        if (Array.isArray(copy.images)) {
+          copy.images = copy.images.filter((img: any) => typeof img === "string" && !img.startsWith("data:image/"));
+          if (copy.images.length === 0 && copy.image_url) copy.images = [copy.image_url];
+        }
+        return copy;
+      }
+      return item;
+    });
+
+    try {
+      localStorage.setItem(key, JSON.stringify(pruned));
+    } catch {
+      // Also prune other mock keys
+      const otherKeys = ["mock_properties", "mock_projects", "mock_news"].filter(k => k !== key);
+      for (const k of otherKeys) {
+        try {
+          const raw = localStorage.getItem(k);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 2) {
+              localStorage.setItem(k, JSON.stringify(parsed.slice(0, 2)));
+            }
+          }
+        } catch (_) {}
+      }
+      localStorage.setItem(key, JSON.stringify(pruned.slice(0, 5)));
+    }
+  }
+};
+
 const LOCAL_DB = {
   getProperties: (): PropertyRow[] => {
     if (typeof window === "undefined") return [];
@@ -157,7 +202,7 @@ const LOCAL_DB = {
           created_at: new Date(Date.now() - 172800000).toISOString()
         }
       ];
-      localStorage.setItem("mock_properties", JSON.stringify(seed));
+      safeSetLocalStorage("mock_properties", seed);
       return seed as PropertyRow[];
     }
     return JSON.parse(data);
@@ -177,12 +222,12 @@ const LOCAL_DB = {
       } as PropertyRow;
       list.unshift(newItem);
     }
-    localStorage.setItem("mock_properties", JSON.stringify(list));
+    safeSetLocalStorage("mock_properties", list);
     return list;
   },
   deleteProperty: (id: string): PropertyRow[] => {
     const list = LOCAL_DB.getProperties().filter(p => p.id !== id);
-    localStorage.setItem("mock_properties", JSON.stringify(list));
+    safeSetLocalStorage("mock_properties", list);
     return list;
   },
   togglePublishProperty: (id: string): PropertyRow[] => {
@@ -191,7 +236,7 @@ const LOCAL_DB = {
     if (index !== -1) {
       list[index].published = !list[index].published;
     }
-    localStorage.setItem("mock_properties", JSON.stringify(list));
+    safeSetLocalStorage("mock_properties", list);
     return list;
   },
 
@@ -230,7 +275,7 @@ const LOCAL_DB = {
           created_at: new Date(Date.now() - 86400000).toISOString()
         }
       ];
-      localStorage.setItem("mock_projects", JSON.stringify(seed));
+      safeSetLocalStorage("mock_projects", seed);
       return seed as ProjectRow[];
     }
     return JSON.parse(data);
@@ -250,12 +295,12 @@ const LOCAL_DB = {
       } as ProjectRow;
       list.unshift(newItem);
     }
-    localStorage.setItem("mock_projects", JSON.stringify(list));
+    safeSetLocalStorage("mock_projects", list);
     return list;
   },
   deleteProject: (id: string): ProjectRow[] => {
     const list = LOCAL_DB.getProjects().filter(p => p.id !== id);
-    localStorage.setItem("mock_projects", JSON.stringify(list));
+    safeSetLocalStorage("mock_projects", list);
     return list;
   },
   togglePublishProject: (id: string): ProjectRow[] => {
@@ -264,7 +309,7 @@ const LOCAL_DB = {
     if (index !== -1) {
       list[index].published = !list[index].published;
     }
-    localStorage.setItem("mock_projects", JSON.stringify(list));
+    safeSetLocalStorage("mock_projects", list);
     return list;
   },
 
@@ -415,7 +460,7 @@ Người dân có thể tra cứu thông tin quy hoạch, tình trạng pháp l�
           created_at: new Date(Date.now() - 86400000).toISOString()
         }
       ];
-      localStorage.setItem("mock_news", JSON.stringify(seed));
+      safeSetLocalStorage("mock_news", seed);
       return seed as NewsPostRow[];
     }
 
@@ -424,7 +469,7 @@ Người dân có thể tra cứu thông tin quy hoạch, tình trạng pháp l�
       // Ensure legal seed articles exist if missing
       if (Array.isArray(parsed) && !parsed.some((p: any) => p.category === "Pháp lý" || p.slug?.includes("so-do"))) {
         const merged = [...legalSeed, ...parsed];
-        localStorage.setItem("mock_news", JSON.stringify(merged));
+        safeSetLocalStorage("mock_news", merged);
         return merged as NewsPostRow[];
       }
       return parsed;
@@ -448,12 +493,12 @@ Người dân có thể tra cứu thông tin quy hoạch, tình trạng pháp l�
       } as NewsPostRow;
       list.unshift(newItem);
     }
-    localStorage.setItem("mock_news", JSON.stringify(list));
+    safeSetLocalStorage("mock_news", list);
     return list;
   },
   deleteNews: (id: string): NewsPostRow[] => {
     const list = LOCAL_DB.getNews().filter(p => p.id !== id);
-    localStorage.setItem("mock_news", JSON.stringify(list));
+    safeSetLocalStorage("mock_news", list);
     return list;
   },
   togglePublishNews: (id: string): NewsPostRow[] => {
@@ -463,7 +508,7 @@ Người dân có thể tra cứu thông tin quy hoạch, tình trạng pháp l�
       list[index].published = !list[index].published;
       list[index].published_at = list[index].published ? new Date().toISOString() : null;
     }
-    localStorage.setItem("mock_news", JSON.stringify(list));
+    safeSetLocalStorage("mock_news", list);
     return list;
   },
 
@@ -888,10 +933,28 @@ function AdminPage() {
 
           <div className="flex items-center gap-4">
             {isMock && (
-              <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border border-amber-200 py-1 px-2.5 text-xs font-semibold rounded-full flex items-center gap-1.5 shadow-sm">
-                <span className="size-2 rounded-full bg-amber-500 animate-ping"></span>
-                Mock Mode Active ({role.toUpperCase()})
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border border-amber-200 py-1 px-2.5 text-xs font-semibold rounded-full flex items-center gap-1.5 shadow-sm">
+                  <span className="size-2 rounded-full bg-amber-500 animate-ping"></span>
+                  Mock Mode Active ({role.toUpperCase()})
+                </Badge>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm("Dọn dẹp và đặt lại dữ liệu mẫu (Mock DB) để giải phóng hoàn toàn bộ nhớ LocalStorage?")) {
+                      localStorage.removeItem("mock_properties");
+                      localStorage.removeItem("mock_projects");
+                      localStorage.removeItem("mock_news");
+                      toast.success("Đã dọn dẹp bộ nhớ đệm LocalStorage thành công!");
+                      setTimeout(() => window.location.reload(), 300);
+                    }
+                  }}
+                  className="hidden sm:inline-flex text-[11px] font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300/80 px-2.5 py-1 rounded-full transition-colors items-center gap-1 shadow-xs cursor-pointer"
+                  title="Xóa dữ liệu rác và làm sạch bộ nhớ LocalStorage"
+                >
+                  <RotateCcw className="size-3 text-amber-700" /> Dọn Mock DB
+                </button>
+              </div>
             )}
             <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 font-medium">
               <Calendar className="size-3.5 text-slate-400" />
@@ -1281,6 +1344,18 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
     e.preventDefault();
     setSaving(true);
 
+    let finalImageUrl = form.image_url;
+    let finalImages = form.images;
+
+    if (isMock) {
+      if (finalImageUrl && finalImageUrl.startsWith("data:image/")) {
+        finalImageUrl = await compressDataUrl(finalImageUrl, { maxWidth: 1000, maxHeight: 750, quality: 0.65 });
+      }
+      if (Array.isArray(finalImages) && finalImages.length > 0) {
+        finalImages = await compressImagesArray(finalImages, { maxWidth: 1000, maxHeight: 750, quality: 0.65 });
+      }
+    }
+
     const payload = {
       title: form.title,
       slug: editingItem ? editingItem.slug : slugify(form.title),
@@ -1290,8 +1365,8 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
       address: form.address || null,
       district: form.district || null,
       property_type: form.property_type,
-      image_url: form.image_url || null,
-      images: form.images as Json,
+      image_url: finalImageUrl || null,
+      images: finalImages as Json,
       published: form.published,
       created_by: editingItem ? editingItem.created_by : (user?.id || null),
     };
@@ -1769,6 +1844,18 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
     e.preventDefault();
     setSaving(true);
 
+    let finalImageUrl = form.image_url;
+    let finalImages = form.images;
+
+    if (isMock) {
+      if (finalImageUrl && finalImageUrl.startsWith("data:image/")) {
+        finalImageUrl = await compressDataUrl(finalImageUrl, { maxWidth: 1000, maxHeight: 750, quality: 0.65 });
+      }
+      if (Array.isArray(finalImages) && finalImages.length > 0) {
+        finalImages = await compressImagesArray(finalImages, { maxWidth: 1000, maxHeight: 750, quality: 0.65 });
+      }
+    }
+
     const payload = {
       name: form.name,
       slug: editingItem ? editingItem.slug : slugify(form.name),
@@ -1778,8 +1865,8 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
       scale: form.scale || null,
       status: form.status || null,
       price_from: form.price_from || null,
-      image_url: form.image_url || null,
-      images: form.images as Json,
+      image_url: finalImageUrl || null,
+      images: finalImages as Json,
       published: form.published,
     };
 

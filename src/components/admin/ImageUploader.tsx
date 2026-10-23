@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+import { compressImageFile } from "@/lib/imageCompression";
+
 interface ImageUploaderProps {
   images: string[];
   featuredImage: string;
@@ -40,15 +42,13 @@ export default function ImageUploader({
 
       try {
         if (isMock) {
-          // Convert to Base64 data URL for offline mode mock db storage
-          const reader = new FileReader();
-          const base64Promise = new Promise<string>((resolve, reject) => {
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = () => reject(new Error("Lỗi khi đọc file bằng FileReader"));
+          // Compress to lightweight Base64 (~50KB-80KB) for offline mode mock db storage
+          const compressedBase64 = await compressImageFile(file, {
+            maxWidth: 1000,
+            maxHeight: 750,
+            quality: 0.65,
           });
-          reader.readAsDataURL(file);
-          const base64Url = await base64Promise;
-          newUrls.push(base64Url);
+          newUrls.push(compressedBase64);
         } else {
           // Upload to Supabase Storage
           const fileExt = file.name.split(".").pop();

@@ -84,9 +84,9 @@ const NhaDatBanIndexRoute = NhaDatBanIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const NhaDatBanSlugRoute = NhaDatBanSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => NhaDatBanRoute,
+  id: '/nha-dat-ban/$slug',
+  path: '/nha-dat-ban/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const NhaDatChoThueIndexRoute = NhaDatChoThueIndexRouteImport.update({
   id: '/nha-dat-cho-thue/',
@@ -94,9 +94,9 @@ const NhaDatChoThueIndexRoute = NhaDatChoThueIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const NhaDatChoThueSlugRoute = NhaDatChoThueSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => NhaDatChoThueRoute,
+  id: '/nha-dat-cho-thue/$slug',
+  path: '/nha-dat-cho-thue/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PhapLyIndexRoute = PhapLyIndexRouteImport.update({
   id: '/phap-ly/',
@@ -252,6 +252,8 @@ export interface RootRouteChildren {
   OnThiRoute: typeof OnThiRoute
   DuAnSlugRoute: typeof DuAnSlugRoute
   MoiGioiSlugRoute: typeof MoiGioiSlugRoute
+  NhaDatBanSlugRoute: typeof NhaDatBanSlugRoute
+  NhaDatChoThueSlugRoute: typeof NhaDatChoThueSlugRoute
   PhapLySlugRoute: typeof PhapLySlugRoute
   TinTucSlugRoute: typeof TinTucSlugRoute
   DuAnIndexRoute: typeof DuAnIndexRoute
@@ -343,10 +345,10 @@ declare module '@tanstack/react-router' {
     }
     '/nha-dat-ban/$slug': {
       id: '/nha-dat-ban/$slug'
-      path: '/$slug'
+      path: '/nha-dat-ban/$slug'
       fullPath: '/nha-dat-ban/$slug'
       preLoaderRoute: typeof NhaDatBanSlugRouteImport
-      parentRoute: typeof NhaDatBanRoute
+      parentRoute: typeof rootRouteImport
     }
     '/nha-dat-cho-thue/': {
       id: '/nha-dat-cho-thue/'
@@ -357,10 +359,10 @@ declare module '@tanstack/react-router' {
     }
     '/nha-dat-cho-thue/$slug': {
       id: '/nha-dat-cho-thue/$slug'
-      path: '/$slug'
+      path: '/nha-dat-cho-thue/$slug'
       fullPath: '/nha-dat-cho-thue/$slug'
       preLoaderRoute: typeof NhaDatChoThueSlugRouteImport
-      parentRoute: typeof NhaDatChoThueRoute
+      parentRoute: typeof rootRouteImport
     }
     '/phap-ly/': {
       id: '/phap-ly/'
@@ -402,6 +404,8 @@ const rootRouteChildren: RootRouteChildren = {
   OnThiRoute: OnThiRoute,
   DuAnSlugRoute: DuAnSlugRoute,
   MoiGioiSlugRoute: MoiGioiSlugRoute,
+  NhaDatBanSlugRoute: NhaDatBanSlugRoute,
+  NhaDatChoThueSlugRoute: NhaDatChoThueSlugRoute,
   PhapLySlugRoute: PhapLySlugRoute,
   TinTucSlugRoute: TinTucSlugRoute,
   DuAnIndexRoute: DuAnIndexRoute,
