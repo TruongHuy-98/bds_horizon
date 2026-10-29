@@ -1,8 +1,9 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useMemo, useEffect } from "react";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import { sampleListings, ListingItem } from "@/data/listingsData";
+import { findListingBySlug, getLocalAndSampleListings } from "@/lib/listingsService";
 import {
   MapPin,
   Compass,
@@ -27,9 +28,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/nha-dat-ban/$slug")({
   component: PropertyDetailPage,
   head: ({ params }) => {
-    const property = sampleListings.find(
-      (item) => item.slug === params.slug && item.listingType === "sale"
-    );
+    const property = findListingBySlug(params.slug, "sale") || findListingBySlug(params.slug);
     return {
       meta: [
         {
@@ -55,17 +54,20 @@ export const Route = createFileRoute("/nha-dat-ban/$slug")({
 function PropertyDetailPage() {
   const { slug } = Route.useParams();
 
-  // Find the property by slug
-  const property = useMemo(() => {
-    return sampleListings.find(
-      (item) => item.slug === slug && item.listingType === "sale"
-    );
+  // Find the property by slug from DB or sample listings
+  const [property, setProperty] = useState<ListingItem | null>(() =>
+    findListingBySlug(slug, "sale") || findListingBySlug(slug)
+  );
+
+  useEffect(() => {
+    const p = findListingBySlug(slug, "sale") || findListingBySlug(slug);
+    setProperty(p);
   }, [slug]);
 
   // Similar properties in the same district or category
   const similarProperties = useMemo(() => {
     if (!property) return [];
-    return sampleListings
+    return getLocalAndSampleListings("sale")
       .filter(
         (item) =>
           item.listingType === "sale" &&
@@ -321,9 +323,16 @@ function PropertyDetailPage() {
                   <span className="h-4 w-1 bg-primary rounded-full"></span>
                   Thông tin mô tả
                 </h2>
-                <div className="text-sm sm:text-base text-foreground/80 leading-relaxed whitespace-pre-line space-y-3">
-                  {property.description}
-                </div>
+                {property.description?.includes("<") ? (
+                  <div
+                    className="prose prose-slate max-w-none text-sm sm:text-base text-foreground/90 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: property.description }}
+                  />
+                ) : (
+                  <div className="text-sm sm:text-base text-foreground/80 leading-relaxed whitespace-pre-line space-y-3">
+                    {property.description}
+                  </div>
+                )}
               </div>
 
               {/* Similar Properties */}

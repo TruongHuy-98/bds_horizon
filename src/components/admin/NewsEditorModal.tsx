@@ -35,6 +35,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import RichTextEditor from "./RichTextEditor";
 import SeoPreviewBlock from "./SeoPreviewBlock";
 import ImageUploader from "./ImageUploader";
+import PublishStatusCard from "./PublishStatusCard";
+import TagManagerCard from "./TagManagerCard";
 import { NewsPostRow } from "@/routes/admin";
 import { slugify } from "@/lib/utils";
 import { CategoryItem, fetchCategories, createCategory } from "@/lib/categories";
@@ -399,112 +401,23 @@ export default function NewsEditorModal({
             <div className="lg:col-span-4 space-y-6">
               
               {/* CARD 1: PUBLISHING STATUS & SCHEDULING */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
-                <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <Clock className="size-4 text-blue-600" /> Trạng thái phát hành
-                </h3>
-
-                <RadioGroup
-                  value={form.publishStatus}
-                  onValueChange={(val: any) => setForm({ ...form, publishStatus: val })}
-                  className="space-y-3"
-                >
-                  {/* Public Option */}
-                  <div className="flex items-start space-x-3 p-3 rounded-xl border border-slate-200/80 hover:bg-slate-50 transition-colors">
-                    <RadioGroupItem value="public" id="st-public" className="mt-0.5" />
-                    <div className="space-y-0.5">
-                      <Label htmlFor="st-public" className="font-bold text-slate-800 text-xs cursor-pointer">
-                        Công khai ngay (Public)
-                      </Label>
-                      <p className="text-[11px] text-slate-500 leading-tight">
-                        Bài viết được xuất bản lập tức trên website cho độc giả xem.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Draft Option */}
-                  <div className="flex items-start space-x-3 p-3 rounded-xl border border-slate-200/80 hover:bg-slate-50 transition-colors">
-                    <RadioGroupItem value="draft" id="st-draft" className="mt-0.5" />
-                    <div className="space-y-0.5">
-                      <Label htmlFor="st-draft" className="font-bold text-slate-800 text-xs cursor-pointer">
-                        Lưu bản nháp (Draft)
-                      </Label>
-                      <p className="text-[11px] text-slate-500 leading-tight">
-                        Lưu trữ để biên tập lại, chưa hiển thị công khai.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Scheduled Option */}
-                  <div className="flex items-start space-x-3 p-3 rounded-xl border border-slate-200/80 hover:bg-slate-50 transition-colors">
-                    <RadioGroupItem value="scheduled" id="st-scheduled" className="mt-0.5" />
-                    <div className="space-y-0.5 w-full">
-                      <Label htmlFor="st-scheduled" className="font-bold text-slate-800 text-xs cursor-pointer">
-                        Hẹn giờ đăng bài (Scheduled)
-                      </Label>
-                      <p className="text-[11px] text-slate-500 leading-tight">
-                        Tự động hiển thị theo lịch cài đặt trước.
-                      </p>
-                    </div>
-                  </div>
-                </RadioGroup>
-
-                {/* Datetime picker if scheduled */}
-                {form.publishStatus === "scheduled" && (
-                  <div className="pt-2 space-y-1.5 animate-in fade-in slide-in-from-top-1">
-                    <Label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                      <Calendar className="size-3.5 text-blue-600" /> Chọn ngày & giờ đăng:
-                    </Label>
-                    <Input
-                      type="datetime-local"
-                      value={form.scheduledAt}
-                      onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })}
-                      className="text-xs border-slate-200"
-                    />
-                  </div>
-                )}
-              </div>
+              <PublishStatusCard
+                publishStatus={form.publishStatus}
+                onChangePublishStatus={(val) => setForm({ ...form, publishStatus: val })}
+                scheduledAt={form.scheduledAt}
+                onChangeScheduledAt={(val) => setForm({ ...form, scheduledAt: val })}
+                itemTypeLabel="bài viết"
+              />
 
               {/* CARD 2: TAGS MANAGEMENT */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-3">
-                <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <TagIcon className="size-4 text-emerald-600" /> Quản lý Thẻ (Tags)
-                </h3>
-
-                <div className="space-y-2">
-                  <Input
-                    placeholder="Gõ tên tag rồi nhấn Enter hoặc dấu phẩy..."
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={handleAddTag}
-                    className="text-xs border-slate-200"
-                  />
-                  <p className="text-[10px] text-slate-400">VD: Đà Nẵng, Quy hoạch, Hòa Xuân...</p>
-                </div>
-
-                {/* TAG PILLS CONTAINER */}
-                <div className="flex flex-wrap gap-1.5 pt-1 min-h-[40px]">
-                  {form.tags.length === 0 ? (
-                    <span className="text-xs text-slate-400 italic">Chưa có tag nào</span>
-                  ) : (
-                    form.tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-medium py-1 px-2.5 rounded-lg flex items-center gap-1.5"
-                      >
-                        #{tag}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveTag(tag)}
-                          className="hover:text-red-600 rounded-full p-0.5"
-                        >
-                          <X className="size-3" />
-                        </button>
-                      </Badge>
-                    ))
-                  )}
-                </div>
-              </div>
+              <TagManagerCard
+                tags={form.tags}
+                onChangeTags={(tags) => setForm({ ...form, tags })}
+                title="Quản lý Thẻ (Tags)"
+                placeholder="Gõ tên tag rồi nhấn Enter hoặc dấu phẩy..."
+                hint="VD: Đà Nẵng, Quy hoạch, Hòa Xuân, Bất động sản..."
+                suggestions={["Đà Nẵng", "Quy hoạch", "Thị trường BĐS", "Hòa Xuân", "Sơn Trà", "Pháp lý"]}
+              />
 
               {/* CARD 3: CATEGORY & AUTHOR */}
               <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">

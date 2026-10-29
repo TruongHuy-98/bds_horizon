@@ -74,6 +74,7 @@ import { INITIAL_MOCK_EXAM_RESULTS, ExamResult } from "@/data/mockExamResultsDat
 import { SmartQuestionImporterModal } from "@/components/admin/SmartQuestionImporterModal";
 import type { ParsedQuestion } from "@/lib/questionParser";
 import NewsEditorModal, { NewsFormData } from "@/components/admin/NewsEditorModal";
+import PropertyEditorModal, { PropertyFormData } from "@/components/admin/PropertyEditorModal";
 import CategoryManagerModal from "@/components/admin/CategoryManagerModal";
 import { LOCAL_USERS_DB, UserAccount, UserRole, BrokerPlanType, UserStatus } from "@/data/mockUsersData";
 import { UserEditModal } from "@/components/admin/UserEditModal";
@@ -1257,23 +1258,12 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDistrict, setFilterDistrict] = useState("all");
   const [filterType, setFilterType] = useState("all");
+  const [filterListingType, setFilterListingType] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   
-  // Selected property for editing (if null, then we are in Create mode)
+  // Editor Modal states
+  const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PropertyRow | null>(null);
-
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    price_label: "",
-    area: "",
-    address: "",
-    district: "",
-    property_type: "Căn hộ",
-    image_url: "",
-    images: [] as string[],
-    published: true,
-  });
-  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -1306,46 +1296,19 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
     load();
   }, [isMock]);
 
-  // When edit icon is clicked
-  const handleStartEdit = (it: PropertyRow) => {
-    setEditingItem(it);
-    setForm({
-      title: it.title,
-      description: it.description || "",
-      price_label: it.price_label || "",
-      area: it.area ? String(it.area) : "",
-      address: it.address || "",
-      district: it.district || "",
-      property_type: it.property_type || "Căn hộ",
-      image_url: it.image_url || "",
-      images: Array.isArray(it.images) ? (it.images as string[]) : it.image_url ? [it.image_url] : [],
-      published: it.published ?? true,
-    });
-  };
-
-  // When cancel edit button is clicked
-  const handleCancelEdit = () => {
+  const handleOpenCreateModal = () => {
     setEditingItem(null);
-    setForm({
-      title: "",
-      description: "",
-      price_label: "",
-      area: "",
-      address: "",
-      district: "",
-      property_type: "Căn hộ",
-      image_url: "",
-      images: [] as string[],
-      published: true,
-    });
+    setModalOpen(true);
   };
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
+  const handleOpenEditModal = (it: PropertyRow) => {
+    setEditingItem(it);
+    setModalOpen(true);
+  };
 
-    let finalImageUrl = form.image_url;
-    let finalImages = form.images;
+  const handleSaveModal = async (formData: PropertyFormData) => {
+    let finalImageUrl = formData.image_url;
+    let finalImages = formData.images;
 
     if (isMock) {
       if (finalImageUrl && finalImageUrl.startsWith("data:image/")) {
@@ -1356,74 +1319,104 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
       }
     }
 
+    const isPublic = formData.publishStatus === "public";
+    const isScheduled = formData.publishStatus === "scheduled";
+
     const payload = {
-      title: form.title,
-      slug: editingItem ? editingItem.slug : slugify(form.title),
-      description: form.description || null,
-      price_label: form.price_label || null,
-      area: form.area ? Number(form.area) : null,
-      address: form.address || null,
-      district: form.district || null,
-      property_type: form.property_type,
+      title: formData.title,
+      slug: formData.slug || slugify(formData.title),
+      description: formData.description || null,
+      price_label: formData.price_label || null,
+      price: formData.price ?? null,
+      area: formData.area ? Number(formData.area) : null,
+      address: formData.address || null,
+      district: formData.district || null,
+      property_type: formData.property_type,
+      listing_type: formData.listing_type,
+      bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
+      bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
       image_url: finalImageUrl || null,
       images: finalImages as Json,
-      published: form.published,
+      published: isPublic,
+      status: isScheduled ? "scheduled" : isPublic ? "available" : "draft",
+      tags: formData.tags,
       created_by: editingItem ? editingItem.created_by : (user?.id || null),
+      // Extended fields
+      excerpt: formData.excerpt,
+      direction: formData.direction,
+      legal_status: formData.legal_status,
+      scheduled_at: isScheduled ? new Date(formData.scheduledAt).toISOString() : null,
+      focus_keyword: formData.focusKeyword,
+      seo_title: formData.seoTitle,
+      seo_description: formData.seoDescription,
     };
 
     if (isMock) {
       try {
         if (editingItem) {
           LOCAL_DB.saveProperty({ ...payload, id: editingItem.id });
-          toast.success("Đã cập nhật tin đăng thành công (Mock DB)");
+          toast.success("Đã cập nhật tin đăng BĐS thành công (WordPress Style / Mock DB)");
         } else {
           LOCAL_DB.saveProperty(payload);
-          toast.success("Đã đăng tin mới thành công (Mock DB)");
+          toast.success("Đã đăng tin BĐS mới thành công (WordPress Style / Mock DB)");
         }
-        handleCancelEdit();
         load();
       } catch (err: any) {
         console.error("Local save error:", err);
-        toast.error(`Không thể lưu (Mock DB): Dung lượng LocalStorage có thể đã đầy do ảnh Base64 quá lớn! Chi tiết: ${err.message}`);
-      } finally {
-        setSaving(false);
+        toast.error(`Không thể lưu tin đăng: ${err.message}`);
       }
     } else {
       try {
+        const supabasePayload = {
+          title: payload.title,
+          slug: payload.slug,
+          description: payload.description,
+          price_label: payload.price_label,
+          price: payload.price,
+          area: payload.area,
+          address: payload.address,
+          district: payload.district,
+          property_type: payload.property_type,
+          listing_type: payload.listing_type,
+          bedrooms: payload.bedrooms,
+          bathrooms: payload.bathrooms,
+          image_url: payload.image_url,
+          images: payload.images,
+          published: payload.published,
+          status: payload.status,
+          tags: payload.tags,
+          created_by: payload.created_by,
+        };
+
         let error;
         if (editingItem) {
-          const res = await supabase.from("properties").update(payload).eq("id", editingItem.id);
+          const res = await supabase.from("properties").update(supabasePayload as any).eq("id", editingItem.id);
           error = res.error;
         } else {
-          const res = await supabase.from("properties").insert(payload);
+          const res = await supabase.from("properties").insert(supabasePayload as any);
           error = res.error;
         }
         if (error) throw error;
-        toast.success(editingItem ? "Đã lưu thay đổi" : "Đã đăng tin thành công");
-        handleCancelEdit();
+        toast.success(editingItem ? "Đã lưu thay đổi tin đăng BĐS" : "Đã đăng tin BĐS thành công!");
         load();
       } catch (err: any) {
         toast.error(`Có lỗi xảy ra: ${err.message}`);
-      } finally {
-        setSaving(false);
       }
     }
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa tin đăng này?")) return;
+    if (!confirm("Bạn có chắc chắn muốn xóa tin đăng BĐS này?")) return;
     
     if (isMock) {
       LOCAL_DB.deleteProperty(id);
-      toast.success("Đã xóa tin đăng (Mock DB)");
-      if (editingItem && editingItem.id === id) handleCancelEdit();
+      toast.success("Đã xóa tin đăng BĐS (Mock DB)");
       load();
     } else {
       try {
         const { error } = await supabase.from("properties").delete().eq("id", id);
         if (error) throw error;
-        toast.success("Đã xóa tin đăng");
-        if (editingItem && editingItem.id === id) handleCancelEdit();
+        toast.success("Đã xóa tin đăng BĐS thành công");
         load();
       } catch (err: any) {
         toast.error(`Không thể xóa: ${err.message}`);
@@ -1434,7 +1427,7 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
   const togglePublish = async (it: PropertyRow) => {
     if (isMock) {
       LOCAL_DB.togglePublishProperty(it.id);
-      toast.success("Đã thay đổi trạng thái hiển thị (Mock DB)");
+      toast.success("Đã cập nhật trạng thái hiển thị (Mock DB)");
       load();
     } else {
       try {
@@ -1450,314 +1443,386 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
       }
     }
   };
+  const isItemRent = (it: PropertyRow) =>
+    (it.listing_type || "").toLowerCase().includes("thuê") || it.listing_type === "rent";
 
   // Filtering items
   const filteredItems = items.filter((it) => {
-    const matchesSearch = it.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (it.address && it.address.toLowerCase().includes(searchTerm.toLowerCase()));
+    const isRent = isItemRent(it);
+    const matchesSearch =
+      it.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (it.address && it.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (it.district && it.district.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesDistrict = filterDistrict === "all" || it.district === filterDistrict;
     const matchesType = filterType === "all" || it.property_type === filterType;
-    return matchesSearch && matchesDistrict && matchesType;
+    const matchesListing =
+      filterListingType === "all" ||
+      (filterListingType === "Cho thuê" && isRent) ||
+      (filterListingType === "Bán" && !isRent);
+    const matchesStatus = filterStatus === "all" || (filterStatus === "published" ? it.published : !it.published);
+    return matchesSearch && matchesDistrict && matchesType && matchesListing && matchesStatus;
   });
+
+  const saleCount = items.filter((i) => !isItemRent(i)).length;
+  const rentCount = items.filter((i) => isItemRent(i)).length;
 
   const uniqueDistricts = Array.from(new Set(items.map((i) => i.district).filter(Boolean)));
   const uniqueTypes = Array.from(new Set(items.map((i) => i.property_type).filter(Boolean)));
 
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setFilterDistrict("all");
+    setFilterType("all");
+    setFilterListingType("all");
+    setFilterStatus("all");
+  };
+
   return (
-    <div className="grid lg:grid-cols-12 gap-8 items-start">
-      
-      {/* LEFT COLUMN: LIST VIEW */}
-      <div className="lg:col-span-7 space-y-4">
-        <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+    <div className="space-y-6">
+      {/* TOP HEADER BAR */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+        <div>
+          <h2 className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
+            <Building2 className="size-5 text-blue-600" /> Quản lý Tin đăng BĐS (Bán & Cho thuê)
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Đăng tải và quản lý bất động sản với giao diện WordPress Editor chuẩn SEO, thông số kỹ thuật đa dạng & quản lý thư viện ảnh
+          </p>
+        </div>
+
+        <Button
+          onClick={handleOpenCreateModal}
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs py-5 px-5 rounded-xl shadow-lg shadow-blue-500/10 flex items-center gap-2 transition-all duration-300 cursor-pointer w-full sm:w-auto justify-center"
+        >
+          <Plus className="size-4" /> + Đăng tin mới (WordPress Style)
+        </Button>
+      </div>
+
+      {/* FILTER & LIST SECTION */}
+      <div className="space-y-4">
+        
+        {/* TABS LỌC NHANH: TẤT CẢ / BÁN / CHO THUÊ */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setFilterListingType("all")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                filterListingType === "all"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "bg-slate-50 text-slate-600 border border-slate-200/80 hover:bg-slate-100"
+              }`}
+            >
+              <span>Tất cả tin đăng</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                filterListingType === "all" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+              }`}>
+                {items.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterListingType("Bán")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                filterListingType === "Bán"
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "bg-emerald-50/70 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-100/70"
+              }`}
+            >
+              <span>🏷️ Trang "Nhà đất Bán"</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                filterListingType === "Bán" ? "bg-white/20 text-white" : "bg-emerald-200 text-emerald-800"
+              }`}>
+                {saleCount}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterListingType("Cho thuê")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                filterListingType === "Cho thuê"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "bg-indigo-50/70 text-indigo-700 border border-indigo-200/80 hover:bg-indigo-100/70"
+              }`}
+            >
+              <span>🔑 Trang "Nhà đất Cho thuê"</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                filterListingType === "Cho thuê" ? "bg-white/20 text-white" : "bg-indigo-200 text-indigo-800"
+              }`}>
+                {rentCount}
+              </span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleResetFilters}
+              className="text-xs h-8 text-slate-600 hover:text-slate-900 border-slate-200 cursor-pointer"
+            >
+              <RotateCcw className="size-3 mr-1" /> Đặt lại bộ lọc
+            </Button>
+          </div>
+        </div>
+
+        {/* FILTERS TOOLBAR */}
+        <div className="flex flex-col lg:flex-row items-center gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
           <div className="relative w-full flex-1">
             <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
             <Input
-              placeholder="Tìm kiếm tiêu đề, địa chỉ..."
+              placeholder="Tìm kiếm theo tiêu đề, địa chỉ, quận huyện..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-slate-50/50 border-slate-200/80 focus-visible:ring-blue-500/30"
+              className="pl-9 bg-slate-50/50 border-slate-200/80 focus-visible:ring-blue-500/30 text-xs"
             />
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
+
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <select
               value={filterDistrict}
               onChange={(e) => setFilterDistrict(e.target.value)}
-              className="text-xs font-medium bg-white border border-slate-200 rounded-lg p-2 flex-1 sm:flex-initial focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="text-xs font-medium bg-white border border-slate-200 rounded-lg p-2 flex-1 sm:flex-initial focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
               <option value="all">Tất cả Quận/Huyện</option>
               {uniqueDistricts.map((d) => (
                 <option key={d} value={d!}>{d}</option>
               ))}
             </select>
+
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="text-xs font-medium bg-white border border-slate-200 rounded-lg p-2 flex-1 sm:flex-initial focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="text-xs font-medium bg-white border border-slate-200 rounded-lg p-2 flex-1 sm:flex-initial focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
-              <option value="all">Tất cả Loại tin</option>
+              <option value="all">Tất cả Loại BĐS</option>
               {uniqueTypes.map((t) => (
                 <option key={t} value={t!}>{t}</option>
               ))}
             </select>
+
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="text-xs font-medium bg-white border border-slate-200 rounded-lg p-2 flex-1 sm:flex-initial focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            >
+              <option value="all">Tất cả Trạng thái</option>
+              <option value="published">Đang công khai</option>
+              <option value="draft">Bản nháp</option>
+            </select>
+
+            <Button
+              type="button"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 h-9 rounded-lg flex items-center gap-1.5 shadow-sm cursor-pointer"
+              onClick={() => {}}
+            >
+              <Filter className="size-3.5" /> Lọc tin
+            </Button>
           </div>
         </div>
 
+        {/* LIST CARD CONTAINER */}
         <Card className="border-slate-100 overflow-hidden shadow-sm bg-white">
           <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
-            <h3 className="font-bold text-slate-900 text-sm">Danh sách tin đăng ({filteredItems.length})</h3>
+            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+              Danh sách tin đăng ({filteredItems.length})
+            </h3>
             <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100 border-none font-semibold text-xs">
               Mới nhất xếp trước
             </Badge>
           </div>
 
           {loading ? (
-            <div className="p-8 text-center text-slate-400 space-y-2">
+            <div className="p-12 text-center text-slate-400 space-y-2">
               <div className="animate-spin size-8 border-t-2 border-b-2 border-blue-600 rounded-full mx-auto"></div>
-              <p className="text-xs font-medium">Đang tải danh sách tin...</p>
+              <p className="text-xs font-medium">Đang tải danh sách bất động sản...</p>
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="p-16 text-center text-slate-400 bg-slate-50/20">
-              <Building2 className="size-12 mx-auto text-slate-300 stroke-[1.5] mb-2" />
-              <p className="font-semibold text-slate-800 text-sm">Không tìm thấy tin đăng nào</p>
-              <p className="text-xs text-slate-400 mt-0.5">Vui lòng điều chỉnh bộ lọc hoặc thêm tin mới bên phải</p>
+            <div className="p-16 text-center text-slate-400 bg-slate-50/20 space-y-3">
+              <Building2 className="size-12 mx-auto text-slate-300 stroke-[1.5]" />
+              <div>
+                <p className="font-semibold text-slate-800 text-sm">Không tìm thấy tin đăng nào</p>
+                <p className="text-xs text-slate-400 mt-0.5">Vui lòng điều chỉnh lại bộ lọc hoặc tạo một tin đăng mới</p>
+              </div>
+              <Button
+                onClick={handleOpenCreateModal}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
+              >
+                <Plus className="size-3.5 mr-1" /> Soạn thảo tin đăng BĐS mới
+              </Button>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 max-h-[70vh] overflow-y-auto">
-              {filteredItems.map((it) => (
-                <div key={it.id} className="p-4 flex gap-4 hover:bg-slate-50/40 transition-colors group">
-                  <div className="size-16 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200/40 relative">
-                    {it.image_url ? (
-                      <img src={it.image_url} alt={it.title} className="size-full object-cover" />
-                    ) : (
-                      <div className="size-full flex items-center justify-center bg-slate-100 text-slate-400">
-                        <Building2 className="size-5" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-bold text-slate-900 text-sm truncate group-hover:text-blue-600 transition-colors">
-                        {it.title}
-                      </h4>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Badge
-                          variant={it.published ? "default" : "secondary"}
-                          className={`cursor-pointer text-[10px] font-bold py-0.5 px-2 rounded-full border-none shadow-sm ${
-                            it.published ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                          }`}
-                          onClick={() => togglePublish(it)}
-                        >
-                          {it.published ? "Công khai" : "Nháp"}
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="text-xs text-slate-500 font-medium flex flex-wrap gap-x-2 gap-y-1 mt-1.5">
-                      <span className="text-orange-600 font-bold flex items-center gap-0.5">
-                        <DollarSign className="size-3" />
-                        {it.price_label || "Thỏa thuận"}
-                      </span>
-                      <span className="text-slate-300">•</span>
-                      <span className="flex items-center gap-0.5 text-indigo-600 font-semibold">
-                        <Maximize2 className="size-3" />
-                        {it.area ? `${it.area} m²` : "N/A"}
-                      </span>
-                      {it.district && (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <span className="flex items-center gap-0.5">
-                            <MapPin className="size-3 text-slate-400" />
-                            {it.district}
-                          </span>
-                        </>
+            <div className="divide-y divide-slate-100">
+              {filteredItems.map((it) => {
+                const isRent = isItemRent(it);
+                const targetPath = isRent ? `/nha-dat-cho-thue/${it.slug}` : `/nha-dat-ban/${it.slug}`;
+                return (
+                  <div key={it.id} className="p-4 sm:p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center hover:bg-slate-50/50 transition-colors group">
+                    {/* Thumbnail Image */}
+                    <div className="size-20 sm:size-24 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200/60 relative group-hover:shadow-md transition-all">
+                      {it.image_url ? (
+                        <img
+                          src={it.image_url}
+                          alt={it.title}
+                          className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="size-full flex items-center justify-center bg-slate-100 text-slate-400">
+                          <Building2 className="size-6" />
+                        </div>
                       )}
-                      {it.property_type && (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <Badge variant="outline" className="text-[10px] py-0 h-4 px-1.5 border-slate-200 bg-slate-50/50">
+                      {/* Distinct Listing Type Badge */}
+                      <span className={`absolute top-1.5 left-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm flex items-center gap-0.5 ${
+                        isRent ? "bg-indigo-600 text-white" : "bg-emerald-600 text-white"
+                      }`}>
+                        {isRent ? "Cho thuê" : "Bán"}
+                      </span>
+                    </div>
+
+                    {/* Middle Info */}
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 ${
+                          isRent
+                            ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                            : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        }`}>
+                          {isRent ? "🔑 BĐS Cho thuê" : "🏷️ BĐS Bán"}
+                        </span>
+                        
+                        <h4
+                          onClick={() => handleOpenEditModal(it)}
+                          className="font-bold text-slate-900 text-sm hover:text-blue-600 transition-colors cursor-pointer line-clamp-1"
+                        >
+                          {it.title}
+                        </h4>
+                      </div>
+
+                      {/* Key metrics: Price, Area, Location */}
+                      <div className="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                        <span className="text-orange-600 font-extrabold flex items-center gap-0.5 text-sm">
+                          <DollarSign className="size-3.5" />
+                          {it.price_label || "Thỏa thuận"}
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <span className="flex items-center gap-1 text-indigo-600 font-bold">
+                          <Maximize2 className="size-3" />
+                          {it.area ? `${it.area} m²` : "N/A"}
+                        </span>
+                        {it.district && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="flex items-center gap-0.5 text-slate-600">
+                              <MapPin className="size-3 text-slate-400" />
+                              Quận {it.district}
+                            </span>
+                          </>
+                        )}
+                        {it.address && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-500 truncate max-w-[200px]" title={it.address}>
+                              {it.address}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Target Page Link & Badges */}
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        {it.property_type && (
+                          <Badge variant="outline" className="text-[10px] py-0 h-4 px-1.5 border-slate-200 bg-slate-50 text-slate-600">
                             {it.property_type}
                           </Badge>
-                        </>
-                      )}
+                        )}
+                        {it.bedrooms && (
+                          <Badge variant="outline" className="text-[10px] py-0 h-4 px-1.5 border-slate-200 bg-slate-50 text-slate-600">
+                            {it.bedrooms} PN
+                          </Badge>
+                        )}
+                        {it.bathrooms && (
+                          <Badge variant="outline" className="text-[10px] py-0 h-4 px-1.5 border-slate-200 bg-slate-50 text-slate-600">
+                            {it.bathrooms} WC
+                          </Badge>
+                        )}
+                        {it.slug && (
+                          <a
+                            href={targetPath}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] text-blue-600 hover:underline font-mono flex items-center gap-0.5"
+                          >
+                            <span>Trang đích: {targetPath}</span>
+                            <Eye className="size-3 ml-0.5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Action buttons & status */}
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+                      <Badge
+                        variant={it.published ? "default" : "secondary"}
+                        className={`cursor-pointer text-[10px] font-bold py-0.5 px-2.5 rounded-full border-none shadow-sm transition-all ${
+                          it.published
+                            ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                        onClick={() => togglePublish(it)}
+                        title="Bấm để đổi trạng thái"
+                      >
+                        {it.published ? "Công khai" : "Bản nháp"}
+                      </Badge>
+
+                      <div className="flex items-center gap-1">
+                        <a
+                          href={targetPath}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="size-8 flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg cursor-pointer transition-colors"
+                          title="Xem trực tiếp trên website"
+                        >
+                          <Eye className="size-3.5" />
+                        </a>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenEditModal(it)}
+                          className="size-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer"
+                          title="Chỉnh sửa tin đăng (WordPress Style)"
+                        >
+                          <Edit2 className="size-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => remove(it.id)}
+                          className="size-8 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
+                          title="Xóa tin đăng"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-1 shrink-0 ml-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleStartEdit(it)}
-                      className="size-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
-                      title="Sửa tin đăng"
-                    >
-                      <Edit2 className="size-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => remove(it.id)}
-                      className="size-8 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                      title="Xóa tin đăng"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>
       </div>
 
-      {/* RIGHT COLUMN: ACTION FORM */}
-      <div className="lg:col-span-5">
-        <Card className="p-6 border-slate-100 shadow-sm bg-white space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-              {editingItem ? (
-                <>
-                  <Edit2 className="size-4 text-blue-600" /> Cập nhật tin đăng
-                </>
-              ) : (
-                <>
-                  <Plus className="size-4 text-blue-600" /> Đăng tin mới
-                </>
-              )}
-            </h3>
-            {editingItem && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleCancelEdit}
-                className="h-7 text-xs hover:bg-slate-100 text-slate-500 hover:text-slate-900"
-              >
-                <ArrowLeft className="size-3 mr-1" /> Tạo mới
-              </Button>
-            )}
-          </div>
-
-          <form onSubmit={submit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Tiêu đề tin đăng <span className="text-red-500">*</span></Label>
-              <Input
-                required
-                placeholder="Ví dụ: Căn hộ nghỉ dưỡng 2PN view biển Sơn Trà..."
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="border-slate-200/80 focus-visible:ring-blue-500/30"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Mô tả chi tiết</Label>
-              <Textarea
-                placeholder="Nhập thông tin mô tả chi tiết bất động sản: thiết kế, nội thất, hướng nhà, tiện ích xung quanh, tình trạng pháp lý..."
-                rows={4}
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="border-slate-200/80 focus-visible:ring-blue-500/30 resize-none text-sm"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold flex items-center gap-0.5">
-                  <DollarSign className="size-3 text-slate-400" /> Giá hiển thị
-                </Label>
-                <Input
-                  placeholder="Ví dụ: 3.5 tỷ, Thỏa thuận..."
-                  value={form.price_label}
-                  onChange={(e) => setForm({ ...form, price_label: e.target.value })}
-                  className="border-slate-200/80 focus-visible:ring-blue-500/30"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold flex items-center gap-0.5">
-                  <Maximize2 className="size-3 text-slate-400" /> Diện tích (m²)
-                </Label>
-                <Input
-                  type="number"
-                  placeholder="Ví dụ: 85..."
-                  value={form.area}
-                  onChange={(e) => setForm({ ...form, area: e.target.value })}
-                  className="border-slate-200/80 focus-visible:ring-blue-500/30"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold flex items-center gap-0.5">
-                <MapPin className="size-3 text-slate-400" /> Địa chỉ chính xác
-              </Label>
-              <Input
-                placeholder="Số nhà, Tên đường, Phường..."
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                className="border-slate-200/80 focus-visible:ring-blue-500/30"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Quận/Huyện</Label>
-                <Input
-                  placeholder="Ví dụ: Sơn Trà, Ngũ Hành Sơn..."
-                  value={form.district}
-                  onChange={(e) => setForm({ ...form, district: e.target.value })}
-                  className="border-slate-200/80 focus-visible:ring-blue-500/30"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Loại bất động sản</Label>
-                <Input
-                  placeholder="Ví dụ: Căn hộ, Đất nền, Biệt thự..."
-                  value={form.property_type}
-                  onChange={(e) => setForm({ ...form, property_type: e.target.value })}
-                  className="border-slate-200/80 focus-visible:ring-blue-500/30"
-                />
-              </div>
-            </div>
-
-            <ImageUploader
-              images={form.images}
-              featuredImage={form.image_url}
-              onChangeImages={(urls) => setForm(prev => ({ ...prev, images: urls }))}
-              onChangeFeaturedImage={(url) => setForm(prev => ({ ...prev, image_url: url }))}
-              isMock={isMock}
-              label="Hình ảnh bất động sản"
-            />
-
-            <div className="flex items-center justify-between rounded-xl border border-slate-200/80 p-3 bg-slate-50/40">
-              <div className="space-y-0.5">
-                <div className="text-xs font-bold text-slate-800">Hiển thị công khai</div>
-                <div className="text-[10px] text-slate-400 font-medium">Bật để khách truy cập website có thể xem thấy</div>
-              </div>
-              <Switch 
-                checked={form.published} 
-                onCheckedChange={(v) => setForm({ ...form, published: v })} 
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              disabled={saving} 
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-blue-500/10 transition-all duration-300 py-5 h-auto rounded-xl"
-            >
-              {saving ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin size-4 border-2 border-t-transparent border-white rounded-full"></span>
-                  Đang xử lý...
-                </span>
-              ) : editingItem ? (
-                "Cập nhật thay đổi"
-              ) : (
-                "Đăng tin ngay"
-              )}
-            </Button>
-          </form>
-        </Card>
-      </div>
-
+      {/* WORDPRESS & REAL ESTATE STYLE EDITOR MODAL */}
+      <PropertyEditorModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSaveModal}
+        editingItem={editingItem}
+        isMock={isMock}
+      />
     </div>
   );
 }

@@ -27,6 +27,7 @@ interface SeoPreviewBlockProps {
   setSeoTitle: (v: string) => void;
   seoDescription: string;
   setSeoDescription: (v: string) => void;
+  baseUrlPrefix?: string;
 }
 
 export default function SeoPreviewBlock({
@@ -39,6 +40,7 @@ export default function SeoPreviewBlock({
   setSeoTitle,
   seoDescription,
   setSeoDescription,
+  baseUrlPrefix = "tin-tuc",
 }: SeoPreviewBlockProps) {
   const [deviceMode, setDeviceMode] = useState<"desktop" | "mobile">("desktop");
 
@@ -254,7 +256,7 @@ export default function SeoPreviewBlock({
                 <div className="flex flex-col leading-tight">
                   <span className="font-medium text-[12px] text-[#202124]">Da Nang Real Estate</span>
                   <span className="text-[11px] text-[#5f6368] truncate max-w-[280px]">
-                    https://bds-horizon.vercel.app › tin-tuc › {displaySlug}
+                    https://bds-horizon.vercel.app › {baseUrlPrefix} › {displaySlug}
                   </span>
                 </div>
               </div>

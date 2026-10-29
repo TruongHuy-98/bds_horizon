@@ -378,8 +378,9 @@ function FeaturedProperties() {
   // Map database listings to UI format
   const mappedDbProperties = dbProperties.map((p) => ({
     raw: {
+      slug: p.slug,
       title: p.title,
-      description: p.description || "Chưa có mô tả chi tiết cho bất động sản này.",
+      description: p.description || p.excerpt || "Chưa có mô tả chi tiết cho bất động sản này.",
       price: p.price_label || (p.price ? `${p.price} tỷ` : "Thỏa thuận"),
       area: p.area ? `${p.area}m²` : "N/A",
       beds: p.bedrooms || 0,
@@ -391,13 +392,13 @@ function FeaturedProperties() {
         : p.image_url 
           ? [p.image_url] 
           : ["https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60"],
-      listing_type: p.listing_type === "rent" ? "Cho thuê" : "Mua bán",
+      listing_type: p.listing_type === "rent" || p.listing_type === "Cho thuê" ? "Cho thuê" : "Mua bán",
       status: p.status === "available" ? "Còn trống" : p.status === "rented" ? "Đã cho thuê" : "Đã bán",
       developer: p.developer || "Đang cập nhật",
     },
     img: p.image_url || (Array.isArray(p.images) && p.images[0]) || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60",
-    tag: p.listing_type === "rent" ? "Cho thuê" : "Mua bán",
-    tagTone: p.listing_type === "rent" ? ("teal" as const) : ("orange" as const),
+    tag: p.listing_type === "rent" || p.listing_type === "Cho thuê" ? "Cho thuê" : "Mua bán",
+    tagTone: p.listing_type === "rent" || p.listing_type === "Cho thuê" ? ("teal" as const) : ("orange" as const),
     extra: p.status === "available" ? "Còn trống" : p.status === "rented" ? "Đã cho thuê" : "Đã bán",
     title: p.title,
     loc: p.address || p.district || "Đà Nẵng",
@@ -600,10 +601,28 @@ function FeaturedProperties() {
               {/* Right Column: Descriptions & Contact Form */}
               <div className="flex flex-col space-y-6">
                 <div>
-                  <h4 className="font-bold text-sm text-foreground uppercase tracking-wider mb-2">Mô tả chi tiết</h4>
-                  <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-l-2 border-primary/20 pl-3">
-                    {selectedProperty?.raw.description}
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">Mô tả chi tiết</h4>
+                    {selectedProperty?.raw.slug && (
+                      <Link
+                        to={selectedProperty.raw.listing_type === "Cho thuê" ? "/nha-dat-cho-thue/$slug" : "/nha-dat-ban/$slug"}
+                        params={{ slug: selectedProperty.raw.slug }}
+                        className="text-xs text-primary font-semibold hover:underline flex items-center gap-1"
+                      >
+                        Xem trang đầy đủ ↗
+                      </Link>
+                    )}
                   </div>
+                  {selectedProperty?.raw.description?.includes("<") ? (
+                    <div
+                      className="prose prose-sm max-w-none text-sm text-muted-foreground leading-relaxed border-l-2 border-primary/20 pl-3"
+                      dangerouslySetInnerHTML={{ __html: selectedProperty.raw.description }}
+                    />
+                  ) : (
+                    <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-l-2 border-primary/20 pl-3">
+                      {selectedProperty?.raw.description || "Chưa có mô tả chi tiết cho bất động sản này."}
+                    </div>
+                  )}
                 </div>
 
                 <div className="border border-border/50 bg-surface-container/20 rounded-xl p-5">

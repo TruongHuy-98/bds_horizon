@@ -6,6 +6,7 @@ import { ListingFilterBar, FilterState, initialFilterState } from "@/components/
 import { PropertyListingCard } from "@/components/listings/PropertyListingCard";
 import { ListingSidebar } from "@/components/listings/ListingSidebar";
 import { sampleListings, ListingItem } from "@/data/listingsData";
+import { getLocalAndSampleListings } from "@/lib/listingsService";
 import { useFilteredListings } from "@/hooks/useFilteredListings";
 import {
   Select,
@@ -102,8 +103,15 @@ function NhaDatBanPage() {
     };
   }, [searchParams]);
 
+  // Load combined DB listings + sample listings
+  const [allListings, setAllListings] = useState<ListingItem[]>([]);
+
+  useEffect(() => {
+    setAllListings(getLocalAndSampleListings("sale"));
+  }, []);
+
   // Execute client-side filtering via custom hook
-  const rawFiltered = useFilteredListings(sampleListings, currentFilters, "sale");
+  const rawFiltered = useFilteredListings(allListings, currentFilters, "sale");
 
   // Apply sorting
   const filteredListings = useMemo(() => {
@@ -342,10 +350,28 @@ function NhaDatBanPage() {
 
             <div className="flex flex-col space-y-6">
               <div>
-                <h4 className="font-bold text-sm text-foreground uppercase tracking-wider mb-2">Mô tả chi tiết</h4>
-                <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-l-2 border-primary/20 pl-3">
-                  {selectedProperty?.description}
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">Mô tả chi tiết</h4>
+                  {selectedProperty?.slug && (
+                    <Link
+                      to="/nha-dat-ban/$slug"
+                      params={{ slug: selectedProperty.slug }}
+                      className="text-xs text-primary font-semibold hover:underline flex items-center gap-1"
+                    >
+                      Xem trang chi tiết ↗
+                    </Link>
+                  )}
                 </div>
+                {selectedProperty?.description?.includes("<") ? (
+                  <div
+                    className="prose prose-sm max-w-none text-sm text-muted-foreground leading-relaxed border-l-2 border-primary/20 pl-3"
+                    dangerouslySetInnerHTML={{ __html: selectedProperty.description }}
+                  />
+                ) : (
+                  <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-l-2 border-primary/20 pl-3">
+                    {selectedProperty?.description || "Chưa có mô tả chi tiết cho bất động sản này."}
+                  </div>
+                )}
               </div>
 
               <div className="border border-border/50 bg-surface-container/20 rounded-xl p-5">
