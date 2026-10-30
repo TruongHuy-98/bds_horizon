@@ -38,19 +38,22 @@ import {
 } from "@/components/ui/dialog";
 
 interface RichTextEditorProps {
-  value: string;
+  value?: string;
+  content?: string;
   onChange: (value: string) => void;
   placeholder?: string;
 }
 
 export default function RichTextEditor({
   value,
+  content,
   onChange,
   placeholder = "Soạn thảo nội dung bài báo chi tiết tại đây...",
 }: RichTextEditorProps) {
+  const initialVal = value ?? content ?? "";
   const [mode, setMode] = useState<"visual" | "html">("visual");
   const editorRef = useRef<HTMLDivElement>(null);
-  const [htmlCode, setHtmlCode] = useState(value);
+  const [htmlCode, setHtmlCode] = useState<string>(initialVal);
 
   // Dialog states
   const [linkOpen, setLinkOpen] = useState(false);
@@ -70,11 +73,12 @@ export default function RichTextEditor({
 
   // Sync internal editor content when props value changes from outside
   useEffect(() => {
-    setHtmlCode(value || "");
-    if (editorRef.current && editorRef.current.innerHTML !== (value || "")) {
-      editorRef.current.innerHTML = value || "";
+    const newVal = value ?? content ?? "";
+    setHtmlCode(newVal);
+    if (editorRef.current && editorRef.current.innerHTML !== newVal) {
+      editorRef.current.innerHTML = newVal;
     }
-  }, [value]);
+  }, [value, content]);
 
   const exec = (command: string, value: string | undefined = undefined) => {
     if (mode === "html") return;
@@ -481,9 +485,9 @@ export default function RichTextEditor({
       {/* FOOTER STATS & TIPS */}
       <div className="bg-slate-50 border-t border-slate-200 px-4 py-2 flex items-center justify-between text-xs text-slate-500 font-medium">
         <div className="flex items-center gap-3">
-          <span>Số từ: <strong className="text-slate-800">{htmlCode.replace(/<[^>]*>/g, " ").trim().split(/\s+/).filter(Boolean).length}</strong></span>
+          <span>Số từ: <strong className="text-slate-800">{(htmlCode || "").replace(/<[^>]*>/g, " ").trim().split(/\s+/).filter(Boolean).length}</strong></span>
           <span>•</span>
-          <span>Số ký tự (gồm HTML): <strong className="text-slate-800">{htmlCode.length}</strong></span>
+          <span>Số ký tự (gồm HTML): <strong className="text-slate-800">{(htmlCode || "").length}</strong></span>
         </div>
         <div className="text-[11px] text-slate-400 hidden sm:block">
           Hỗ trợ phím tắt Ctrl+B, Ctrl+I, Ctrl+U và dán nội dung HTML trực tiếp.

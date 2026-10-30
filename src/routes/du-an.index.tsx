@@ -516,12 +516,14 @@ function DuAnPage() {
     img: p.image_url || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=60",
     name: p.name,
     developer: p.developer || "Chưa rõ CĐT",
-    district: guessDistrict(p.location),
-    category: guessCategory(p.name, p.description),
+    district: p.district || guessDistrict(p.location),
+    category: (Array.isArray(p.categories) && p.categories.length > 0
+      ? (p.categories[0].includes("Biệt thự") ? "Biệt thự" : p.categories[0].includes("Nghỉ dưỡng") ? "Nghỉ dưỡng" : p.categories[0].includes("đô thị") ? "Khu đô thị" : p.categories[0].includes("Văn phòng") ? "Văn phòng" : "Căn hộ")
+      : guessCategory(p.name, p.description)) as Category,
     status: (p.status || "Đang mở bán") as Status,
     priceFrom: p.price_from || "Liên hệ",
     units: p.scale || "N/A",
-    handover: "N/A",
+    handover: p.handover || "N/A",
     slug: p.slug,
     location: p.location,
   }));

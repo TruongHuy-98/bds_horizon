@@ -389,9 +389,16 @@ function ProjectDetailPage() {
                 </div>
 
                 {project?.description && (
-                  <p className="mt-4 text-sm text-muted-foreground leading-relaxed line-clamp-6">
-                    {project.description}
-                  </p>
+                  project.description.includes("<") ? (
+                    <div
+                      className="mt-4 text-sm text-muted-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert line-clamp-6"
+                      dangerouslySetInnerHTML={{ __html: project.description }}
+                    />
+                  ) : (
+                    <p className="mt-4 text-sm text-muted-foreground leading-relaxed line-clamp-6">
+                      {project.description}
+                    </p>
+                  )
                 )}
 
                 <div className="h-px bg-border/60 my-6" />
@@ -399,9 +406,16 @@ function ProjectDetailPage() {
                 <dl className="space-y-4 text-sm">
                   <Row k="Chủ đầu tư" v={project?.developer || "Đang cập nhật"} />
                   <Row k="Quy mô" v={project?.scale || "Đang cập nhật"} />
-                  <Row k="Diện tích" v={project?.area || "1.2 ha"} />
-                  <Row k="Loại hình" v={project?.category || "Căn hộ"} />
-                  <Row k="Trạng thái" v={project?.status || "Đang thi công"} />
+                  <Row k="Diện tích" v={project?.area || project?.scale || "1.2 ha"} />
+                  <Row
+                    k="Loại hình"
+                    v={
+                      Array.isArray(project?.categories)
+                        ? project.categories.join(", ")
+                        : project?.category || "Căn hộ cao cấp"
+                    }
+                  />
+                  <Row k="Trạng thái" v={project?.status || "Đang mở bán"} />
                 </dl>
               </div>
 

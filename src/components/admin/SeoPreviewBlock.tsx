@@ -18,15 +18,27 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 interface SeoPreviewBlockProps {
-  articleTitle: string;
-  articleSlug: string;
-  articleContent: string;
-  focusKeyword: string;
-  setFocusKeyword: (v: string) => void;
-  seoTitle: string;
-  setSeoTitle: (v: string) => void;
-  seoDescription: string;
-  setSeoDescription: (v: string) => void;
+  // Option A (Article naming)
+  articleTitle?: string;
+  articleSlug?: string;
+  articleContent?: string;
+  focusKeyword?: string;
+  setFocusKeyword?: (v: string) => void;
+  seoTitle?: string;
+  setSeoTitle?: (v: string) => void;
+  seoDescription?: string;
+  setSeoDescription?: (v: string) => void;
+
+  // Option B (Property / Project naming)
+  title?: string;
+  slug?: string;
+  contentHtml?: string;
+  description?: string;
+  onChangeTitle?: (v: string) => void;
+  onChangeSlug?: (v: string) => void;
+  onChangeDescription?: (v: string) => void;
+  onChangeFocusKeyword?: (v: string) => void;
+
   baseUrlPrefix?: string;
 }
 
@@ -40,21 +52,51 @@ export default function SeoPreviewBlock({
   setSeoTitle,
   seoDescription,
   setSeoDescription,
+  title,
+  slug,
+  contentHtml,
+  description,
+  onChangeTitle,
+  onChangeSlug,
+  onChangeDescription,
+  onChangeFocusKeyword,
   baseUrlPrefix = "tin-tuc",
 }: SeoPreviewBlockProps) {
   const [deviceMode, setDeviceMode] = useState<"desktop" | "mobile">("desktop");
 
-  // Effective values fallback to article title/excerpt if empty
-  const displayTitle = seoTitle.trim() || articleTitle || "Tiêu đề bài viết SEO chưa nhập...";
-  const displayDesc =
-    seoDescription.trim() ||
-    (articleContent
-      ? articleContent.replace(/<[^>]*>/g, " ").substring(0, 150).trim() + "..."
-      : "Mô tả bài viết SEO sẽ xuất hiện ở đây khi người dùng tìm kiếm trên Google...");
-  const displaySlug = articleSlug || "slug-bai-viet";
+  const curTitle = seoTitle ?? title ?? "";
+  const curDesc = seoDescription ?? description ?? "";
+  const curArticleTitle = articleTitle ?? title ?? "";
+  const curArticleSlug = articleSlug ?? slug ?? "";
+  const curArticleContent = articleContent ?? contentHtml ?? "";
+  const curFocusKeyword = focusKeyword ?? "";
 
-  const titleLength = seoTitle.length;
-  const descLength = seoDescription.length;
+  const handleUpdateTitle = (v: string) => {
+    if (setSeoTitle) setSeoTitle(v);
+    if (onChangeTitle) onChangeTitle(v);
+  };
+
+  const handleUpdateDesc = (v: string) => {
+    if (setSeoDescription) setSeoDescription(v);
+    if (onChangeDescription) onChangeDescription(v);
+  };
+
+  const handleUpdateKeyword = (v: string) => {
+    if (setFocusKeyword) setFocusKeyword(v);
+    if (onChangeFocusKeyword) onChangeFocusKeyword(v);
+  };
+
+  // Effective values fallback to article title/excerpt if empty
+  const displayTitle = curTitle.trim() || curArticleTitle || "Tiêu đề bài viết SEO chưa nhập...";
+  const displayDesc =
+    curDesc.trim() ||
+    (curArticleContent
+      ? curArticleContent.replace(/<[^>]*>/g, " ").substring(0, 150).trim() + "..."
+      : "Mô tả bài viết SEO sẽ xuất hiện ở đây khi người dùng tìm kiếm trên Google...");
+  const displaySlug = curArticleSlug || "slug-bai-viet";
+
+  const titleLength = curTitle.length;
+  const descLength = curDesc.length;
 
   // Title Progress Score (Optimal: 50-60 chars)
   const getTitleStatus = () => {
@@ -76,11 +118,11 @@ export default function SeoPreviewBlock({
   const descStat = getDescStatus();
 
   // SEO Score Checks
-  const kw = focusKeyword.trim().toLowerCase();
+  const kw = curFocusKeyword.trim().toLowerCase();
   const titleHasKw = kw ? displayTitle.toLowerCase().includes(kw) : false;
   const titleOptimal = titleLength >= 45 && titleLength <= 65;
   const descOptimal = descLength >= 110 && descLength <= 165;
-  const hasHeadings = /<h[23][^>]*>/i.test(articleContent);
+  const hasHeadings = /<h[23][^>]*>/i.test(curArticleContent);
   const descHasKw = kw ? displayDesc.toLowerCase().includes(kw) : false;
 
   const checks = [
@@ -143,8 +185,8 @@ export default function SeoPreviewBlock({
               <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
               <Input
                 placeholder="Ví dụ: thị trường bất động sản đà nẵng"
-                value={focusKeyword}
-                onChange={(e) => setFocusKeyword(e.target.value)}
+                value={curFocusKeyword}
+                onChange={(e) => handleUpdateKeyword(e.target.value)}
                 className="pl-9 text-sm border-slate-200 focus-visible:ring-emerald-500/30"
               />
             </div>
@@ -162,8 +204,8 @@ export default function SeoPreviewBlock({
             </div>
             <Input
               placeholder="Nhập tiêu đề hiển thị trên Google..."
-              value={seoTitle}
-              onChange={(e) => setSeoTitle(e.target.value)}
+              value={curTitle}
+              onChange={(e) => handleUpdateTitle(e.target.value)}
               className="text-sm border-slate-200 focus-visible:ring-emerald-500/30"
             />
             {/* Progress Bar */}
@@ -194,8 +236,8 @@ export default function SeoPreviewBlock({
             <Textarea
               placeholder="Nhập 2-3 câu mô tả cuốn hút để người dùng click khi tìm kiếm trên Google..."
               rows={3}
-              value={seoDescription}
-              onChange={(e) => setSeoDescription(e.target.value)}
+              value={curDesc}
+              onChange={(e) => handleUpdateDesc(e.target.value)}
               className="text-sm border-slate-200 resize-none focus-visible:ring-emerald-500/30"
             />
             {/* Progress Bar */}

@@ -75,6 +75,7 @@ import { SmartQuestionImporterModal } from "@/components/admin/SmartQuestionImpo
 import type { ParsedQuestion } from "@/lib/questionParser";
 import NewsEditorModal, { NewsFormData } from "@/components/admin/NewsEditorModal";
 import PropertyEditorModal, { PropertyFormData } from "@/components/admin/PropertyEditorModal";
+import ProjectEditorModal, { ProjectFormData } from "@/components/admin/ProjectEditorModal";
 import CategoryManagerModal from "@/components/admin/CategoryManagerModal";
 import { LOCAL_USERS_DB, UserAccount, UserRole, BrokerPlanType, UserStatus } from "@/data/mockUsersData";
 import { UserEditModal } from "@/components/admin/UserEditModal";
@@ -1827,27 +1828,16 @@ function PropertiesManager({ isMock }: { isMock: boolean }) {
   );
 }
 
-/* ---------- 3. PROJECTS MANAGER ---------- */
+/* ---------- 3. PROJECTS MANAGER (WordPress & Real Estate Project Style) ---------- */
 function ProjectsManager({ isMock }: { isMock: boolean }) {
   const [items, setItems] = useState<ProjectRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDeveloper, setFilterDeveloper] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPublish, setFilterPublish] = useState("all");
   const [editingItem, setEditingItem] = useState<ProjectRow | null>(null);
-
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    developer: "",
-    location: "",
-    scale: "",
-    status: "Đang mở bán",
-    price_from: "",
-    image_url: "",
-    images: [] as string[],
-    published: true,
-  });
-  const [saving, setSaving] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -1873,66 +1863,62 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
     load();
   }, [isMock]);
 
+  const handleStartCreate = () => {
+    setEditingItem(null);
+    setModalOpen(true);
+  };
+
   const handleStartEdit = (it: ProjectRow) => {
     setEditingItem(it);
-    setForm({
-      name: it.name,
-      description: it.description || "",
-      developer: it.developer || "",
-      location: it.location || "",
-      scale: it.scale || "",
-      status: it.status || "Đang mở bán",
-      price_from: it.price_from || "",
-      image_url: it.image_url || "",
-      images: Array.isArray(it.images) ? (it.images as string[]) : it.image_url ? [it.image_url] : [],
-      published: it.published ?? true,
-    });
+    setModalOpen(true);
   };
 
-  const handleCancelEdit = () => {
+  const handleCloseModal = () => {
+    setModalOpen(false);
     setEditingItem(null);
-    setForm({
-      name: "",
-      description: "",
-      developer: "",
-      location: "",
-      scale: "",
-      status: "Đang mở bán",
-      price_from: "",
-      image_url: "",
-      images: [] as string[],
-      published: true,
-    });
   };
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-
-    let finalImageUrl = form.image_url;
-    let finalImages = form.images;
+  const handleSaveProject = async (data: ProjectFormData) => {
+    let finalImageUrl = data.image_url;
+    let finalImages = data.images;
 
     if (isMock) {
       if (finalImageUrl && finalImageUrl.startsWith("data:image/")) {
-        finalImageUrl = await compressDataUrl(finalImageUrl, { maxWidth: 1000, maxHeight: 750, quality: 0.65 });
+        finalImageUrl = await compressDataUrl(finalImageUrl, { maxWidth: 1200, maxHeight: 800, quality: 0.7 });
       }
       if (Array.isArray(finalImages) && finalImages.length > 0) {
-        finalImages = await compressImagesArray(finalImages, { maxWidth: 1000, maxHeight: 750, quality: 0.65 });
+        finalImages = await compressImagesArray(finalImages, { maxWidth: 1200, maxHeight: 800, quality: 0.7 });
       }
     }
 
+    const isPublished = data.publishStatus === "public";
+    const fullLocation = data.location 
+      ? (data.location.includes(data.district) ? data.location : `${data.location}, ${data.district}, Đà Nẵng`)
+      : `Quận ${data.district}, Đà Nẵng`;
+
     const payload = {
-      name: form.name,
-      slug: editingItem ? editingItem.slug : slugify(form.name),
-      description: form.description || null,
-      developer: form.developer || null,
-      location: form.location || null,
-      scale: form.scale || null,
-      status: form.status || null,
-      price_from: form.price_from || null,
+      name: data.name,
+      slug: data.slug || slugify(data.name),
+      description: data.description || null,
+      developer: data.developer || null,
+      location: fullLocation,
+      scale: data.scale || null,
+      status: data.status || null,
+      price_from: data.price_from || null,
       image_url: finalImageUrl || null,
       images: finalImages as Json,
-      published: form.published,
+      published: isPublished,
+      // Extended fields preserved in local state / mock
+      district: data.district,
+      categories: data.categories,
+      legal_status: data.legal_status,
+      handover: data.handover,
+      tags: data.tags,
+      excerpt: data.excerpt,
+      focus_keyword: data.focusKeyword,
+      seo_title: data.seoTitle,
+      seo_description: data.seoDescription,
+      scheduled_at: data.publishStatus === "scheduled" ? data.scheduledAt : null,
     };
 
     if (isMock) {
@@ -1942,34 +1928,54 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
           toast.success("Đã cập nhật dự án thành công (Mock DB)");
         } else {
           LOCAL_DB.saveProject(payload);
-          toast.success("Đã thêm dự án mới thành công (Mock DB)");
+          toast.success("Đã phát hành dự án mới thành công (Mock DB)");
         }
-        handleCancelEdit();
+        handleCloseModal();
         load();
       } catch (err: any) {
         console.error("Local save error:", err);
-        toast.error(`Không thể lưu (Mock DB): Dung lượng LocalStorage có thể đã đầy! Chi tiết: ${err.message}`);
-      } finally {
-        setSaving(false);
+        toast.error(`Không thể lưu (Mock DB): ${err.message}`);
       }
     } else {
       try {
         let error;
         if (editingItem) {
-          const res = await supabase.from("projects").update(payload).eq("id", editingItem.id);
+          const res = await supabase.from("projects").update({
+            name: payload.name,
+            slug: payload.slug,
+            description: payload.description,
+            developer: payload.developer,
+            location: payload.location,
+            scale: payload.scale,
+            status: payload.status,
+            price_from: payload.price_from,
+            image_url: payload.image_url,
+            images: payload.images,
+            published: payload.published,
+          }).eq("id", editingItem.id);
           error = res.error;
         } else {
-          const res = await supabase.from("projects").insert(payload);
+          const res = await supabase.from("projects").insert({
+            name: payload.name,
+            slug: payload.slug,
+            description: payload.description,
+            developer: payload.developer,
+            location: payload.location,
+            scale: payload.scale,
+            status: payload.status,
+            price_from: payload.price_from,
+            image_url: payload.image_url,
+            images: payload.images,
+            published: payload.published,
+          });
           error = res.error;
         }
         if (error) throw error;
-        toast.success(editingItem ? "Đã cập nhật dự án" : "Đã đăng dự án thành công");
-        handleCancelEdit();
+        toast.success(editingItem ? "Đã cập nhật dự án thành công" : "Đã phát hành dự án thành công");
+        handleCloseModal();
         load();
       } catch (err: any) {
         toast.error(`Lỗi: ${err.message}`);
-      } finally {
-        setSaving(false);
       }
     }
   };
@@ -1980,14 +1986,14 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
     if (isMock) {
       LOCAL_DB.deleteProject(id);
       toast.success("Đã xóa dự án (Mock DB)");
-      if (editingItem && editingItem.id === id) handleCancelEdit();
+      if (editingItem && editingItem.id === id) handleCloseModal();
       load();
     } else {
       try {
         const { error } = await supabase.from("projects").delete().eq("id", id);
         if (error) throw error;
         toast.success("Đã xóa dự án thành công");
-        if (editingItem && editingItem.id === id) handleCancelEdit();
+        if (editingItem && editingItem.id === id) handleCloseModal();
         load();
       } catch (err: any) {
         toast.error(`Lỗi: ${err.message}`);
@@ -1998,7 +2004,7 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
   const togglePublish = async (it: ProjectRow) => {
     if (isMock) {
       LOCAL_DB.togglePublishProject(it.id);
-      toast.success("Đã thay đổi hiển thị (Mock DB)");
+      toast.success("Đã cập nhật trạng thái hiển thị (Mock DB)");
       load();
     } else {
       try {
@@ -2007,7 +2013,7 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
           .update({ published: !it.published })
           .eq("id", it.id);
         if (error) throw error;
-        toast.success("Đã cập nhật hiển thị");
+        toast.success("Đã cập nhật trạng thái hiển thị");
         load();
       } catch (err: any) {
         toast.error(`Lỗi: ${err.message}`);
@@ -2015,279 +2021,293 @@ function ProjectsManager({ isMock }: { isMock: boolean }) {
     }
   };
 
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setFilterDeveloper("all");
+    setFilterStatus("all");
+    setFilterPublish("all");
+  };
+
   const filteredItems = items.filter((it) => {
-    const matchesSearch = it.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (it.developer && it.developer.toLowerCase().includes(searchTerm.toLowerCase()));
+    const q = searchTerm.toLowerCase();
+    const matchesSearch =
+      it.name.toLowerCase().includes(q) ||
+      (it.developer && it.developer.toLowerCase().includes(q)) ||
+      (it.location && it.location.toLowerCase().includes(q));
     const matchesDev = filterDeveloper === "all" || it.developer === filterDeveloper;
-    return matchesSearch && matchesDev;
+    const matchesStatus = filterStatus === "all" || it.status === filterStatus;
+    const matchesPub =
+      filterPublish === "all" ||
+      (filterPublish === "published" ? it.published : !it.published);
+    return matchesSearch && matchesDev && matchesStatus && matchesPub;
   });
 
   const uniqueDevelopers = Array.from(new Set(items.map((i) => i.developer).filter(Boolean)));
+  const uniqueStatuses = Array.from(new Set(items.map((i) => i.status).filter(Boolean)));
+
+  const getStatusBadgeClass = (status: string | null) => {
+    if (!status) return "bg-slate-100 text-slate-700";
+    if (status.includes("mở bán")) return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    if (status.includes("Sắp") || status.includes("booking")) return "bg-amber-50 text-amber-700 border-amber-200";
+    if (status.includes("bàn giao")) return "bg-blue-50 text-blue-700 border-blue-200";
+    return "bg-slate-100 text-slate-700 border-slate-200";
+  };
 
   return (
-    <div className="grid lg:grid-cols-12 gap-8 items-start">
-      
-      {/* LEFT COLUMN: LIST VIEW */}
-      <div className="lg:col-span-7 space-y-4">
-        <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-          <div className="relative w-full flex-1">
-            <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
-            <Input
-              placeholder="Tìm kiếm dự án, chủ đầu tư..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-slate-50/50 border-slate-200/80 focus-visible:ring-blue-500/30"
-            />
+    <div className="w-full space-y-6">
+      {/* TOP ACTION BAR & FILTER WORKSPACE */}
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-3 border-b border-slate-100">
+          <div>
+            <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+              <Landmark className="size-5 text-blue-600" /> Quản lý Dự án Bất động sản
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Quản lý danh mục các dự án đô thị, căn hộ cao cấp, khu nghỉ dưỡng và tiến độ thi công
+            </p>
           </div>
-          <select
-            value={filterDeveloper}
-            onChange={(e) => setFilterDeveloper(e.target.value)}
-            className="text-xs font-medium bg-white border border-slate-200 rounded-lg p-2 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500"
+
+          <Button
+            onClick={handleStartCreate}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-md shadow-blue-500/10 px-5 py-2.5 h-auto rounded-xl flex items-center gap-2 cursor-pointer transition-all hover:scale-[1.01]"
           >
-            <option value="all">Tất cả Chủ đầu tư</option>
-            {uniqueDevelopers.map((d) => (
-              <option key={d} value={d!}>{d}</option>
-            ))}
-          </select>
+            <Plus className="size-4" />
+            <span>+ Thêm dự án mới (WordPress Style)</span>
+          </Button>
         </div>
 
-        <Card className="border-slate-100 overflow-hidden shadow-sm bg-white">
-          <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
-            <h3 className="font-bold text-slate-900 text-sm">Danh sách dự án ({filteredItems.length})</h3>
-            <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100 border-none font-semibold text-xs">
-              Mới nhất xếp trước
-            </Badge>
+        {/* SEARCH & FILTERS ROW */}
+        <div className="flex flex-col md:flex-row items-center gap-3">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
+            <Input
+              placeholder="Tìm kiếm theo tên dự án, chủ đầu tư, vị trí..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 bg-slate-50/50 border-slate-200 focus-visible:ring-blue-500/30 text-xs"
+            />
           </div>
 
-          {loading ? (
-            <div className="p-8 text-center text-slate-400 space-y-2">
-              <div className="animate-spin size-8 border-t-2 border-b-2 border-blue-600 rounded-full mx-auto"></div>
-              <p className="text-xs font-medium">Đang tải danh sách dự án...</p>
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="p-16 text-center text-slate-400 bg-slate-50/20">
-              <Landmark className="size-12 mx-auto text-slate-300 stroke-[1.5] mb-2" />
-              <p className="font-semibold text-slate-800 text-sm">Không tìm thấy dự án nào</p>
-              <p className="text-xs text-slate-400 mt-0.5">Vui lòng thay đổi từ khóa hoặc tạo dự án mới</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100 max-h-[70vh] overflow-y-auto">
-              {filteredItems.map((it) => (
-                <div key={it.id} className="p-4 flex gap-4 hover:bg-slate-50/40 transition-colors group">
-                  <div className="w-20 h-16 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200/40">
-                    {it.image_url ? (
-                      <img src={it.image_url} alt={it.name} className="size-full object-cover" />
-                    ) : (
-                      <div className="size-full flex items-center justify-center bg-slate-100 text-slate-400">
-                        <Landmark className="size-5" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-bold text-slate-900 text-sm truncate group-hover:text-blue-600 transition-colors">
-                        {it.name}
-                      </h4>
-                      <Badge
-                        variant={it.published ? "default" : "secondary"}
-                        className={`cursor-pointer text-[10px] font-bold py-0.5 px-2 rounded-full border-none shadow-sm ${
-                          it.published ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                        }`}
-                        onClick={() => togglePublish(it)}
-                      >
-                        {it.published ? "Hiển thị" : "Nháp"}
-                      </Badge>
-                    </div>
-                    
-                    <div className="text-xs text-slate-500 font-medium flex flex-wrap gap-x-2.5 gap-y-1 mt-1.5">
-                      <span className="text-slate-800 font-bold">{it.developer || "Chưa rõ CĐT"}</span>
-                      <span className="text-slate-300">•</span>
-                      <span className="flex items-center gap-0.5">
-                        <MapPin className="size-3 text-slate-400" />
-                        {it.location}
-                      </span>
-                      <span className="text-slate-300">•</span>
-                      <span className="text-blue-600 font-semibold">Giá từ {it.price_from || "Liên hệ"}</span>
-                      {it.status && (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <span className="text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] font-bold">{it.status}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-1 shrink-0 ml-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleStartEdit(it)}
-                      className="size-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
-                    >
-                      <Edit2 className="size-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => remove(it.id)}
-                      className="size-8 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                </div>
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto">
+            <select
+              value={filterDeveloper}
+              onChange={(e) => setFilterDeveloper(e.target.value)}
+              className="text-xs font-medium bg-white border border-slate-200 rounded-lg p-2.5 flex-1 sm:flex-none focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            >
+              <option value="all">Tất cả Chủ đầu tư</option>
+              {uniqueDevelopers.map((d) => (
+                <option key={d} value={d!}>{d}</option>
               ))}
-            </div>
-          )}
-        </Card>
-      </div>
+            </select>
 
-      {/* RIGHT COLUMN: ACTION FORM */}
-      <div className="lg:col-span-5">
-        <Card className="p-6 border-slate-100 shadow-sm bg-white space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-              {editingItem ? (
-                <>
-                  <Edit2 className="size-4 text-blue-600" /> Cập nhật dự án
-                </>
-              ) : (
-                <>
-                  <Plus className="size-4 text-blue-600" /> Thêm dự án mới
-                </>
-              )}
-            </h3>
-            {editingItem && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleCancelEdit}
-                className="h-7 text-xs hover:bg-slate-100 text-slate-500 hover:text-slate-900"
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="text-xs font-medium bg-white border border-slate-200 rounded-lg p-2.5 flex-1 sm:flex-none focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            >
+              <option value="all">Tất cả Trạng thái</option>
+              {uniqueStatuses.map((st) => (
+                <option key={st} value={st!}>{st}</option>
+              ))}
+            </select>
+
+            <select
+              value={filterPublish}
+              onChange={(e) => setFilterPublish(e.target.value)}
+              className="text-xs font-medium bg-white border border-slate-200 rounded-lg p-2.5 flex-1 sm:flex-none focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            >
+              <option value="all">Tất cả Hiển thị</option>
+              <option value="published">Công khai</option>
+              <option value="draft">Bản nháp</option>
+            </select>
+
+            {(searchTerm || filterDeveloper !== "all" || filterStatus !== "all" || filterPublish !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                className="text-xs text-slate-500 hover:text-slate-800 h-9 px-2.5"
+                title="Đặt lại bộ lọc"
               >
-                <ArrowLeft className="size-3 mr-1" /> Tạo mới
+                <RotateCcw className="size-3.5 mr-1" /> Đặt lại
               </Button>
             )}
           </div>
-
-          <form onSubmit={submit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Tên dự án <span className="text-red-500">*</span></Label>
-              <Input
-                required
-                placeholder="Ví dụ: Sun Cosmo Residence Đà Nẵng..."
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="border-slate-200/80 focus-visible:ring-blue-500/30"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Mô tả tổng quan</Label>
-              <Textarea
-                placeholder="Nhập thông tin giới thiệu quy mô, tiện ích, vị trí, tiềm năng phát triển của dự án..."
-                rows={4}
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="border-slate-200/80 focus-visible:ring-blue-500/30 resize-none text-sm"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Chủ đầu tư</Label>
-                <Input
-                  placeholder="Ví dụ: Sun Group, FPT..."
-                  value={form.developer}
-                  onChange={(e) => setForm({ ...form, developer: e.target.value })}
-                  className="border-slate-200/80 focus-visible:ring-blue-500/30"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Vị trí dự án</Label>
-                <Input
-                  placeholder="Ví dụ: Ngũ Hành Sơn, Đà Nẵng..."
-                  value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  className="border-slate-200/80 focus-visible:ring-blue-500/30"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Quy mô diện tích</Label>
-                <Input
-                  placeholder="Ví dụ: 3.5 ha, 2 blocks..."
-                  value={form.scale}
-                  onChange={(e) => setForm({ ...form, scale: e.target.value })}
-                  className="border-slate-200/80 focus-visible:ring-blue-500/30"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold">Trạng thái bán hàng</Label>
-                <Input
-                  placeholder="Đang mở bán, Sắp mở bán..."
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="border-slate-200/80 focus-visible:ring-blue-500/30"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-slate-500 font-bold flex items-center gap-0.5">
-                  <DollarSign className="size-3 text-slate-400" /> Giá khởi điểm (từ)
-                </Label>
-                <Input
-                  placeholder="Ví dụ: 3 tỷ, 4.5 tỷ..."
-                  value={form.price_from}
-                  onChange={(e) => setForm({ ...form, price_from: e.target.value })}
-                  className="border-slate-200/80 focus-visible:ring-blue-500/30"
-                />
-              </div>
-            </div>
-
-            <ImageUploader
-              images={form.images}
-              featuredImage={form.image_url}
-              onChangeImages={(urls) => setForm(prev => ({ ...prev, images: urls }))}
-              onChangeFeaturedImage={(url) => setForm(prev => ({ ...prev, image_url: url }))}
-              isMock={isMock}
-              label="Hình ảnh dự án"
-            />
-
-            <div className="flex items-center justify-between rounded-xl border border-slate-200/80 p-3 bg-slate-50/40">
-              <div className="space-y-0.5">
-                <div className="text-xs font-bold text-slate-800">Hiển thị công khai</div>
-                <div className="text-[10px] text-slate-400 font-medium">Bật hiển thị dự án ra trang chủ website</div>
-              </div>
-              <Switch 
-                checked={form.published} 
-                onCheckedChange={(v) => setForm({ ...form, published: v })} 
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              disabled={saving} 
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-blue-500/10 transition-all duration-300 py-5 h-auto rounded-xl"
-            >
-              {saving ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin size-4 border-2 border-t-transparent border-white rounded-full"></span>
-                  Đang xử lý...
-                </span>
-              ) : editingItem ? (
-                "Cập nhật dự án"
-              ) : (
-                "Đăng dự án"
-              )}
-            </Button>
-          </form>
-        </Card>
+        </div>
       </div>
 
+      {/* PROJECT LIST TABLE / CARDS */}
+      <Card className="border-slate-200/90 overflow-hidden shadow-sm bg-white rounded-2xl">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-slate-900 text-sm">Danh sách dự án ({filteredItems.length})</h3>
+            <Badge variant="outline" className="text-[10px] bg-white text-slate-600 font-semibold">
+              Tổng {items.length} dự án
+            </Badge>
+          </div>
+          <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100 border-none font-semibold text-xs">
+            Mới nhất xếp trước
+          </Badge>
+        </div>
+
+        {loading ? (
+          <div className="p-16 text-center text-slate-400 space-y-2">
+            <div className="animate-spin size-8 border-t-2 border-b-2 border-blue-600 rounded-full mx-auto"></div>
+            <p className="text-xs font-medium">Đang tải danh sách dự án...</p>
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="p-16 text-center text-slate-400 bg-slate-50/20 space-y-3">
+            <Landmark className="size-12 mx-auto text-slate-300 stroke-[1.5]" />
+            <div>
+              <p className="font-semibold text-slate-800 text-sm">Không tìm thấy dự án nào</p>
+              <p className="text-xs text-slate-400 mt-0.5">Vui lòng thay đổi từ khóa hoặc bấm nút thêm dự án mới</p>
+            </div>
+            <Button
+              onClick={handleStartCreate}
+              variant="outline"
+              size="sm"
+              className="text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
+            >
+              <Plus className="size-3.5 mr-1" /> Thêm dự án mới
+            </Button>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {filteredItems.map((it) => (
+              <div
+                key={it.id}
+                className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50/60 transition-colors group"
+              >
+                <div className="flex items-start gap-4 min-w-0 flex-1">
+                  {/* Thumbnail */}
+                  <div className="w-24 h-20 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200/80 shadow-xs relative">
+                    {it.image_url ? (
+                      <img src={it.image_url} alt={it.name} className="size-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <div className="size-full flex items-center justify-center bg-slate-100 text-slate-400">
+                        <Landmark className="size-6" />
+                      </div>
+                    )}
+                    {it.status && (
+                      <span className={`absolute bottom-1 left-1 right-1 text-center text-[9px] font-bold py-0.5 px-1 rounded backdrop-blur-xs border shadow-xs ${getStatusBadgeClass(it.status)}`}>
+                        {it.status}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4
+                        onClick={() => handleStartEdit(it)}
+                        className="font-bold text-slate-900 text-base truncate group-hover:text-blue-600 transition-colors cursor-pointer"
+                        title={it.name}
+                      >
+                        {it.name}
+                      </h4>
+
+                      <Badge
+                        variant={it.published ? "default" : "secondary"}
+                        className={`cursor-pointer text-[10px] font-bold py-0.5 px-2 rounded-full border shadow-xs transition-colors ${
+                          it.published
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                            : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                        }`}
+                        onClick={() => togglePublish(it)}
+                      >
+                        {it.published ? "● Công khai" : "○ Bản nháp"}
+                      </Badge>
+                    </div>
+
+                    {/* Metadata tags */}
+                    <div className="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span className="text-slate-800 font-bold flex items-center gap-1">
+                        <Building2 className="size-3 text-slate-400" />
+                        {it.developer || "Chưa rõ CĐT"}
+                      </span>
+                      <span className="text-slate-300">•</span>
+                      <span className="flex items-center gap-1 text-slate-600">
+                        <MapPin className="size-3 text-slate-400" />
+                        {it.location || "Đà Nẵng"}
+                      </span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-blue-600 font-bold flex items-center gap-0.5">
+                        <DollarSign className="size-3 text-blue-500" />
+                        Giá từ {it.price_from || "Liên hệ"}
+                      </span>
+                      {it.scale && (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <span className="text-slate-600 flex items-center gap-1">
+                            <Layers className="size-3 text-slate-400" />
+                            {it.scale}
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Preview URL */}
+                    <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1 pt-0.5">
+                      <span>URL:</span>
+                      <a
+                        href={`/du-an/${it.slug || slugify(it.name)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline flex items-center gap-0.5"
+                      >
+                        /du-an/{it.slug || slugify(it.name)}
+                        <ArrowUpRight className="size-3" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                  <a
+                    href={`/du-an/${it.slug || slugify(it.name)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="size-8 flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Xem dự án trên website"
+                  >
+                    <Eye className="size-4" />
+                  </a>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleStartEdit(it)}
+                    className="size-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer"
+                    title="Chỉnh sửa dự án"
+                  >
+                    <Edit2 className="size-4" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => remove(it.id)}
+                    className="size-8 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
+                    title="Xóa dự án"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* WORDPRESS & REAL ESTATE PROJECT MODAL */}
+      <ProjectEditorModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        onSave={handleSaveProject}
+        editingItem={editingItem}
+        isMock={isMock}
+      />
     </div>
   );
 }
