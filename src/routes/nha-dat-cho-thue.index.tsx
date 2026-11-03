@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { MapPin, AlertCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ContactConsentCheckbox } from "@/components/site/ContactConsentCheckbox";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
@@ -368,6 +369,7 @@ function NhaDatChoThuePage() {
                     onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
                     className="bg-card border-border h-10 text-sm"
                   />
+                  <ContactConsentCheckbox />
                   <Button
                     type="submit"
                     disabled={isSubmittingContact}

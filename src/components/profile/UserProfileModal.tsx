@@ -50,6 +50,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { UserAccount } from "@/data/mockUsersData";
 import { validateCCCD } from "@/lib/cccd";
+import { logConsent } from "@/lib/consent";
 import { preloadCccdOcr, type CccdSide } from "@/lib/cccdOcr";
 import { useCccdScan } from "@/hooks/use-cccd-scan";
 import {
@@ -159,6 +160,9 @@ export function UserProfileModal() {
   const [verificationStatus, setVerificationStatus] = useState<
     "verified" | "pending" | "unverified"
   >("unverified");
+  // Đồng ý riêng cho việc xử lý dữ liệu CCCD (Điều 9 Luật 91/2025/QH15)
+  const [cccdConsentAt, setCccdConsentAt] = useState<string | undefined>();
+  const [cccdConsentChecked, setCccdConsentChecked] = useState(false);
 
   // CTV states
   const [bankName, setBankName] = useState("Vietcombank");
@@ -225,6 +229,8 @@ export function UserProfileModal() {
         profile.verification_status ||
           (profile.isVerified ? "verified" : "unverified"),
       );
+      setCccdConsentAt(profile.cccd_consent_at);
+      setCccdConsentChecked(!!profile.cccd_consent_at);
 
       // CTV
       setBankName(profile.bank_name || "Vietcombank");
@@ -410,6 +416,18 @@ export function UserProfileModal() {
       return;
     }
 
+    const hasCccdData = !!(idCardNumber.trim() || idCardFrontUrl || idCardBackUrl);
+    if (hasCccdData && !cccdConsentChecked) {
+      toast.error("Vui lòng tích ô đồng ý xử lý dữ liệu CCCD trước khi lưu thông tin định danh.");
+      return;
+    }
+    let nextCccdConsentAt = cccdConsentAt;
+    if (hasCccdData && cccdConsentChecked && !cccdConsentAt) {
+      nextCccdConsentAt = new Date().toISOString();
+      setCccdConsentAt(nextCccdConsentAt);
+      void logConsent("cccd_verification", true, profile?.id);
+    }
+
     setSaving(true);
     const updatedData: Partial<UserAccount> = {
       name: name.trim(),
@@ -424,6 +442,7 @@ export function UserProfileModal() {
       id_card_place: idCardPlace,
       id_card_front_url: idCardFrontUrl,
       id_card_back_url: idCardBackUrl,
+      cccd_consent_at: nextCccdConsentAt,
       license_number: licenseNumber,
       license_issuer: licenseIssuer,
       license_issue_date: licenseIssueDate,
@@ -820,6 +839,30 @@ export function UserProfileModal() {
                         Căn cước công dân (CCCD)
                       </h4>
                     </div>
+
+                    <label className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] leading-relaxed text-muted-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={cccdConsentChecked}
+                        onChange={(e) => setCccdConsentChecked(e.target.checked)}
+                        className="mt-0.5 accent-primary"
+                      />
+                      <span>
+                        Tôi đồng ý cung cấp số, ngày cấp, nơi cấp và ảnh hai mặt CCCD để BDS Horizon{" "}
+                        <strong className="text-foreground">xác minh danh tính người đăng tin</strong>. Ảnh
+                        được quét OCR ngay trên trình duyệt, không công khai, chỉ quản trị viên xác minh được
+                        xem, và được xóa khi tôi yêu cầu. Xem{" "}
+                        <a href="/chinh-sach-bao-mat" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                          Chính sách bảo vệ dữ liệu cá nhân
+                        </a>
+                        .
+                        {cccdConsentAt && (
+                          <span className="block mt-0.5 text-[10px]">
+                            Đã đồng ý lúc {new Date(cccdConsentAt).toLocaleString("vi-VN")}.
+                          </span>
+                        )}
+                      </span>
+                    </label>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="space-y-1">

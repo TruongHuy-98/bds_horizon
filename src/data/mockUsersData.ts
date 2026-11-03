@@ -38,6 +38,8 @@ export interface UserAccount {
   license_expiry_date?: string;
   license_image_url?: string;
   verification_status?: "verified" | "pending" | "unverified";
+  /** Thời điểm người dùng đồng ý xử lý dữ liệu CCCD để xác minh danh tính (ISO string) */
+  cccd_consent_at?: string;
   // Extra fields for collaborators (CTV)
   bank_name?: string;
   bank_account_number?: string;

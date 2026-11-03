@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ShieldCheck, Terminal, ArrowLeft, Chrome } from "lucide-react";
+import { PRIVACY_POLICY_VERSION, logConsent } from "@/lib/consent";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -21,17 +22,32 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [selectedRole, setSelectedRole] = useState<"user" | "broker" | "collaborator">("user");
   const [loading, setLoading] = useState(false);
+  // Hai ô đồng ý tách riêng, không tích sẵn (Điều 9 Luật 91/2025/QH15)
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreeData, setAgreeData] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup" && (!agreeTerms || !agreeData)) {
+      toast.error("Vui lòng đọc và đồng ý Điều khoản sử dụng và Chính sách bảo vệ dữ liệu cá nhân.");
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
+        const consentAt = new Date().toISOString();
         // Register in Supabase
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/admin` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/admin`,
+            data: {
+              terms_accepted_at: consentAt,
+              privacy_consent_at: consentAt,
+              privacy_policy_version: PRIVACY_POLICY_VERSION,
+            },
+          },
         });
         if (error) throw error;
         
@@ -41,6 +57,7 @@ function AuthPage() {
             .from("user_roles")
             .insert({ user_id: data.user.id, role: selectedRole });
           if (roleError) console.warn("Failed to assign role immediately:", roleError);
+          void logConsent("account_signup", true, data.user.id);
         }
 
         toast.success("Đăng ký thành công! Hãy kiểm tra email để xác nhận tài khoản.");
@@ -115,6 +132,13 @@ function AuthPage() {
           <Button variant="outline" className="w-full border-slate-800 bg-slate-950/40 text-slate-200 hover:bg-slate-900 hover:text-white flex items-center justify-center gap-2" onClick={onGoogle}>
             <Chrome className="size-4 text-blue-400" /> Tiếp tục với Google
           </Button>
+          <p className="-mt-3 text-center text-[10.5px] leading-relaxed text-slate-500">
+            Khi tiếp tục với Google, chúng tôi nhận email và tên hiển thị từ Google để tạo tài khoản theo{" "}
+            <Link to="/chinh-sach-bao-mat" target="_blank" className="text-blue-400 underline">
+              Chính sách bảo vệ dữ liệu cá nhân
+            </Link>
+            .
+          </p>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -165,6 +189,42 @@ function AuthPage() {
                   <option value="broker">Nhà Môi Giới (Đăng tin BĐS bán/thuê)</option>
                   <option value="collaborator">Cộng tác viên (Viết bài & Tin tức)</option>
                 </select>
+              </div>
+            )}
+
+            {mode === "signup" && (
+              <div className="space-y-2.5 pt-1 text-[11px] leading-relaxed text-slate-400">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="mt-0.5 accent-blue-500"
+                  />
+                  <span>
+                    Tôi đã đọc và đồng ý với{" "}
+                    <Link to="/dieu-khoan-su-dung" target="_blank" className="text-blue-400 underline">
+                      Điều khoản sử dụng & Quy chế hoạt động
+                    </Link>
+                    .
+                  </span>
+                </label>
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreeData}
+                    onChange={(e) => setAgreeData(e.target.checked)}
+                    className="mt-0.5 accent-blue-500"
+                  />
+                  <span>
+                    Tôi đồng ý cho BDS Horizon xử lý email và thông tin hồ sơ của tôi để tạo, quản lý tài
+                    khoản và đăng tin, theo{" "}
+                    <Link to="/chinh-sach-bao-mat" target="_blank" className="text-blue-400 underline">
+                      Chính sách bảo vệ dữ liệu cá nhân
+                    </Link>
+                    . Tôi có thể rút lại sự đồng ý bất kỳ lúc nào.
+                  </span>
+                </label>
               </div>
             )}
 

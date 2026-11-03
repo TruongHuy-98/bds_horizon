@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Phone, Mail, MapPin } from "lucide-react";
+import { COMPANY_INFO } from "@/lib/companyInfo";
+import { resetAnalyticsConsent } from "@/lib/consent";
 
 function Logo() {
   return (
@@ -105,29 +107,67 @@ export default function Footer() {
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-primary transition-colors">
+              <a href={`mailto:${COMPANY_INFO.email}`} className="hover:text-primary transition-colors">
                 Liên hệ
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-primary transition-colors">
+              <Link to="/dieu-khoan-su-dung" className="hover:text-primary transition-colors">
                 Điều khoản sử dụng
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-primary transition-colors">
+              <Link to="/chinh-sach-bao-mat" className="hover:text-primary transition-colors">
                 Chính sách bảo mật
-              </a>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/dieu-khoan-su-dung"
+                hash="khieu-nai"
+                className="hover:text-primary transition-colors"
+              >
+                Giải quyết khiếu nại
+              </Link>
             </li>
           </ul>
         </div>
       </div>
       <div className="border-t border-border/80">
-        <div className="container-page py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <span>© 2026 Da Nang Real Estate. All rights reserved. Coastal living, professional service.</span>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-primary transition-colors">Quy chế hoạt động</a>
-            <a href="#" className="hover:text-primary transition-colors">Bảo mật thông tin</a>
+        <div className="container-page py-5 flex flex-col gap-3 text-xs text-muted-foreground">
+          <div className="leading-relaxed">
+            <span className="font-semibold text-foreground">{COMPANY_INFO.legalName}</span>
+            {" · "}MST: {COMPANY_INFO.taxCode}
+            {" · "}GCNĐKDN: {COMPANY_INFO.businessRegistration}
+            {" · "}Địa chỉ: {COMPANY_INFO.address}
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <span>© 2026 Da Nang Real Estate. All rights reserved. Coastal living, professional service.</span>
+            <div className="flex items-center gap-4">
+              <Link to="/dieu-khoan-su-dung" className="hover:text-primary transition-colors">
+                Quy chế hoạt động
+              </Link>
+              <Link to="/chinh-sach-bao-mat" className="hover:text-primary transition-colors">
+                Bảo mật thông tin
+              </Link>
+              <button
+                type="button"
+                onClick={resetAnalyticsConsent}
+                className="hover:text-primary transition-colors"
+              >
+                Cài đặt cookie
+              </button>
+              {COMPANY_INFO.moitRegistrationUrl && (
+                <a
+                  href={COMPANY_INFO.moitRegistrationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors"
+                >
+                  Đã thông báo Bộ Công Thương
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </div>

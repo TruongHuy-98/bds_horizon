@@ -12,6 +12,7 @@ import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { VisitorTracker } from "@/components/site/VisitorTracker";
+import { CookieConsentBanner } from "@/components/site/CookieConsentBanner";
 import { AuthProvider } from "@/hooks/use-auth";
 import { UserProfileModal } from "@/components/profile/UserProfileModal";
 
@@ -105,7 +106,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="vi">
       <head>
         <HeadContent />
       </head>
@@ -126,6 +127,7 @@ function RootComponent() {
         <VisitorTracker />
         <Outlet />
         <UserProfileModal />
+        <CookieConsentBanner />
         <Toaster richColors position="top-right" />
       </AuthProvider>
     </QueryClientProvider>

@@ -20,6 +20,7 @@ import {
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ContactConsentCheckbox } from "@/components/site/ContactConsentCheckbox";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
@@ -466,6 +467,7 @@ function RentalDetailPage() {
                       onChange={(e) => setContactForm({ ...contactForm, note: e.target.value })}
                       className="h-10 text-xs bg-muted/30"
                     />
+                    <ContactConsentCheckbox />
                     <Button
                       type="submit"
                       className="w-full h-10 font-semibold text-xs rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground shadow-xs mt-1"

@@ -20,6 +20,7 @@ import {
   Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ContactConsentCheckbox } from "@/components/site/ContactConsentCheckbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -664,6 +665,7 @@ function FeaturedProperties() {
                         className="w-full bg-card border border-border rounded-md p-2.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
                       />
                     </div>
+                    <ContactConsentCheckbox />
                     <Button
                       type="submit"
                       disabled={isSubmittingContact}

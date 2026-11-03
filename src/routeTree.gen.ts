@@ -14,6 +14,8 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BanDatRouteImport } from './routes/ban-dat'
 import { Route as CheckQuyHoachRouteImport } from './routes/check-quy-hoach'
+import { Route as ChinhSachBaoMatRouteImport } from './routes/chinh-sach-bao-mat'
+import { Route as DieuKhoanSuDungRouteImport } from './routes/dieu-khoan-su-dung'
 import { Route as OnThiRouteImport } from './routes/on-thi'
 import { Route as DuAnIndexRouteImport } from './routes/du-an.index'
 import { Route as DuAnSlugRouteImport } from './routes/du-an.$slug'
@@ -51,6 +53,16 @@ const BanDatRoute = BanDatRouteImport.update({
 const CheckQuyHoachRoute = CheckQuyHoachRouteImport.update({
   id: '/check-quy-hoach',
   path: '/check-quy-hoach',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChinhSachBaoMatRoute = ChinhSachBaoMatRouteImport.update({
+  id: '/chinh-sach-bao-mat',
+  path: '/chinh-sach-bao-mat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DieuKhoanSuDungRoute = DieuKhoanSuDungRouteImport.update({
+  id: '/dieu-khoan-su-dung',
+  path: '/dieu-khoan-su-dung',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnThiRoute = OnThiRouteImport.update({
@@ -125,6 +137,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/ban-dat': typeof BanDatRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
+  '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
+  '/dieu-khoan-su-dung': typeof DieuKhoanSuDungRoute
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
@@ -145,6 +159,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/ban-dat': typeof BanDatRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
+  '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
+  '/dieu-khoan-su-dung': typeof DieuKhoanSuDungRoute
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
@@ -166,6 +182,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/ban-dat': typeof BanDatRoute
   '/check-quy-hoach': typeof CheckQuyHoachRoute
+  '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
+  '/dieu-khoan-su-dung': typeof DieuKhoanSuDungRoute
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
@@ -188,6 +206,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/ban-dat'
     | '/check-quy-hoach'
+    | '/chinh-sach-bao-mat'
+    | '/dieu-khoan-su-dung'
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
@@ -208,6 +228,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/ban-dat'
     | '/check-quy-hoach'
+    | '/chinh-sach-bao-mat'
+    | '/dieu-khoan-su-dung'
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
@@ -228,6 +250,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/ban-dat'
     | '/check-quy-hoach'
+    | '/chinh-sach-bao-mat'
+    | '/dieu-khoan-su-dung'
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
@@ -249,6 +273,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BanDatRoute: typeof BanDatRoute
   CheckQuyHoachRoute: typeof CheckQuyHoachRoute
+  ChinhSachBaoMatRoute: typeof ChinhSachBaoMatRoute
+  DieuKhoanSuDungRoute: typeof DieuKhoanSuDungRoute
   OnThiRoute: typeof OnThiRoute
   DuAnSlugRoute: typeof DuAnSlugRoute
   MoiGioiSlugRoute: typeof MoiGioiSlugRoute
@@ -299,6 +325,20 @@ declare module '@tanstack/react-router' {
       path: '/check-quy-hoach'
       fullPath: '/check-quy-hoach'
       preLoaderRoute: typeof CheckQuyHoachRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chinh-sach-bao-mat': {
+      id: '/chinh-sach-bao-mat'
+      path: '/chinh-sach-bao-mat'
+      fullPath: '/chinh-sach-bao-mat'
+      preLoaderRoute: typeof ChinhSachBaoMatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dieu-khoan-su-dung': {
+      id: '/dieu-khoan-su-dung'
+      path: '/dieu-khoan-su-dung'
+      fullPath: '/dieu-khoan-su-dung'
+      preLoaderRoute: typeof DieuKhoanSuDungRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/on-thi': {
@@ -401,6 +441,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BanDatRoute: BanDatRoute,
   CheckQuyHoachRoute: CheckQuyHoachRoute,
+  ChinhSachBaoMatRoute: ChinhSachBaoMatRoute,
+  DieuKhoanSuDungRoute: DieuKhoanSuDungRoute,
   OnThiRoute: OnThiRoute,
   DuAnSlugRoute: DuAnSlugRoute,
   MoiGioiSlugRoute: MoiGioiSlugRoute,
