@@ -1,0 +1,145 @@
+# <img src="images/logo-mark.png" alt="" width="32" height="32" align="top"> evondevKit
+
+[English](README.md) | **Tiếng Việt**
+
+![evondevKit / ui-ux: UI dashboard không còn mùi AI](images/evondevkit-ui-ux.png)
+
+<p align="center"><strong>Nếu thấy hữu ích, bạn có thể ủng hộ dự án qua MoMo:</strong></p>
+
+<p align="center">
+  <img src="images/momo.jpg" alt="Mã QR MoMo ủng hộ evondevKit" width="240">
+</p>
+
+Skill **`ui-ux`** cho Claude Code: dựng và làm đẹp giao diện app (dashboard, danh sách,
+bảng, form, cài đặt, modal) theo đúng thư viện component và màu của dự án bạn.
+
+Xem giới thiệu: [evondev-uiux.vercel.app/ui-ux](https://evondev-uiux.vercel.app/ui-ux)
+
+## Cài
+
+### Claude Code
+
+```bash
+/plugin marketplace add evondev/evondevKit
+/plugin install evon@evondevkit
+```
+
+Trong extension VS Code hay app desktop không có `/plugin`: gõ `/` → **Manage plugins** →
+Marketplaces, thêm `evondev/evondevKit`, rồi sang tab Plugins cài `evon`.
+
+Gọi bằng `/evon:ui-ux`.
+
+**Lấy bản mới**
+
+- Terminal: `/plugin marketplace update evondevkit`, rồi `/reload-plugins` để phiên đang mở
+  nhận bản mới.
+- VS Code, app desktop: `/` → **Manage plugins** → Marketplaces → `evondevkit` → bấm icon refresh.
+- Từ shell bất kỳ: `claude plugin marketplace update evondevkit`.
+
+`/reload-plugins` chỉ nạp lại bản đã tải về, không tự kéo bản mới. Muốn khỏi cập nhật tay:
+Marketplaces → `evondevkit` → **Enable auto-update**, từ đó mỗi lần mở Claude Code tự lấy bản mới.
+
+**Gỡ**
+
+```bash
+/plugin uninstall evon@evondevkit
+/plugin marketplace remove evondevkit
+```
+
+Dòng đầu gỡ skill, dòng hai bỏ luôn nguồn cài (không định cài lại thì chạy). Gỡ xong mở
+phiên mới để chắc phiên không còn nạp skill.
+
+- VS Code, app desktop: `/` → **Manage plugins** → tab Plugins → `evon` → Uninstall; muốn bỏ
+  nguồn cài thì sang Marketplaces → `evondevkit` → xoá.
+- Từ shell bất kỳ: `claude plugin uninstall evon@evondevkit`, rồi
+  `claude plugin marketplace remove evondevkit`.
+
+### Cursor, OpenCode, Codex, Antigravity, ZCode, omp
+
+Chạy ở thư mục gốc dự án (dùng `bunx` thay `npx` cũng được):
+
+```bash
+npx skills add evondev/evondevKit
+```
+
+Lệnh hỏi cài cho công cụ nào rồi chép skill vào `.agents/skills/ui-ux/`, thư mục mà Cursor,
+OpenCode, Codex, Antigravity, omp cùng đọc (ZCode thì vào `.zcode/skills/ui-ux/`). Muốn chọn sẵn
+thì thêm `-a`, ví dụ `-a cursor -a zcode`. Dùng chung cho mọi dự án thì thêm `-g`.
+
+| Công cụ | Gọi skill |
+| --- | --- |
+| Cursor, Antigravity | `/ui-ux Dựng màn danh sách đơn hàng…` |
+| Codex | `$ui-ux Dựng màn danh sách đơn hàng…` |
+| ZCode | `$ui-ux Dựng màn danh sách đơn hàng…` (hoặc chọn trong menu `/`) |
+| OpenCode | `Dùng skill ui-ux, dựng màn danh sách đơn hàng…` |
+| omp | `/skill:ui-ux Dựng màn danh sách đơn hàng…` |
+
+Không gọi tên thì công cụ tự bật skill khi đề khớp mô tả. ZCode chưa thấy skill thì vào
+Settings → Skills bấm Refresh. Lấy bản mới: `npx skills update`. Có bản mới thì skill tự báo:
+mỗi ngày tối đa một lần, nó đọc file version trên GitHub (không gửi gì đi) và thêm một dòng kèm
+lệnh cập nhật vào câu trả lời. Nó không tự cài. Muốn tắt thì đặt biến môi trường
+`EVONDEVKIT_NO_UPDATE_CHECK=1`. Gỡ: `npx skills remove ui-ux`
+ở thư mục gốc dự án, cài bằng `-g` thì gỡ bằng `npx skills remove -g ui-ux`.
+Skill mới được test kỹ trên Claude, công cụ khác chạy được nhưng có thể lệch vài chỗ.
+
+> **Bản beta.** Dùng tốt cho giao diện app nền sáng, đề tiếng Việt: đã qua 70 đề test trên dự
+> án thật. Đang test: thêm dark mode cho app đang có.
+> Skill còn được sửa liên tục từ các lượt test, lấy bản mới như mục **Lấy bản mới** ở trên. Muốn được báo khi có bản mới: trên GitHub bấm
+> **Watch → Custom → Releases**, mỗi bản có vài dòng ghi đổi gì ở
+> [Releases](https://github.com/evondev/evondevKit/releases).
+>
+> Skill không hoàn hảo, nó làm tốt nhất có thể theo bộ luật của nó. Gu mỗi người một khác, dự án
+> nào cũng có cái riêng: dựng xong bạn chỉnh tay hay nhắn AI sửa đều được.
+>
+> Gặp chỗ chưa ổn thì [mở issue](https://github.com/evondev/evondevKit/issues), kèm link
+> hoặc ảnh màn đó và câu đề bạn đã gõ.
+
+## Dùng
+
+Mặc định skill làm như một designer: **brief → bạn duyệt → 2–3 wireframe → bạn chọn → dựng**.
+Viết đề tiếng Việt hay tiếng Anh đều vậy. Muốn đi lối khác thì nói rõ trong đề:
+
+| Bạn muốn | Gõ | Skill làm |
+| --- | --- | --- |
+| Dựng hay làm lại một màn (mặc định) | `/evon:ui-ux Dựng màn danh sách đơn hàng: mã đơn, khách, tổng tiền, trạng thái.` hoặc `/evon:ui-ux Redesign the jobs page.` | Brief → bạn duyệt → 2–3 wireframe → bạn chọn → dựng. Wireframe có thanh trên cùng: bật gọn chữ, bỏ lặp, bật màu, thử màu nhấn, xem mobile (bấm ☰ được, có thanh dưới nếu ít mục), xem màn rỗng / lỗi, đọc ưu nhược, chép câu góp ý. Trả lời `ok` là dựng phương án khuyên dùng |
+| App điện thoại (beta) | `/evon:ui-ux Dựng app điện thoại order cà phê: menu, giỏ, thanh toán.` hoặc gửi ảnh màn điện thoại | Như trên, ra bản mẫu HTML trong khung máy, bấm qua lại được; mở trên màn rộng thấy bảng luồng, mỗi luồng một hàng. Đề phải nói "app điện thoại", "mobile", "iOS" hay "Android", không thì skill dựng app web. Soi app có sẵn và chuyển sang React Native, Flutter chưa test kỹ |
+| Hỏi sản phẩm nên thiết kế ra sao, chưa dựng | `/evon:ui-ux Phân tích sản phẩm e-learning này, nên thiết kế ra sao?` | Một tin báo cáo: brief, các màn chính, cách các sản phẩm cùng loại thường làm (skill tra thật, chỗ nào sản phẩm của bạn chưa có thì ghi gợi ý), ba màu nhấn theo ngành, kiểu giao diện hợp người dùng. Không đụng code. Muốn dựng thì nói tiếp `dựng màn …` |
+| Dựng luôn, không wireframe | `/evon:ui-ux Dựng luôn màn cài đặt thông báo.` hoặc `… just build it` | Không vẽ wireframe (đỡ tốn token): skill tự chọn phương án nó sẽ khuyên rồi dựng luôn. Lúc giao báo đã chọn bố cục nào, vì sao |
+| Chốt design system trước khi dựng nhiều màn | `/evon:ui-ux Dựng design system cho app quản lý phòng khám trước, chưa cần màn nào.` hoặc `… build a design system first` | Token và bảy component nền (nút, badge, ô nhập, card, dòng danh sách, modal, trạng thái rỗng) trên một trang `/design-system`. Không vẽ wireframe, dừng một lần để bạn duyệt. Dự án có shadcn hay bộ riêng thì chỉnh bộ đó. Màn dựng sau ráp từ đúng bộ này |
+| Biết UI đang sai chỗ nào | `/evon:ui-ux Xem giúp trang này chỗ nào chưa ổn: http://localhost:3000/orders` | Đưa bảng lỗi có ảnh trước/sau. Bạn trả lời `sửa 1, 3` rồi mới sửa |
+| Xem người mới có bị lạc không | `/evon:ui-ux Soi luồng onboarding: từ đăng ký tới lúc tạo được khoá học đầu tiên.` | Đi từng bước, đếm số bước tới việc chính, bảng chỗ lạc giữa các màn (màn rỗng không có nút đi tiếp, lưu xong không biết đã lưu, mỗi màn gọi một tên). Bạn chọn dòng rồi mới sửa |
+| Làm gọn, giữ brand và khung trang | `/evon:ui-ux Dựng lại trang này giữ brand.` | Thay control, làm gọn card, giữ màu của bạn. Trang lướt để chọn hoặc dashboard (công thức B của `P12`) thì có thêm dòng bản có màu. Trả lời `ok` hoặc `bỏ 7` |
+| Đổi hẳn sang dáng của skill | `/evon:ui-ux Dựng lại hoàn toàn theo gu skill, bỏ style cũ.` | Như trên, đổi cả màu, chỉ giữ logo và màu nhấn |
+| Dọn code, giữ nguyên hình | `/evon:ui-ux Refactor CSS trang /settings sang Tailwind, giữ nguyên giao diện.` | Đổi class, xoá CSS cũ, so ảnh trước và sau |
+
+Việc nhỏ hơn một màn (sửa một component, thêm một dropdown, sửa một lỗi) thì skill làm luôn,
+không qua wireframe.
+
+## Mẹo
+
+- **Đưa link localhost đang chạy.** Skill tự mở trang, đo và chụp từ 375 tới 1920px. Không
+  có thì gửi ảnh chụp.
+- **Mỗi lượt một trang**, ghi route cụ thể.
+- **Dựng mới thì nói dữ liệu thật**: cột, trường, trạng thái rỗng, lỗi.
+- **Có wireframe thì gửi kèm**, ghi "ảnh này chỉ là wireframe".
+- **Muốn skill tự tìm lỗi thì đừng liệt kê lỗi.**
+- **Góp ý wireframe theo số khối**: mỗi khối có số nhỏ ở góc, nhắn "bỏ khối 3", "đưa khối 2 lên đầu".
+- **Skill lo hình, bạn lo logic**: gọi API, lưu dữ liệu, định dạng số là việc của bạn.
+- **Dữ liệu mẫu nên giống thật.** Ảnh hoạt hình làm giao diện nào cũng trông như bản nháp.
+
+## Kiểm lúc nhận bài
+
+- Bảng lỗi có dòng **"Đối chiếu probe"** ở dưới. Không có là skill chưa chạy đo.
+- Thiết kế lại từ đầu có **năm dòng tự soi** lúc giao. Thiếu thì nhắn "soi lại năm câu".
+
+## Skill giữ gì của bạn
+
+- **Component và thư viện của dự án** (shadcn, MUI, bộ nội bộ): dùng cái của bạn, không áp
+  bộ khác lên.
+- **Màu brand**: giữ, trừ khi bạn nói "bỏ style cũ".
+- **Phong cách**: mặc định flat. Muốn glassmorphism, gradient, nền tối thì nói trong đề.
+- Không có Tailwind, hay không có `package.json` (HTML thuần, WordPress) vẫn dùng được.
+
+---
+
+Phát triển skill: xem [DEVELOP.md](DEVELOP.md). Giấy phép [MIT](LICENSE).

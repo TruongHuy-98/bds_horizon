@@ -21,6 +21,7 @@ import {
   Heart,
   CalendarDays,
   Sparkles,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -137,72 +138,6 @@ function ProjectDetailPage() {
         }
       }
 
-      if (!found) {
-        const staticProjects = [
-          {
-            name: "Sun Cosmo Residence",
-            slug: "sun-cosmo-residence",
-            developer: "Sun Group",
-            location: "Trần Hưng Đạo, Ngũ Hành Sơn, Đà Nẵng",
-            scale: "1.250 căn",
-            status: "Đang mở bán",
-            price_from: "55 tr/m²",
-            description: "Tổ hợp căn hộ cao cấp và nhà phố thương mại nằm ngay chân cầu Trần Thị Lý. View sông Hàn và trung tâm thành phố tuyệt đẹp, kiến trúc kết hợp truyền thống và hiện đại.",
-          },
-          {
-            name: "The Ocean Villas Mỹ Khê",
-            slug: "the-ocean-villas-my-khe",
-            developer: "VinaCapital",
-            location: "Võ Nguyên Giáp, Sơn Trà, Đà Nẵng",
-            scale: "120 biệt thự",
-            status: "Đang mở bán",
-            price_from: "28 tỷ/căn",
-            description: "Biệt thự ven sông đắc địa, khu đô thị sinh thái Hòa Xuân. Gồm 5 phòng ngủ master, hồ bơi tràn bờ riêng, sân vườn rộng thoáng mát thích hợp nghỉ dưỡng gia đình.",
-          },
-          {
-            name: "Hòa Xuân Riverside City",
-            slug: "hoa-xuan-riverside-city",
-            developer: "Đất Xanh Miền Trung",
-            location: "Nguyễn Phước Lan, Cẩm Lệ, Đà Nẵng",
-            scale: "1.500 lô đất nền",
-            status: "Đã bàn giao",
-            price_from: "42 tr/m²",
-            description: "Khu đô thị sinh thái Hòa Xuân ven sông với cơ sở hạ tầng đồng bộ, cảnh quan xanh mát, giao thông thuận tiện và quy hoạch bài bản.",
-          },
-          {
-            name: "Azura Riverfront Tower",
-            slug: "azura-riverfront-tower",
-            developer: "VinaCapital",
-            location: "Trần Hưng Đạo, Hải Châu, Đà Nẵng",
-            scale: "225 căn hộ",
-            status: "Đang mở bán",
-            price_from: "65 tr/m²",
-            description: "Tòa tháp căn hộ cao cấp bên bờ sông Hàn, vị trí đắc địa cạnh cầu Sông Hàn, đầy đủ tiện ích chuẩn quốc tế.",
-          },
-          {
-            name: "Eco Green Hòa Vang",
-            slug: "eco-green-hoa-vang",
-            developer: "HUD",
-            location: "Quốc lộ 14B, Hòa Vang, Đà Nẵng",
-            scale: "350 căn nhà phố",
-            status: "Sắp mở bán",
-            price_from: "3.5 tỷ/căn",
-            description: "Khu nhà phố sinh thái thân thiện môi trường tại Hòa Vang, không khí trong lành, thiết kế tối ưu mảng xanh.",
-          },
-          {
-            name: "Da Nang Smart Plaza",
-            slug: "da-nang-smart-plaza",
-            developer: "FPT City",
-            location: "FPT City, Ngũ Hành Sơn, Đà Nẵng",
-            scale: "1 tháp, 25 tầng",
-            status: "Sắp mở bán",
-            price_from: "40 tr/m²",
-            description: "Tổ hợp thương mại dịch vụ và căn hộ thông minh tại FPT City Đà Nẵng, công nghệ Smart Home cao cấp.",
-          }
-        ];
-        found = staticProjects.find((p) => p.slug === slug || p.name.toLowerCase().replace(/\s+/g, "-") === slug);
-      }
-
       setProject(found);
       if (found) {
         const images = Array.isArray(found.images) && found.images.length > 0
@@ -218,7 +153,45 @@ function ProjectDetailPage() {
     loadProject();
   }, [slug]);
 
-  const projectName = project?.name || "The Landmark Da Nang";
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <div className="animate-spin size-8 border-t-2 border-b-2 border-primary rounded-full mb-3" />
+          <p className="text-sm text-muted-foreground">Đang tải thông tin dự án...</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <div className="h-16 w-16 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4">
+            <Building2 className="h-8 w-8" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">
+            Không tìm thấy dự án
+          </h1>
+          <p className="text-muted-foreground text-sm max-w-md mb-6">
+            Dự án này không tồn tại trong cơ sở dữ liệu hoặc đã bị gỡ xuống.
+          </p>
+          <Link to="/du-an">
+            <Button className="gap-2">
+              <ArrowLeft className="h-4 w-4" /> Quay lại danh sách Dự án
+            </Button>
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const projectName = project.name;
   const projectImages = Array.isArray(project?.images) && project.images.length > 0
     ? project.images
     : project?.image_url

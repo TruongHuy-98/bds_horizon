@@ -48,9 +48,9 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
   };
 
   return (
-    <article className="group bg-card rounded-xl border border-border/70 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row relative">
+    <article className="group bg-card rounded-xl border border-border/70 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row relative sm:h-[230px]">
       {/* Thumbnail Image Container */}
-      <div className="relative sm:w-64 md:w-72 shrink-0 aspect-[4/3] sm:aspect-auto overflow-hidden bg-muted">
+      <div className="relative w-full h-52 sm:h-full sm:w-64 md:w-72 shrink-0 overflow-hidden bg-muted">
         <Link
           to={detailPath}
           params={{ slug: item.slug }}
@@ -59,7 +59,7 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
           <img
             src={item.images[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60"}
             alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
         </Link>
@@ -110,21 +110,21 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
       </div>
 
       {/* Details Container */}
-      <div className="p-4 flex-1 flex flex-col justify-between">
-        <div>
+      <div className="p-3.5 md:p-4 flex-1 flex flex-col justify-between overflow-hidden">
+        <div className="min-w-0">
           {/* Title as Link */}
           <Link
             to={detailPath}
             params={{ slug: item.slug }}
             className="block"
           >
-            <h3 className="font-bold text-base md:text-lg text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+            <h3 className="font-bold text-base md:text-lg text-foreground group-hover:text-primary transition-colors line-clamp-1 leading-snug">
               {item.title}
             </h3>
           </Link>
 
           {/* Key Metrics: Price & Area */}
-          <div className="mt-2.5 flex flex-wrap items-baseline gap-3">
+          <div className="mt-1.5 flex flex-wrap items-baseline gap-2.5">
             <span className="text-xl font-extrabold text-primary">{item.priceLabel}</span>
             {item.pricePerM2 && (
               <span className="text-xs font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
@@ -137,26 +137,26 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
           </div>
 
           {/* Location */}
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
             <span className="truncate">{item.location}</span>
           </div>
 
           {/* Directions & Frontage Tags */}
           {(item.directions || item.frontage || item.legal) && (
-            <div className="mt-2.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               {item.directions && (
-                <span className="flex items-center gap-1 bg-surface-container/60 px-2 py-0.5 rounded">
+                <span className="flex items-center gap-1 bg-surface-container/60 px-2 py-0.5 rounded text-[11px]">
                   <Compass className="h-3 w-3 text-muted-foreground" /> Hướng: {item.directions}
                 </span>
               )}
               {item.frontage && (
-                <span className="flex items-center gap-1 bg-surface-container/60 px-2 py-0.5 rounded">
-                  <MoveHorizontal className="h-3 w-3 text-muted-foreground" /> Mặt tiền: {item.frontage}
+                <span className="flex items-center gap-1 bg-surface-container/60 px-2 py-0.5 rounded text-[11px]">
+                  <MoveHorizontal className="h-3 w-3 text-muted-foreground" /> MT: {item.frontage}
                 </span>
               )}
               {item.legal && (
-                <span className="flex items-center gap-1 bg-teal/10 text-teal dark:bg-teal/20 px-2 py-0.5 rounded font-medium">
+                <span className="flex items-center gap-1 bg-teal/10 text-teal dark:bg-teal/20 px-2 py-0.5 rounded font-medium text-[11px]">
                   <ShieldCheck className="h-3 w-3" /> {item.legal}
                 </span>
               )}
@@ -164,13 +164,15 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
           )}
 
           {/* Description summary */}
-          <p className="mt-2.5 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-            {item.description}
-          </p>
+          {item.description && (
+            <p className="mt-1.5 text-xs text-muted-foreground line-clamp-1 leading-relaxed">
+              {item.description}
+            </p>
+          )}
         </div>
 
         {/* Footer: Broker Info & Action Buttons */}
-        <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between gap-3">
+        <div className="mt-2 pt-2.5 border-t border-border/60 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <img
               src={item.brokerAvatar}

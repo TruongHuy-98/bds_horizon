@@ -65,22 +65,22 @@ function DistrictCardItem({ district }: { district: DistrictCard }) {
           loading="lazy"
         />
       </div>
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+      {/* Gradient overlay with enhanced bottom contrast */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
       {/* Content */}
       <div className="relative flex h-full flex-col justify-end p-4 md:p-5">
-        <div className="flex items-center gap-1.5 text-white/70 text-xs mb-1">
-          <MapPin className="h-3 w-3 shrink-0" />
+        <div className="flex items-center gap-1.5 text-white/85 text-xs mb-1 drop-shadow-xs">
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-amber-300" />
           <span className="line-clamp-1">{district.description}</span>
         </div>
-        <h3 className="font-bold text-white text-base md:text-lg leading-tight">
+        <h3 className="font-bold text-white text-base md:text-lg leading-tight drop-shadow-xs">
           {district.name}
         </h3>
-        <div className="mt-1.5 inline-flex items-center gap-1 text-xs">
-          <span className="font-bold text-emerald-400">
+        <div className="mt-1.5 inline-flex items-center gap-1.5 text-xs">
+          <span className="font-bold text-amber-300 drop-shadow-xs">
             {district.listings.toLocaleString("vi-VN")}
           </span>
-          <span className="text-white/75">tin đăng</span>
+          <span className="text-white/85">tin đăng</span>
         </div>
       </div>
     </Link>

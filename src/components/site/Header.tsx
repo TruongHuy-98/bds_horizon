@@ -1,11 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Menu, X, User, ShieldCheck, Building2, Award, LogOut, Sparkles, PlusCircle } from "lucide-react";
+import { Menu, X, User, ShieldCheck, Building2, Award, LogOut, Sparkles, PlusCircle, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { HeaderProfileDropdown } from "@/components/profile/HeaderProfileDropdown";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function Logo() {
   return (
@@ -28,26 +34,49 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role, isGuest, profile, openProfileModal, switchMockRole, logout } = useAuth();
 
-  const nav: { label: string; to?: string; href?: string }[] = [
+  // Core primary routes always visible on desktop
+  const mainNav = [
     { label: "Nhà đất bán", to: "/nha-dat-ban" },
     { label: "Nhà đất cho thuê", to: "/nha-dat-cho-thue" },
     { label: "Dự án", to: "/du-an" },
-    { label: "Pháp lý", to: "/phap-ly" },
     { label: "Check Quy Hoạch", to: "/check-quy-hoach" },
-    { label: "Luyện thi", to: "/on-thi" },
-    { label: "Danh bạ Môi giới", to: "/moi-gioi" },
     { label: "Tin tức", to: "/tin-tuc" },
   ];
+
+  // Secondary routes displayed on xl+, or in a "Thêm" dropdown on lg
+  const moreNav = [
+    { label: "Pháp lý", to: "/phap-ly" },
+    { label: "Luyện thi", to: "/on-thi" },
+    { label: "Danh bạ Môi giới", to: "/moi-gioi" },
+  ];
+
+  const fullNav = [...mainNav, ...moreNav];
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border/60">
       <div className="container-page flex h-16 items-center justify-between gap-4">
         {/* Logo + Desktop Nav */}
-        <div className="flex items-center gap-6 xl:gap-8 min-w-0">
+        <div className="flex items-center gap-5 xl:gap-8 min-w-0">
           <Logo />
-          <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
-            {nav.map((n) =>
-              n.to ? (
+          <nav className="hidden lg:flex items-center gap-3.5 xl:gap-5">
+            {/* Primary links */}
+            {mainNav.map((n) => (
+              <Link
+                key={n.label}
+                to={n.to}
+                className="text-[13px] xl:text-sm font-medium text-foreground/80 hover:text-primary transition-colors whitespace-nowrap"
+                activeProps={{
+                  className: "text-[13px] xl:text-sm font-semibold text-primary border-b-2 border-primary pb-1",
+                }}
+                activeOptions={{ exact: true }}
+              >
+                {n.label}
+              </Link>
+            ))}
+
+            {/* Direct links on wide screens (xl+) */}
+            <div className="hidden xl:flex items-center gap-5">
+              {moreNav.map((n) => (
                 <Link
                   key={n.label}
                   to={n.to}
@@ -59,16 +88,28 @@ export default function Header() {
                 >
                   {n.label}
                 </Link>
-              ) : (
-                <a
-                  key={n.label}
-                  href={n.href}
-                  className="text-[13px] xl:text-sm font-medium text-foreground/80 hover:text-primary transition-colors whitespace-nowrap"
-                >
-                  {n.label}
-                </a>
-              ),
-            )}
+              ))}
+            </div>
+
+            {/* Dropdown "Thêm" on medium desktop screens (1024px-1279px) */}
+            <div className="hidden lg:flex xl:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1 text-[13px] font-medium text-foreground/80 hover:text-primary transition-colors cursor-pointer outline-none py-1">
+                    Thêm <ChevronDown className="size-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-44 bg-card border-border shadow-lg">
+                  {moreNav.map((n) => (
+                    <DropdownMenuItem key={n.label} asChild>
+                      <Link to={n.to} className="w-full cursor-pointer text-xs font-medium py-2">
+                        {n.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </nav>
         </div>
 
@@ -243,7 +284,7 @@ export default function Header() {
               </div>
             )}
 
-            {nav.map((n) =>
+            {fullNav.map((n) =>
               n.to ? (
                 <Link
                   key={n.label}

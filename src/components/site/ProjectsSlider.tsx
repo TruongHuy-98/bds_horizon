@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { MapPin, ChevronLeft, ChevronRight, ImageIcon, Building2, Ruler, Tag } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-type ProjectStatus = "Đang mở bán" | "Sắp mở bán" | "Đã bàn giao";
+type ProjectStatus = "Đang mở bán" | "Sắp mở bán" | "Đã bàn giao" | "Đang bàn giao";
 
 interface Project {
   id: string;
@@ -20,126 +21,39 @@ interface Project {
   description: string;
 }
 
-const mockProjects: Project[] = [
-  {
-    id: "1",
-    name: "Sun Cosmo Residence",
-    slug: "sun-cosmo-residence",
-    location: "Nguyễn Tất Thành, Ngũ Hành Sơn",
-    district: "Ngũ Hành Sơn, Đà Nẵng",
-    status: "Đang mở bán",
-    priceFrom: "55 tr/m²",
-    area: "42 - 98m²",
-    units: "1.250 căn",
-    developer: "Sun Group",
-    img: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80",
-    imageCount: 14,
-    description: "Tổ hợp căn hộ cao cấp mặt tiền sông Cổ Cò, view biển và núi Ngũ Hành Sơn.",
-  },
-  {
-    id: "2",
-    name: "The Filmore Da Nang",
-    slug: "the-filmore-da-nang",
-    location: "Mỹ An, Ngũ Hành Sơn",
-    district: "Ngũ Hành Sơn, Đà Nẵng",
-    status: "Đang mở bán",
-    priceFrom: "4.9 tỷ/căn",
-    area: "65 - 120m²",
-    units: "840 căn",
-    developer: "VinaCapital",
-    img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80",
-    imageCount: 9,
-    description: "Căn hộ hạng sang phong cách Mỹ, vị trí vàng sát biển Mỹ An, bàn giao full nội thất.",
-  },
-  {
-    id: "3",
-    name: "Da Nang Landmark Tower",
-    slug: "da-nang-landmark-tower",
-    location: "Bạch Đằng, Hải Châu",
-    district: "Hải Châu, Đà Nẵng",
-    status: "Sắp mở bán",
-    priceFrom: "Đang cập nhật",
-    area: "75 - 200m²",
-    units: "600 căn",
-    developer: "Đà Nẵng Landmark",
-    img: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&auto=format&fit=crop&q=80",
-    imageCount: 7,
-    description: "Biểu tượng mới của trung tâm thành phố, tòa tháp 50 tầng view sông Hàn và biển.",
-  },
-  {
-    id: "4",
-    name: "Nam Hòa Xuân",
-    slug: "nam-hoa-xuan",
-    location: "Hòa Xuân, Cẩm Lệ",
-    district: "Cẩm Lệ, Đà Nẵng",
-    status: "Đang mở bán",
-    priceFrom: "3.2 tỷ/căn",
-    area: "80 - 150m²",
-    units: "2.500 căn",
-    developer: "VRG Đà Nẵng",
-    img: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&auto=format&fit=crop&q=80",
-    imageCount: 12,
-    description: "Khu đô thị sinh thái ven sông Cẩm Lệ, mảng xanh chiếm 70% diện tích, hạ tầng hoàn chỉnh.",
-  },
-  {
-    id: "5",
-    name: "Newtown Diamond Legend",
-    slug: "newtown-diamond-legend",
-    location: "Phạm Văn Đồng, Sơn Trà",
-    district: "Sơn Trà, Đà Nẵng",
-    status: "Sắp mở bán",
-    priceFrom: "Liên hệ",
-    area: "50 - 90m²",
-    units: "480 căn",
-    developer: "Newtown Group",
-    img: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&auto=format&fit=crop&q=80",
-    imageCount: 6,
-    description: "Căn hộ view biển Mỹ Khê trực diện, chuẩn resort 5 sao, cách biển chỉ 300m.",
-  },
-  {
-    id: "6",
-    name: "Charm City Đà Nẵng",
-    slug: "charm-city-da-nang",
-    location: "Nguyễn Sinh Sắc, Liên Chiểu",
-    district: "Liên Chiểu, Đà Nẵng",
-    status: "Đang mở bán",
-    priceFrom: "1.8 tỷ/căn",
-    area: "55 - 100m²",
-    units: "3.200 căn",
-    developer: "Charm Group",
-    img: "https://images.unsplash.com/photo-1460317442991-0ec209397118?w=800&auto=format&fit=crop&q=80",
-    imageCount: 11,
-    description: "Khu đô thị phức hợp quy mô lớn phía Bắc thành phố, liền kề Cảng Liên Chiểu tương lai.",
-  },
-];
-
-const STATUS_STYLES: Record<ProjectStatus, { bg: string; text: string; dot: string }> = {
+const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
   "Đang mở bán": {
-    bg: "bg-emerald-500/90",
-    text: "text-white",
-    dot: "bg-emerald-300",
+    bg: "bg-teal/95 shadow-sm",
+    text: "text-teal-foreground",
+    dot: "bg-teal-foreground",
   },
   "Sắp mở bán": {
-    bg: "bg-orange-500/90",
-    text: "text-white",
-    dot: "bg-orange-300",
+    bg: "bg-orange/95 shadow-sm",
+    text: "text-orange-foreground",
+    dot: "bg-orange-foreground",
   },
   "Đã bàn giao": {
-    bg: "bg-slate-500/90",
-    text: "text-white",
-    dot: "bg-slate-300",
+    bg: "bg-muted/95 border border-border/80 backdrop-blur-sm",
+    text: "text-muted-foreground",
+    dot: "bg-muted-foreground/60",
+  },
+  "Đang bàn giao": {
+    bg: "bg-muted/95 border border-border/80 backdrop-blur-sm",
+    text: "text-muted-foreground",
+    dot: "bg-muted-foreground/60",
   },
 };
 
+const DEFAULT_STATUS_STYLE = STATUS_STYLES["Đang mở bán"];
+
 function ProjectCard({ project }: { project: Project }) {
-  const statusStyle = STATUS_STYLES[project.status];
+  const statusStyle = STATUS_STYLES[project.status] || DEFAULT_STATUS_STYLE;
 
   return (
     <Link
       to="/du-an/$slug"
-      params={{ slug: project.slug }}
-      className="group block bg-card rounded-2xl overflow-hidden border border-border/60 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 flex-shrink-0"
-      style={{ width: "320px" }}
+      params={{ slug: project.slug || "du-an" }}
+      className="group block bg-card rounded-2xl overflow-hidden border border-border/60 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 w-80 shrink-0"
     >
       {/* Image */}
       <div className="relative overflow-hidden aspect-[16/10]">
@@ -198,7 +112,49 @@ function ProjectCard({ project }: { project: Project }) {
   );
 }
 
+function mapDbProject(p: any): Project {
+  const guessDistrict = (loc: string) => {
+    const text = (loc || "").toLowerCase();
+    if (text.includes("hải châu")) return "Hải Châu, Đà Nẵng";
+    if (text.includes("sơn trà")) return "Sơn Trà, Đà Nẵng";
+    if (text.includes("ngũ hành sơn")) return "Ngũ Hành Sơn, Đà Nẵng";
+    if (text.includes("cẩm lệ")) return "Cẩm Lệ, Đà Nẵng";
+    if (text.includes("liên chiểu")) return "Liên Chiểu, Đà Nẵng";
+    if (text.includes("thanh khê")) return "Thanh Khê, Đà Nẵng";
+    if (text.includes("hòa vang")) return "Hòa Vang, Đà Nẵng";
+    return loc || "Đà Nẵng";
+  };
+
+  const images = Array.isArray(p.images) ? p.images : [];
+  const img =
+    p.image_url ||
+    images[0] ||
+    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80";
+  const imageCount = Math.max(
+    1,
+    (p.image_url ? 1 : 0) + (images.length > 0 && images[0] === p.image_url ? images.length - 1 : images.length)
+  );
+
+  return {
+    id: String(p.id),
+    name: p.name,
+    slug: p.slug || p.name.toLowerCase().replace(/\s+/g, "-"),
+    location: p.location || "Đà Nẵng",
+    district: p.district || guessDistrict(p.location),
+    status: (p.status as ProjectStatus) || "Đang mở bán",
+    priceFrom: p.price_from || p.priceFrom || "Liên hệ",
+    area: p.area || "Đang cập nhật",
+    units: p.scale || p.units || "N/A",
+    developer: p.developer || "Chưa rõ CĐT",
+    img,
+    imageCount,
+    description: p.description || "",
+  };
+}
+
 export function ProjectsSlider() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const trackRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -206,6 +162,63 @@ export function ProjectsSlider() {
   const dragStart = useRef({ x: 0, scrollLeft: 0 });
 
   const CARD_WIDTH = 336; // card width (320) + gap (16)
+
+  // Fetch dynamic projects from Supabase or LocalStorage
+  useEffect(() => {
+    let isMounted = true;
+    const fetchProjects = async () => {
+      setLoading(true);
+      const isMock =
+        typeof window !== "undefined"
+          ? localStorage.getItem("bds_mock_admin") === "true" ||
+            !!localStorage.getItem("bds_mock_role") ||
+            !import.meta.env.VITE_SUPABASE_URL
+          : true;
+
+      if (isMock) {
+        try {
+          const localData = localStorage.getItem("mock_projects");
+          if (localData) {
+            const list = JSON.parse(localData);
+            if (Array.isArray(list) && list.length > 0) {
+              if (isMounted) setProjects(list.map(mapDbProject));
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn("Error reading mock_projects:", e);
+        }
+        if (isMounted) setProjects([]);
+      } else {
+        try {
+          const { data, error } = await supabase
+            .from("projects")
+            .select("*")
+            .eq("published", true)
+            .order("created_at", { ascending: false });
+
+          if (error) throw error;
+          if (isMounted) {
+            if (data && data.length > 0) {
+              setProjects(data.map(mapDbProject));
+            } else {
+              setProjects([]);
+            }
+          }
+        } catch (err) {
+          console.warn("Failed to fetch projects from Supabase:", err);
+          if (isMounted) setProjects([]);
+        }
+      }
+      if (isMounted) setLoading(false);
+    };
+
+    fetchProjects();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const updateScrollState = useCallback(() => {
     const el = trackRef.current;
@@ -246,6 +259,10 @@ export function ProjectsSlider() {
     setIsDragging(false);
     if (trackRef.current) trackRef.current.style.cursor = "grab";
   };
+
+  if (projects.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-16 md:py-20">
@@ -324,7 +341,7 @@ export function ProjectsSlider() {
             onMouseUp={onMouseUp}
             onMouseLeave={onMouseUp}
           >
-            {mockProjects.map((project) => (
+            {projects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
           </div>

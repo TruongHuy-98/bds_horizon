@@ -4,6 +4,7 @@ import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import { ListingFilterBar, FilterState, initialFilterState } from "@/components/listings/ListingFilterBar";
 import { PropertyListingCard } from "@/components/listings/PropertyListingCard";
+import { ListPagination } from "@/components/listings/ListPagination";
 import { ListingSidebar } from "@/components/listings/ListingSidebar";
 import { sampleListings, ListingItem } from "@/data/listingsData";
 import { getLocalAndSampleListings } from "@/lib/listingsService";
@@ -111,6 +112,10 @@ function NhaDatBanPage() {
     setAllListings(getLocalAndSampleListings("sale"));
   }, []);
 
+  // Pagination setup (10 items per page)
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
   // Execute client-side filtering via custom hook
   const rawFiltered = useFilteredListings(allListings, currentFilters, "sale");
 
@@ -126,6 +131,18 @@ function NhaDatBanPage() {
     }
     return sorted;
   }, [rawFiltered, sortBy]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [currentFilters, sortBy]);
+
+  const totalPages = Math.ceil(filteredListings.length / ITEMS_PER_PAGE);
+
+  const paginatedListings = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredListings.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredListings, currentPage]);
 
   // Filter change handlers updating URL params seamlessly
   const handleFilterChange = (newFilters: FilterState) => {
@@ -247,7 +264,7 @@ function NhaDatBanPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredListings.map((item) => (
+                  {paginatedListings.map((item) => (
                     <PropertyListingCard
                       key={item.id}
                       item={item}
@@ -257,6 +274,17 @@ function NhaDatBanPage() {
                       }}
                     />
                   ))}
+
+                  {/* Pagination */}
+                  <ListPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(p) => {
+                      setCurrentPage(p);
+                      window.scrollTo({ top: 320, behavior: "smooth" });
+                    }}
+                    className="pt-6"
+                  />
                 </div>
               )}
             </div>

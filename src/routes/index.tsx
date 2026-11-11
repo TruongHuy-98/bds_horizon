@@ -122,6 +122,7 @@ const agents = [
     listings: 45,
     years: 8,
     rating: 5,
+    reviews: 38,
   },
   {
     img: a2,
@@ -130,6 +131,7 @@ const agents = [
     listings: 32,
     years: 5,
     rating: 5,
+    reviews: 29,
   },
   {
     img: a3,
@@ -138,6 +140,7 @@ const agents = [
     listings: 68,
     years: 12,
     rating: 5,
+    reviews: 54,
   },
 ];
 
@@ -252,7 +255,7 @@ function Hero() {
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" className="w-full md:w-auto shrink-0 bg-teal text-teal-foreground hover:bg-teal/90 h-11 px-6 rounded-md font-medium whitespace-nowrap">
+            <Button type="submit" className="w-full md:w-auto shrink-0 bg-primary text-primary-foreground hover:bg-primary/95 h-11 px-7 rounded-md font-medium whitespace-nowrap shadow-sm transition-colors">
               Tìm kiếm
             </Button>
           </div>
@@ -311,14 +314,28 @@ function PlanningCheck() {
         </div>
         <div className="relative">
           <div className="absolute -inset-6 bg-gradient-to-br from-primary/10 to-teal/10 rounded-3xl blur-2xl" />
-          <img
-            src={planMap}
-            alt="Bản đồ quy hoạch Đà Nẵng 2030"
-            width={1280}
-            height={960}
-            loading="lazy"
-            className="relative rounded-2xl shadow-card-hover w-full"
-          />
+          <Link
+            to="/check-quy-hoach"
+            className="group relative block overflow-hidden rounded-2xl shadow-card-hover border border-border/60"
+            title="Nhấn để tra cứu bản đồ quy hoạch trực tiếp"
+          >
+            <img
+              src={planMap}
+              alt="Bản đồ quy hoạch Đà Nẵng 2030"
+              width={1280}
+              height={960}
+              loading="lazy"
+              className="relative rounded-2xl w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-5">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-lg">
+                <MapIcon className="h-4 w-4" /> Bấm để mở bản đồ quy hoạch số
+              </span>
+            </div>
+            <div className="absolute bottom-3 right-3 sm:hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/90 text-primary-foreground text-[11px] font-semibold backdrop-blur-sm">
+              <MapIcon className="h-3 w-3" /> Mở bản đồ
+            </div>
+          </Link>
         </div>
       </div>
     </section>
@@ -454,12 +471,12 @@ function FeaturedProperties() {
               Các sản phẩm đã qua kiểm định pháp lý nghiêm ngặt.
             </p>
           </div>
-          <a
-            href="#"
+          <Link
+            to="/nha-dat-ban"
             className="hidden md:inline-flex items-center gap-1 text-sm font-semibold text-primary hover:gap-2 transition-all"
           >
             Xem tất cả <ArrowRight className="h-4 w-4" />
-          </a>
+          </Link>
         </div>
 
         {loading ? (
@@ -477,55 +494,60 @@ function FeaturedProperties() {
                   setActiveImageIndex(0);
                   setContactForm({ name: "", phone: "", message: "" });
                 }}
-                className="group bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 border border-border/60 cursor-pointer"
+                className="group bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 border border-border/60 cursor-pointer flex flex-col justify-between"
               >
-              <div className="relative aspect-[4/3] overflow-hidden">
-                <img
-                  src={p.img}
-                  alt={p.title}
-                  width={800}
-                  height={600}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute top-3 left-3 flex gap-2">
-                  <Tag tone={p.tagTone}>{p.tag}</Tag>
-                  {p.extra && (
-                    <span className="bg-white/95 text-foreground text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                      {p.extra}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-base leading-snug line-clamp-1">{p.title}</h3>
-                <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {p.loc}
-                </div>
-                <div className="mt-4 flex items-end justify-between border-t border-border pt-3">
-                  <div className="text-primary font-bold text-lg">{p.price}</div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    {p.beds > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Bed className="h-3.5 w-3.5" />
-                        {p.beds}
-                      </span>
-                    )}
-                    {p.baths > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Bath className="h-3.5 w-3.5" />
-                        {p.baths}
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      <Square className="h-3.5 w-3.5" />
-                      {p.area}
-                    </span>
+                <div>
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img
+                      src={p.img}
+                      alt={p.title}
+                      width={800}
+                      height={600}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <Tag tone={p.tagTone}>{p.tag}</Tag>
+                      {p.extra && (
+                        <span className="bg-white/95 text-foreground text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                          {p.extra}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-4 pb-2">
+                    <h3 className="font-semibold text-base leading-snug line-clamp-1">{p.title}</h3>
+                    <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80" />
+                      <span className="line-clamp-1">{p.loc}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </article>
+
+                <div className="px-4 pb-4 pt-0">
+                  <div className="mt-2 flex items-end justify-between border-t border-border pt-3 min-h-[44px]">
+                    <div className="text-primary font-bold text-lg leading-none">{p.price}</div>
+                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                      {p.beds > 0 && (
+                        <span className="flex items-center gap-1" title={`${p.beds} phòng ngủ`}>
+                          <Bed className="h-3.5 w-3.5" />
+                          {p.beds}
+                        </span>
+                      )}
+                      {p.baths > 0 && (
+                        <span className="flex items-center gap-1" title={`${p.baths} phòng tắm`}>
+                          <Bath className="h-3.5 w-3.5" />
+                          {p.baths}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1" title={`Diện tích: ${p.area}`}>
+                        <Square className="h-3.5 w-3.5" />
+                        {p.area}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </article>
           ))}
           </div>
         )}
@@ -724,10 +746,14 @@ function TopAgents() {
                 <div className="min-w-0">
                   <div className="font-semibold">{a.name}</div>
                   <div className="text-xs text-muted-foreground">{a.role}</div>
-                  <div className="mt-1 flex items-center gap-0.5 text-orange">
-                    {Array.from({ length: a.rating }).map((_, i) => (
-                      <Star key={i} className="h-3.5 w-3.5 fill-current" />
-                    ))}
+                  <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-0.5 text-orange">
+                      {Array.from({ length: a.rating }).map((_, i) => (
+                        <Star key={i} className="h-3.5 w-3.5 fill-current" />
+                      ))}
+                    </div>
+                    <span className="text-xs font-bold text-foreground">5.0</span>
+                    <span className="text-[11px] text-muted-foreground">({a.reviews} đánh giá)</span>
                   </div>
                   <div className="mt-1 text-[11px] text-muted-foreground">
                     {a.listings} tin đăng • {a.years} năm kinh nghiệm
