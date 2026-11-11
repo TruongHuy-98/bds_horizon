@@ -48,13 +48,13 @@ export function PropertyListingCard({ item, onSelect }: PropertyListingCardProps
   };
 
   return (
-    <article className="group bg-card rounded-xl border border-border/70 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row relative sm:h-[230px]">
-      {/* Thumbnail Image Container */}
+    <article className="group bg-card rounded-xl border border-border/70 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row relative sm:h-[220px]">
+      {/* Thumbnail Image Container: chiều cao cố định đồng bộ, dùng absolute inset-0 để ảnh tài liệu dọc không bao giờ làm vỡ khung */}
       <div className="relative w-full h-52 sm:h-full sm:w-64 md:w-72 shrink-0 overflow-hidden bg-muted">
         <Link
           to={detailPath}
           params={{ slug: item.slug }}
-          className="block w-full h-full"
+          className="absolute inset-0 block w-full h-full"
         >
           <img
             src={item.images[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60"}

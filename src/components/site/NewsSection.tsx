@@ -14,79 +14,67 @@ interface NewsPost {
   created_at: string;
 }
 
-// Mock news data — realistic Đà Nẵng real estate content
+// Mock news data — realistic Đà Nẵng real estate content matching 2026 legal & market updates
 const MOCK_NEWS: NewsPost[] = [
   {
     id: "1",
-    title: "Thị trường bất động sản Đà Nẵng phục hồi mạnh trong quý IV/2024, giao dịch tăng 35%",
-    slug: "thi-truong-bds-da-nang-phuc-hoi-quy-4-2024",
+    title: "Hướng dẫn chi tiết quy trình sang tên sổ đỏ tại Đà Nẵng mới nhất 2026",
+    slug: "quy-trinh-sang-ten-so-do-da-nang-2026",
     excerpt:
-      "Sau giai đoạn trầm lắng, thị trường BĐS Đà Nẵng đang trên đà phục hồi ấn tượng với lượng giao dịch tăng mạnh, đặc biệt ở phân khúc căn hộ và đất nền ven biển.",
-    category: "Thị trường Đà Nẵng",
+      "Toàn bộ hồ sơ, biểu phí, thuế thu nhập cá nhân, lệ phí trước bạ và quy trình 4 bước sang tên Giấy chứng nhận quyền sử dụng đất tại Văn phòng Đăng ký đất đai.",
+    category: "Pháp lý",
     cover_image:
-      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=900&auto=format&fit=crop&q=80",
-    published_at: "2024-10-08T08:00:00Z",
-    created_at: "2024-10-08T08:00:00Z",
+      "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=900&auto=format&fit=crop&q=80",
+    published_at: "2026-10-05T08:00:00Z",
+    created_at: "2026-10-05T08:00:00Z",
   },
   {
     id: "2",
-    title: "Cảng Liên Chiểu chính thức khởi công — BĐS phía Bắc Đà Nẵng bứt phá",
-    slug: "cang-lien-chieu-khoi-cong-bds-phia-bac-da-nang",
+    title: "5 Rủi ro pháp lý cần lưu ý khi mua nhà đất dự án và cách phòng tránh",
+    slug: "5-rui-ro-phap-ly-khi-mua-nha-dat-du-an",
     excerpt:
-      "Siêu dự án Cảng Liên Chiểu 3,4 tỷ USD được khởi công chính thức, mở ra cú hích lớn cho thị trường BĐS khu vực quận Liên Chiểu và Hòa Vang.",
-    category: "Tiến độ Hạ tầng",
+      "Những bẫy pháp lý thường gặp như dự án chưa nghiệm thu, thế chấp ngân hàng và cách kiểm tra quy hoạch trước khi đặt cọc.",
+    category: "Pháp lý",
     cover_image:
-      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80",
-    published_at: "2024-10-05T07:30:00Z",
-    created_at: "2024-10-05T07:30:00Z",
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80",
+    published_at: "2026-10-05T07:30:00Z",
+    created_at: "2026-10-05T07:30:00Z",
   },
   {
     id: "3",
-    title: "Luật Đất đai 2024 có hiệu lực: Những điểm mới quan trọng người mua nhà cần biết",
-    slug: "luat-dat-dai-2024-hieu-luc-diem-moi",
+    title: "Điểm mới Luật Đất đai về bảng giá đất thị trường và điều kiện cấp Giấy chứng nhận",
+    slug: "diem-moi-luat-dat-dai-bang-gia-dat-thi-truong",
     excerpt:
-      "Từ 1/8/2024, Luật Đất đai sửa đổi chính thức có hiệu lực với nhiều thay đổi quan trọng về quyền sử dụng đất, bảng giá đất và quy trình chuyển nhượng.",
-    category: "Quy hoạch & Pháp lý",
+      "Quy định bỏ khung giá đất, áp dụng bảng giá đất sát giá thị trường và những tác động trực tiếp đến tiền sử dụng đất tại Đà Nẵng.",
+    category: "Pháp lý",
     cover_image:
-      "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80",
-    published_at: "2024-10-03T09:00:00Z",
-    created_at: "2024-10-03T09:00:00Z",
+      "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=600&auto=format&fit=crop&q=80",
+    published_at: "2026-10-03T09:00:00Z",
+    created_at: "2026-10-03T09:00:00Z",
   },
   {
     id: "4",
-    title: "Giá đất Ngũ Hành Sơn tăng 20% sau thông tin quy hoạch Khu đô thị biển Đông",
-    slug: "gia-dat-ngu-hanh-son-tang-20-phan-tram",
+    title: "Thị trường Bất động sản Đà Nẵng quý 2/2026 tăng trưởng tích cực",
+    slug: "thi-truong-bds-da-nang-quy-2-2026-tang-truong",
     excerpt:
-      "Thông tin quy hoạch Khu đô thị biển Đông tại Ngũ Hành Sơn đã kéo theo làn sóng quan tâm đầu tư, đẩy giá đất nhiều tuyến đường tăng mạnh.",
-    category: "Thị trường Đà Nẵng",
+      "Thanh khoản phân khúc căn hộ và đất nền sinh thái ven sông bứt phá với hơn 1.800 giao dịch thành công trong quý vừa qua.",
+    category: "Thị trường BĐS",
     cover_image:
-      "https://images.unsplash.com/photo-1573164713988-8665fc963095?w=600&auto=format&fit=crop&q=80",
-    published_at: "2024-10-01T10:00:00Z",
-    created_at: "2024-10-01T10:00:00Z",
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&auto=format&fit=crop&q=80",
+    published_at: "2026-06-22T08:00:00Z",
+    created_at: "2026-06-22T08:00:00Z",
   },
   {
     id: "5",
-    title: "5 lưu ý quan trọng khi mua căn hộ nghỉ dưỡng condotel tại Đà Nẵng",
-    slug: "5-luu-y-mua-can-ho-condotel-da-nang",
+    title: "Đà Nẵng công bố bản đồ quy hoạch phân khu đô thị mới đến năm 2030",
+    slug: "da-nang-cong-bo-ban-do-quy-hoach-phan-khu-2030",
     excerpt:
-      "Condotel vẫn là kênh đầu tư hấp dẫn tại Đà Nẵng, tuy nhiên nhà đầu tư cần nắm rõ các rủi ro pháp lý và tiêu chí chọn dự án uy tín.",
-    category: "Lời khuyên mua nhà",
+      "Chi tiết 12 phân khu chức năng được số hóa đồng bộ, tạo hành lang pháp lý minh bạch cho các nhà đầu tư chiến lược.",
+    category: "Quy hoạch & Pháp lý",
     cover_image:
-      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&auto=format&fit=crop&q=80",
-    published_at: "2024-09-28T08:00:00Z",
-    created_at: "2024-09-28T08:00:00Z",
-  },
-  {
-    id: "6",
-    title: "Báo cáo thị trường BĐS Đà Nẵng Q3/2024: Căn hộ dẫn đầu giao dịch",
-    slug: "bao-cao-thi-truong-bds-da-nang-q3-2024",
-    excerpt:
-      "Phân khúc căn hộ tiếp tục dẫn đầu về số lượng giao dịch trong quý 3/2024, chiếm 58% tổng giá trị thị trường BĐS thành phố Đà Nẵng.",
-    category: "Báo cáo thị trường",
-    cover_image:
-      "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80",
-    published_at: "2024-09-25T07:00:00Z",
-    created_at: "2024-09-25T07:00:00Z",
+      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&auto=format&fit=crop&q=80",
+    published_at: "2026-06-21T07:00:00Z",
+    created_at: "2026-06-21T07:00:00Z",
   },
 ];
 
@@ -106,12 +94,13 @@ function timeAgo(dateStr: string) {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  "Thị trường Đà Nẵng": "bg-blue-50 text-blue-700",
-  "Tiến độ Hạ tầng": "bg-amber-50 text-amber-700",
-  "Quy hoạch & Pháp lý": "bg-purple-50 text-purple-700",
-  "Lời khuyên mua nhà": "bg-emerald-50 text-emerald-700",
-  "Báo cáo thị trường": "bg-slate-50 text-slate-700",
-  "Pháp lý": "bg-rose-50 text-rose-700",
+  "Thị trường BĐS": "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300",
+  "Thị trường Đà Nẵng": "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300",
+  "Tiến độ Hạ tầng": "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
+  "Quy hoạch & Pháp lý": "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300",
+  "Lời khuyên mua nhà": "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
+  "Báo cáo thị trường": "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  "Pháp lý": "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300",
 };
 
 function getCategoryStyle(category: string) {
@@ -142,7 +131,7 @@ export function NewsSection() {
             .select("*")
             .eq("published", true)
             .order("published_at", { ascending: false })
-            .limit(7);
+            .limit(5);
           if (error) throw error;
           setPosts(data && data.length > 0 ? (data as any as NewsPost[]) : MOCK_NEWS);
         } catch {
@@ -157,7 +146,7 @@ export function NewsSection() {
 
   const displayPosts = posts.length > 0 ? posts : MOCK_NEWS;
   const featuredPost = displayPosts[0];
-  const listPosts = displayPosts.slice(1, 7);
+  const listPosts = displayPosts.slice(1, 5);
 
   if (loading) {
     return (
@@ -175,84 +164,96 @@ export function NewsSection() {
         {/* Section header */}
         <div className="flex items-end justify-between gap-4 mb-8">
           <div>
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-accent-foreground text-xs font-semibold mb-3">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal/10 text-teal text-xs font-semibold mb-2.5">
               <Newspaper className="h-3.5 w-3.5" />
               Thị trường & Pháp lý
             </span>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
               Tin tức bất động sản
             </h2>
-            <p className="mt-2 text-muted-foreground text-sm md:text-base">
+            <p className="mt-1.5 text-muted-foreground text-xs md:text-sm">
               Cập nhật thị trường, quy hoạch và lời khuyên đầu tư mới nhất.
             </p>
           </div>
           <Link
             to="/tin-tuc"
-            className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:gap-2.5 transition-all whitespace-nowrap shrink-0"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-primary hover:gap-2 transition-all whitespace-nowrap shrink-0"
           >
             Xem thêm
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
-        {/* 2-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[5fr_4fr] gap-6 md:gap-8">
-          {/* LEFT — Featured article */}
+        {/* 2-column layout: 7 cols (Left) + 5 cols (Right) with items-stretch for 100% EQUAL height and flush alignment */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* LEFT — Featured Article (7 cols) */}
           {featuredPost && (
-            <Link
-              to="/tin-tuc/$slug"
-              params={{ slug: featuredPost.slug }}
-              className="group block"
-            >
-              <div className="relative overflow-hidden rounded-2xl aspect-[16/9]">
+            <div className="lg:col-span-7 flex flex-col">
+              {/* Symmetrical column header so top lines align with the right column */}
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="h-3.5 w-1 rounded-full bg-teal block" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Tiêu điểm chuyên sâu
+                </span>
+              </div>
+
+              <Link
+                to="/tin-tuc/$slug"
+                params={{ slug: featuredPost.slug }}
+                className="group relative flex-1 min-h-[380px] sm:min-h-[440px] rounded-2xl overflow-hidden border border-border/70 shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col justify-end p-6 sm:p-8"
+              >
                 <img
                   src={featuredPost.cover_image}
                   alt={featuredPost.title}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
+                {/* Multi-stage dark gradient overlay ensuring 100% text legibility */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/55 to-black/20" />
+
+                <div className="relative z-10">
                   <span
-                    className={`inline-block mb-2 px-2.5 py-0.5 rounded-md text-xs font-semibold ${getCategoryStyle(
+                    className={`inline-block mb-3 px-2.5 py-1 rounded-md text-xs font-semibold ${getCategoryStyle(
                       featuredPost.category
                     )}`}
                   >
                     {featuredPost.category}
                   </span>
-                  <h3 className="text-white font-bold text-lg md:text-xl leading-snug line-clamp-2 group-hover:text-white/90 transition-colors">
+                  <h3 className="text-white font-extrabold text-xl sm:text-2xl leading-snug group-hover:text-amber-200 transition-colors drop-shadow-xs">
                     {featuredPost.title}
                   </h3>
-                  <p className="mt-2 text-white/75 text-sm line-clamp-2 leading-relaxed hidden sm:block">
+                  <p className="mt-2.5 text-slate-200/90 text-xs sm:text-sm line-clamp-2 leading-relaxed">
                     {featuredPost.excerpt}
                   </p>
-                  <div className="mt-3 flex items-center gap-1.5 text-white/60 text-xs">
-                    <Clock className="h-3 w-3" />
-                    <span>{timeAgo(featuredPost.published_at || featuredPost.created_at)}</span>
+                  <div className="mt-3.5 flex items-center gap-2 text-slate-300/80 text-xs font-medium">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>{formatDate(featuredPost.published_at || featuredPost.created_at)}</span>
                   </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </div>
           )}
 
-          {/* RIGHT — List of articles */}
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="h-4 w-1 rounded-full bg-primary block" />
-              <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+          {/* RIGHT — List of 4 recent articles (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col">
+            {/* Symmetrical column header aligning with the left column */}
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="h-3.5 w-1 rounded-full bg-primary block" />
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Bài viết mới nhất
               </span>
             </div>
-            <div className="bg-card border border-border/60 rounded-2xl shadow-card overflow-hidden divide-y divide-border/60">
+
+            <div className="flex-1 bg-card border border-border/70 rounded-2xl shadow-card overflow-hidden divide-y divide-border/60 flex flex-col justify-between">
               {listPosts.map((post) => (
                 <Link
                   key={post.id}
                   to="/tin-tuc/$slug"
                   params={{ slug: post.slug }}
-                  className="group flex items-start gap-3 p-3.5 hover:bg-accent/30 transition-colors"
+                  className="group flex items-center gap-3.5 p-3.5 sm:p-4 hover:bg-muted/50 transition-colors flex-1"
                 >
                   {/* Thumbnail */}
-                  <div className="shrink-0 w-[72px] h-[54px] rounded-lg overflow-hidden">
+                  <div className="shrink-0 size-16 sm:size-[72px] rounded-xl overflow-hidden bg-muted border border-border/40">
                     <img
                       src={post.cover_image}
                       alt={post.title}
@@ -263,32 +264,22 @@ export function NewsSection() {
                   {/* Text */}
                   <div className="min-w-0 flex-1">
                     <span
-                      className={`inline-block mb-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${getCategoryStyle(
+                      className={`inline-block mb-1 px-2 py-0.5 rounded text-[10px] font-semibold ${getCategoryStyle(
                         post.category
                       )}`}
                     >
                       {post.category}
                     </span>
-                    <h4 className="text-sm font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors group-hover:underline underline-offset-2 decoration-primary/40">
+                    <h4 className="text-xs sm:text-sm font-bold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                       {post.title}
                     </h4>
-                    <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
                       <CalendarDays className="h-3 w-3" />
-                      <span>{timeAgo(post.published_at || post.created_at)}</span>
+                      <span>{formatDate(post.published_at || post.created_at)}</span>
                     </div>
                   </div>
                 </Link>
               ))}
-            </div>
-
-            {/* Mobile "See more" */}
-            <div className="mt-4 flex md:hidden">
-              <Link
-                to="/tin-tuc"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
-              >
-                Xem thêm tin tức <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
           </div>
         </div>
