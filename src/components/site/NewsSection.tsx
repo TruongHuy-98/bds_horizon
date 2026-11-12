@@ -107,7 +107,7 @@ function getCategoryStyle(category: string) {
   return CATEGORY_COLORS[category] ?? "bg-accent text-accent-foreground";
 }
 
-export function NewsSection() {
+export function NewsSection({ className = "py-10 md:py-12 bg-surface-container/40" }: { className?: string }) {
   const [posts, setPosts] = useState<NewsPost[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -150,8 +150,8 @@ export function NewsSection() {
 
   if (loading) {
     return (
-      <section className="py-16 md:py-20 bg-surface-container/40">
-        <div className="container-page flex justify-center py-20">
+      <section className={className}>
+        <div className="container-page flex justify-center py-12">
           <div className="animate-spin size-8 border-t-2 border-b-2 border-primary rounded-full" />
         </div>
       </section>
@@ -159,10 +159,10 @@ export function NewsSection() {
   }
 
   return (
-    <section className="py-16 md:py-20 bg-surface-container/40">
+    <section className={className}>
       <div className="container-page">
         {/* Section header */}
-        <div className="flex items-end justify-between gap-4 mb-8">
+        <div className="flex items-end justify-between gap-4 mb-6">
           <div>
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal/10 text-teal text-xs font-semibold mb-2.5">
               <Newspaper className="h-3.5 w-3.5" />

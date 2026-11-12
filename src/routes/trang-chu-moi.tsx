@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import { NewsSection } from "@/components/site/NewsSection";
@@ -447,7 +447,7 @@ export default function TrangChuMoiPage() {
         {/* =========================================================
             1. HERO SECTION: Grand Background Banner (Capital Square & Sông Hàn)
         ========================================================= */}
-        <section className="relative isolate w-full pt-12 pb-20 md:pt-16 md:pb-24 overflow-hidden text-white bg-slate-950 border-b border-border/50">
+        <section className="relative isolate w-full pt-10 pb-12 md:pt-12 md:pb-14 overflow-hidden text-white bg-slate-950 border-b border-border/50">
           {/* Background Image Banner: Toàn cảnh hoàng hôn Sông Hàn & Capital Square Đà Nẵng */}
           <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
             <img
@@ -461,15 +461,15 @@ export default function TrangChuMoiPage() {
           </div>
 
           <div className="container-page relative z-10">
-            <div className="max-w-3xl mx-auto text-center mb-8">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900/60 text-white text-xs font-semibold mb-4 border border-white/25 backdrop-blur-md shadow-xs">
+            <div className="max-w-3xl mx-auto text-center mb-6">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900/60 text-white text-xs font-semibold mb-3 border border-white/25 backdrop-blur-md shadow-xs">
                 <ShieldCheck className="size-3.5 text-teal-300" />
                 Cổng Bất Động Sản & Quy Hoạch Minh Bạch Đà Nẵng
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight drop-shadow-[0_2px_14px_rgba(0,0,0,0.85)]">
                 Tìm tổ ấm mơ ước & Thẩm định pháp lý an toàn
               </h1>
-              <p className="mt-3.5 text-sm sm:text-base text-white/95 leading-relaxed max-w-2xl mx-auto drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)]">
+              <p className="mt-3 text-sm sm:text-base text-white/95 leading-relaxed max-w-2xl mx-auto drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)]">
                 Hơn 8.500 bất động sản chính chủ, cập nhật liên tục với bản đồ quy hoạch số 2030 chính xác từng phân khu.
               </p>
             </div>
@@ -607,20 +607,20 @@ export default function TrangChuMoiPage() {
             </div>
 
             {/* Value Trust Bar directly on Banner with Translucent Cards */}
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3.5 text-center shadow-lg">
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center shadow-lg">
                 <div className="text-xl md:text-2xl font-extrabold text-amber-300">8.500+</div>
                 <div className="text-xs text-white/90 mt-0.5 font-medium">BĐS thẩm định minh bạch</div>
               </div>
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3.5 text-center shadow-lg">
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center shadow-lg">
                 <div className="text-xl md:text-2xl font-extrabold text-teal-300">100%</div>
                 <div className="text-xs text-white/90 mt-0.5 font-medium">Có bản đồ quy hoạch 2030</div>
               </div>
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3.5 text-center shadow-lg">
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center shadow-lg">
                 <div className="text-xl md:text-2xl font-extrabold text-orange-300">450+</div>
                 <div className="text-xs text-white/90 mt-0.5 font-medium">Môi giới xác thực uy tín</div>
               </div>
-              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3.5 text-center shadow-lg">
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center shadow-lg">
                 <div className="text-xl md:text-2xl font-extrabold text-white">15 phút</div>
                 <div className="text-xs text-white/90 mt-0.5 font-medium">Kết nối chuyên viên hỗ trợ</div>
               </div>
@@ -631,9 +631,9 @@ export default function TrangChuMoiPage() {
         {/* =========================================================
             2. BENTO GRID: Khám phá BĐS theo 5 phân khu trọng điểm
         ========================================================= */}
-        <section className="py-16 bg-surface-container/40">
+        <section className="py-10 md:py-12 bg-surface-container/40">
           <div className="container-page">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
               <div>
                 <span className="text-xs font-bold text-primary uppercase tracking-wider">
                   Khu vực trọng điểm
@@ -705,11 +705,11 @@ export default function TrangChuMoiPage() {
         {/* =========================================================
             3. PLANNING CHECK FEATURE: Khối Tra cứu quy hoạch 2030
         ========================================================= */}
-        <section className="py-16 md:py-20 bg-background">
+        <section className="py-10 md:py-12 bg-background">
           <div className="container-page">
-            <div className="bg-card border border-border/80 rounded-3xl p-6 md:p-10 shadow-card grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="bg-card border border-border/80 rounded-3xl p-6 md:p-8 shadow-card grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-center">
               {/* Left Column: Information & Actions */}
-              <div className="lg:col-span-6 space-y-4">
+              <div className="lg:col-span-6 space-y-3.5">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal/10 text-teal text-xs font-semibold">
                   <MapIcon className="size-3.5" />
                   Dữ liệu số hoá địa chính 2030
@@ -723,7 +723,7 @@ export default function TrangChuMoiPage() {
                   Trước khi đặt cọc bất động sản, hãy tra cứu kỹ quy hoạch phân khu, lộ giới giao thông và mục đích sử dụng đất để bảo vệ dòng vốn đầu tư an toàn 100%.
                 </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div className="p-3 rounded-xl bg-surface-container/60 border border-border/50">
                     <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
                       <CheckCircle2 className="size-3.5 text-teal" /> Phân khu chi tiết
@@ -742,7 +742,7 @@ export default function TrangChuMoiPage() {
                   </div>
                 </div>
 
-                <div className="pt-3 flex flex-wrap items-center gap-3">
+                <div className="pt-2 flex flex-wrap items-center gap-3">
                   <Button
                     asChild
                     className="bg-primary hover:bg-primary/95 text-primary-foreground font-semibold h-11 px-6 rounded-xl gap-2 shadow-xs"
@@ -794,9 +794,9 @@ export default function TrangChuMoiPage() {
         {/* =========================================================
             4. CURATED LISTINGS: Bất động sản mới nhất theo chuẩn evondevKit
         ========================================================= */}
-        <section className="py-16 bg-surface-container/30">
+        <section className="py-10 md:py-12 bg-surface-container/30">
           <div className="container-page">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
               <div>
                 <span className="text-xs font-bold text-primary uppercase tracking-wider">
                   Sản phẩm tuyển chọn
@@ -935,7 +935,7 @@ export default function TrangChuMoiPage() {
             </div>
 
             {/* View More Link */}
-            <div className="text-center mt-10">
+            <div className="text-center mt-6 md:mt-8">
               <Button
                 asChild
                 variant="outline"
@@ -952,9 +952,9 @@ export default function TrangChuMoiPage() {
         {/* =========================================================
             5. PROJECTS SPOTLIGHT: Slider 4 columns (Ảnh 2)
         ========================================================= */}
-        <section className="py-16 md:py-20 bg-background overflow-hidden">
+        <section className="py-10 md:py-12 bg-background overflow-hidden">
           <div className="container-page">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
               <div>
                 <span className="text-xs font-bold text-teal uppercase tracking-wider">
                   Quy mô & Đẳng cấp
@@ -1064,22 +1064,22 @@ export default function TrangChuMoiPage() {
         {/* =========================================================
             6. TOP VERIFIED BROKERS: Bố cục đặc biệt theo Ảnh 4 (Ảnh 3)
         ========================================================= */}
-        <section className="py-16 md:py-20 bg-surface-container/40">
+        <section className="py-10 md:py-12 bg-surface-container/40">
           <div className="container-page">
-            <div className="max-w-2xl mx-auto text-center mb-10">
+            <div className="max-w-2xl mx-auto text-center mb-6 md:mb-8">
               <span className="text-xs font-bold text-primary uppercase tracking-wider">
                 ĐỘI NGŨ CHUYÊN NGHIỆP
               </span>
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mt-1">
                 Nhà môi giới hàng đầu tại Đà Nẵng
               </h2>
-              <p className="text-sm text-muted-foreground mt-1.5">
+              <p className="text-sm text-muted-foreground mt-1">
                 Các chuyên viên am hiểu từng ngõ ngách thị trường, có chứng chỉ hành nghề và được khách hàng đánh giá cao.
               </p>
             </div>
 
             {/* Top Showcase: Big photo left + Detailed credentials right (Ảnh 4) */}
-            <div className="bg-card border border-border/70 rounded-3xl p-6 md:p-8 shadow-card grid grid-cols-1 md:grid-cols-12 gap-8 items-center max-w-5xl mx-auto">
+            <div className="bg-card border border-border/70 rounded-3xl p-5 md:p-7 shadow-card grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center max-w-5xl mx-auto">
               {/* Left Column: Big portrait photo */}
               <div className="md:col-span-5 relative">
                 <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-muted border border-border/50 shadow-md">
@@ -1173,7 +1173,7 @@ export default function TrangChuMoiPage() {
             </div>
 
             {/* Bottom Row of Thumbnails (Ảnh 4) */}
-            <div className="mt-8 max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div className="mt-6 max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               {TOP_AGENTS.map((agent, idx) => {
                 const isActive = idx === activeAgentIndex;
                 return (
@@ -1208,7 +1208,7 @@ export default function TrangChuMoiPage() {
             </div>
 
             {/* Centered CTA Button (Ảnh 4: "Tìm hiểu thêm →") */}
-            <div className="text-center mt-10">
+            <div className="text-center mt-6 md:mt-8">
               <Button
                 asChild
                 className="bg-primary hover:bg-primary/95 text-primary-foreground font-semibold px-8 h-12 rounded-xl text-sm shadow-md gap-2 cursor-pointer"
@@ -1225,14 +1225,14 @@ export default function TrangChuMoiPage() {
         {/* =========================================================
             7. REAL ESTATE & LEGAL NEWS (Khối Tin tức BĐS chuẩn EvondevKit)
         ========================================================= */}
-        <NewsSection />
+        <NewsSection className="py-10 md:py-12 bg-background" />
 
         {/* =========================================================
             8. QUICK CONSULTATION LEAD BANNER
         ========================================================= */}
-        <section className="py-14 bg-background">
+        <section className="py-10 md:py-12 bg-surface-container/30">
           <div className="container-page">
-            <div className="bg-gradient-to-r from-primary via-primary to-teal rounded-3xl p-8 md:p-12 text-white shadow-card flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="bg-gradient-to-r from-primary via-primary to-teal rounded-3xl p-6 md:p-10 text-white shadow-card flex flex-col lg:flex-row items-center justify-between gap-6 md:gap-8">
               <div className="max-w-xl text-center lg:text-left">
                 <span className="bg-white/15 text-white font-semibold text-xs px-3 py-1 rounded-full backdrop-blur-xs">
                   Tư vấn trực tiếp 24/7
