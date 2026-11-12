@@ -7,7 +7,7 @@ import { PropertyListingCard } from "@/components/listings/PropertyListingCard";
 import { ListPagination } from "@/components/listings/ListPagination";
 import { ListingSidebar } from "@/components/listings/ListingSidebar";
 import { sampleListings, ListingItem } from "@/data/listingsData";
-import { getLocalAndSampleListings } from "@/lib/listingsService";
+import { getLocalAndSampleListings, fetchPropertiesFromDb } from "@/lib/listingsService";
 import { useFilteredListings } from "@/hooks/useFilteredListings";
 import {
   Select,
@@ -108,11 +108,16 @@ function NhaDatChoThuePage() {
   // Load combined DB listings + sample listings for rent
   const [allListings, setAllListings] = useState<ListingItem[]>([]);
 
-  useMemo(() => {
-    // initial sync
-    if (typeof window !== "undefined") {
-      setAllListings(getLocalAndSampleListings("rent"));
-    }
+  useEffect(() => {
+    // 1. Tải tức thì từ seed/cache
+    setAllListings(getLocalAndSampleListings("rent"));
+
+    // 2. Tự động đồng bộ và nạp dữ liệu sống từ Database Supabase / PostgreSQL
+    fetchPropertiesFromDb("rent").then((items) => {
+      if (items && items.length > 0) {
+        setAllListings(items);
+      }
+    });
   }, []);
 
   // Pagination setup (10 items per page)

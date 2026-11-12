@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
+import { supabase } from "@/integrations/supabase/client";
 import { LOCAL_USERS_DB, UserAccount } from "@/data/mockUsersData";
 
 export const Route = createFileRoute("/moi-gioi/")({
@@ -210,27 +211,57 @@ function BrokerGrid() {
   const [brokers, setBrokers] = useState<BrokerDisplay[]>([]);
 
   useEffect(() => {
-    const rawUsers = LOCAL_USERS_DB.getUsers();
-    // Filter only brokers who are not locked
-    const brokerUsers = rawUsers.filter(
-      (u) => u.role === "broker" && u.status !== "locked"
-    );
+    const fetchBrokers = async () => {
+      // 1. Nạp tức thì từ local seed
+      const rawUsers = LOCAL_USERS_DB.getUsers();
+      const brokerUsers = rawUsers.filter(
+        (u) => u.role === "broker" && u.status !== "locked"
+      );
 
-    const formatted: BrokerDisplay[] = brokerUsers.map((u) => ({
-      id: u.id,
-      img: u.avatar,
-      name: u.name,
-      years: u.yearsExperience || u.yearsExp || 5,
-      specialties: u.specialties || ["Môi giới BĐS", u.district || "Đà Nẵng"],
-      district: u.district || "Toàn thành phố",
-      rating: u.rating || 5.0,
-      reviews: u.reviewsCount || u.reviews || 100,
-      verified: !!u.isVerified,
-      phone: u.phone,
-      email: u.email,
-    }));
+      const formattedLocal: BrokerDisplay[] = brokerUsers.map((u) => ({
+        id: u.id,
+        img: u.avatar,
+        name: u.name,
+        years: u.yearsExperience || u.yearsExp || 5,
+        specialties: u.specialties || ["Môi giới BĐS", u.district || "Đà Nẵng"],
+        district: u.district || "Toàn thành phố",
+        rating: u.rating || 5.0,
+        reviews: u.reviewsCount || u.reviews || 100,
+        verified: !!u.isVerified,
+        phone: u.phone,
+        email: u.email,
+      }));
+      setBrokers(formattedLocal);
 
-    setBrokers(formatted);
+      // 2. Truy vấn trực tiếp từ bảng profiles trong Database Supabase
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("role", "broker");
+
+        if (!error && data && data.length > 0) {
+          const dbBrokers: BrokerDisplay[] = data.map((p: any) => ({
+            id: p.id,
+            img: p.avatar || "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80",
+            name: p.name,
+            years: p.years_exp || 5,
+            specialties: Array.isArray(p.specialties) && p.specialties.length > 0 ? p.specialties : ["Môi giới BĐS"],
+            district: p.district || "Đà Nẵng",
+            rating: 5.0,
+            reviews: 120,
+            verified: p.verification_status === "verified",
+            phone: p.phone || "0905 123 456",
+            email: p.email || "",
+          }));
+          setBrokers(dbBrokers);
+        }
+      } catch (err) {
+        console.warn("[moi-gioi.index] Database query failed, keeping local seed:", err);
+      }
+    };
+
+    fetchBrokers();
   }, []);
 
   return (

@@ -64,6 +64,65 @@ export function propertyRowToListingItem(p: any): ListingItem {
 }
 
 /**
+ * ASYNCHRONOUS: Fetches properties directly from Supabase / PostgreSQL database
+ * Falls back to local cache / sampleListings only if offline or database is unreachable
+ */
+export async function fetchPropertiesFromDb(listingTypeOverride?: "sale" | "rent"): Promise<ListingItem[]> {
+  try {
+    let query = supabase
+      .from("properties")
+      .select("*")
+      .eq("published", true)
+      .order("created_at", { ascending: false });
+
+    if (listingTypeOverride) {
+      query = query.eq("listing_type", listingTypeOverride);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      const items = data.map(propertyRowToListingItem);
+      // Cache in localStorage for instant offline access
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`cached_properties_${listingTypeOverride || "all"}`, JSON.stringify(data));
+        } catch {}
+      }
+      return items;
+    }
+  } catch (err) {
+    console.warn("[listingsService] Supabase query failed, falling back to local dataset:", err);
+  }
+
+  // Graceful fallback to local cache & sampleListings
+  return getLocalAndSampleListings(listingTypeOverride);
+}
+
+/**
+ * ASYNCHRONOUS: Fetches a single property by slug directly from Supabase / PostgreSQL
+ */
+export async function fetchPropertyBySlugFromDb(slug: string, listingTypeOverride?: "sale" | "rent"): Promise<ListingItem | null> {
+  try {
+    const { data, error } = await supabase
+      .from("properties")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data) {
+      return propertyRowToListingItem(data);
+    }
+  } catch (err) {
+    console.warn(`[listingsService] Failed to query property slug '${slug}' from database:`, err);
+  }
+
+  return findListingBySlug(slug, listingTypeOverride);
+}
+
+/**
  * Synchronously retrieves all properties from LocalStorage (mock_properties) merged with sampleListings
  */
 export function getLocalAndSampleListings(listingTypeOverride?: "sale" | "rent"): ListingItem[] {

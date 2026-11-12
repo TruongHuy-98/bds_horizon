@@ -82,36 +82,34 @@ export default function LegalDetailPage() {
     let allPosts: any[] = [];
     let currentPost: any = null;
 
-    if (isMock) {
+    try {
+      // Ưu tiên truy vấn bài viết pháp lý từ Database
+      const { data, error } = await supabase
+        .from("news_posts")
+        .select("*")
+        .eq("slug", slug)
+        .maybeSingle();
+
+      if (!error && data) {
+        currentPost = data;
+      }
+
+      const { data: listData } = await supabase
+        .from("news_posts")
+        .select("*")
+        .eq("published", true)
+        .neq("slug", slug)
+        .limit(10);
+
+      allPosts = listData || [];
+    } catch (err) {
+      console.warn("[phap-ly.$slug] Truy vấn database không thành công, dùng fallback:", err);
+    }
+
+    if (!currentPost) {
       const data = localStorage.getItem("mock_news");
       allPosts = data ? JSON.parse(data) : [];
       currentPost = allPosts.find((p) => p.slug === slug) || null;
-    } else {
-      try {
-        const { data, error } = await supabase
-          .from("news_posts")
-          .select("*")
-          .eq("slug", slug)
-          .maybeSingle();
-
-        if (!error && data) {
-          currentPost = data;
-        }
-
-        const { data: listData } = await supabase
-          .from("news_posts")
-          .select("*")
-          .eq("published", true)
-          .neq("slug", slug)
-          .limit(10);
-
-        allPosts = listData || [];
-      } catch (err) {
-        console.warn("Supabase fetch failed, falling back to LocalStorage:", err);
-        const data = localStorage.getItem("mock_news");
-        allPosts = data ? JSON.parse(data) : [];
-        currentPost = allPosts.find((p) => p.slug === slug) || null;
-      }
     }
 
     const foundPost = currentPost || DEFAULT_LEGAL_POSTS.find((p) => p.slug === slug) || null;

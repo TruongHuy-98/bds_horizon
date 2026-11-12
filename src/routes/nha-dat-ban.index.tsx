@@ -7,7 +7,7 @@ import { PropertyListingCard } from "@/components/listings/PropertyListingCard";
 import { ListPagination } from "@/components/listings/ListPagination";
 import { ListingSidebar } from "@/components/listings/ListingSidebar";
 import { sampleListings, ListingItem } from "@/data/listingsData";
-import { getLocalAndSampleListings } from "@/lib/listingsService";
+import { getLocalAndSampleListings, fetchPropertiesFromDb } from "@/lib/listingsService";
 import { useFilteredListings } from "@/hooks/useFilteredListings";
 import {
   Select,
@@ -109,7 +109,15 @@ function NhaDatBanPage() {
   const [allListings, setAllListings] = useState<ListingItem[]>([]);
 
   useEffect(() => {
+    // 1. Tải tức thì từ seed/cache
     setAllListings(getLocalAndSampleListings("sale"));
+
+    // 2. Tự động đồng bộ và nạp dữ liệu sống từ Database Supabase / PostgreSQL
+    fetchPropertiesFromDb("sale").then((items) => {
+      if (items && items.length > 0) {
+        setAllListings(items);
+      }
+    });
   }, []);
 
   // Pagination setup (10 items per page)

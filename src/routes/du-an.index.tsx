@@ -407,24 +407,26 @@ function DuAnPage() {
     const fetchProjects = async () => {
       setLoading(true);
       let list: any[] = [];
-      if (isMock) {
+      try {
+        // Luôn ưu tiên truy vấn trực tiếp từ bảng projects trong Database
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("published", true)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        if (data && data.length > 0) {
+          list = data;
+        }
+      } catch (err) {
+        console.warn("[du-an.index] Truy vấn Supabase không thành công, dùng fallback:", err);
+      }
+
+      if (list.length === 0) {
         const localData = localStorage.getItem("mock_projects");
         list = localData ? JSON.parse(localData) : [];
-      } else {
-        try {
-          const { data, error } = await supabase
-            .from("projects")
-            .select("*")
-            .eq("published", true)
-            .order("created_at", { ascending: false });
-          if (error) throw error;
-          list = data || [];
-        } catch (err) {
-          console.warn("Failed to fetch projects from Supabase, falling back to mock:", err);
-          const localData = localStorage.getItem("mock_projects");
-          list = localData ? JSON.parse(localData) : [];
-        }
       }
+
       setDbProjects(list);
       setLoading(false);
     };

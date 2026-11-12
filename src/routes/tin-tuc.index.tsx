@@ -354,25 +354,29 @@ function NewsPage() {
 
   const loadPosts = async () => {
     setLoading(true);
-    if (isMock) {
-      const localData = localStorage.getItem("mock_news");
-      setPosts(localData ? JSON.parse(localData) : []);
-    } else {
-      try {
-        const { data, error } = await supabase
-          .from("news_posts")
-          .select("*")
-          .eq("published", true)
-          .order("published_at", { ascending: false });
-        
-        if (error) throw error;
-        setPosts(data || []);
-      } catch (err) {
-        console.warn("Supabase fetch failed, falling back to LocalStorage:", err);
-        const localData = localStorage.getItem("mock_news");
-        setPosts(localData ? JSON.parse(localData) : []);
+    let loaded: any[] = [];
+    try {
+      // Ưu tiên truy vấn trực tiếp từ bảng news_posts trong Database
+      const { data, error } = await supabase
+        .from("news_posts")
+        .select("*")
+        .eq("published", true)
+        .order("published_at", { ascending: false });
+      
+      if (error) throw error;
+      if (data && data.length > 0) {
+        loaded = data;
       }
+    } catch (err) {
+      console.warn("[tin-tuc.index] Truy vấn Supabase không thành công, dùng fallback:", err);
     }
+
+    if (loaded.length === 0) {
+      const localData = localStorage.getItem("mock_news");
+      loaded = localData ? JSON.parse(localData) : [];
+    }
+
+    setPosts(loaded);
     setLoading(false);
   };
 

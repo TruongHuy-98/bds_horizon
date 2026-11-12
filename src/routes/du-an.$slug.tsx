@@ -117,25 +117,23 @@ function ProjectDetailPage() {
       setLoading(true);
       let found: any = null;
 
-      if (isMock) {
+      try {
+        // Truy vấn trực tiếp từ bảng projects trong Database
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("slug", slug)
+          .maybeSingle();
+        if (error) throw error;
+        found = data;
+      } catch (err) {
+        console.warn("[du-an.$slug] Truy vấn database không thành công, dùng fallback:", err);
+      }
+
+      if (!found) {
         const localData = localStorage.getItem("mock_projects");
         const list = localData ? JSON.parse(localData) : [];
         found = list.find((p: any) => p.slug === slug || p.name.toLowerCase().replace(/\s+/g, "-") === slug);
-      } else {
-        try {
-          const { data, error } = await supabase
-            .from("projects")
-            .select("*")
-            .eq("slug", slug)
-            .maybeSingle();
-          if (error) throw error;
-          found = data;
-        } catch (err) {
-          console.warn("Failed to fetch project from Supabase, trying mock:", err);
-          const localData = localStorage.getItem("mock_projects");
-          const list = localData ? JSON.parse(localData) : [];
-          found = list.find((p: any) => p.slug === slug || p.name.toLowerCase().replace(/\s+/g, "-") === slug);
-        }
       }
 
       setProject(found);

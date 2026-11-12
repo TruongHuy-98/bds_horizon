@@ -73,39 +73,36 @@ function NewsDetailPage() {
     let postsList: any[] = [];
     let targetPost: any = null;
 
-    if (isMock) {
+    try {
+      // Ưu tiên truy vấn trực tiếp bài viết từ Database
+      const { data, error } = await supabase
+        .from("news_posts")
+        .select("*")
+        .eq("slug", slug)
+        .eq("published", true)
+        .maybeSingle();
+      
+      if (!error && data) {
+        targetPost = data;
+      }
+
+      // Lấy các bài viết liên quan từ Database
+      const { data: listData } = await supabase
+        .from("news_posts")
+        .select("*")
+        .eq("published", true)
+        .neq("slug", slug)
+        .limit(3);
+      
+      postsList = listData || [];
+    } catch (err) {
+      console.warn("[tin-tuc.$slug] Truy vấn database không thành công, dùng fallback:", err);
+    }
+
+    if (!targetPost) {
       const data = localStorage.getItem("mock_news");
       postsList = data ? JSON.parse(data) : [];
       targetPost = postsList.find((p) => p.slug === slug) || null;
-    } else {
-      try {
-        // Fetch specific post
-        const { data, error } = await supabase
-          .from("news_posts")
-          .select("*")
-          .eq("slug", slug)
-          .eq("published", true)
-          .maybeSingle();
-        
-        if (!error && data) {
-          targetPost = data;
-        }
-
-        // Fetch related posts (limited to 3)
-        const { data: listData } = await supabase
-          .from("news_posts")
-          .select("*")
-          .eq("published", true)
-          .neq("slug", slug)
-          .limit(3);
-        
-        postsList = listData || [];
-      } catch (err) {
-        console.warn("Supabase detail fetch failed, falling back to LocalStorage:", err);
-        const data = localStorage.getItem("mock_news");
-        postsList = data ? JSON.parse(data) : [];
-        targetPost = postsList.find((p) => p.slug === slug) || null;
-      }
     }
 
     setPost(targetPost);

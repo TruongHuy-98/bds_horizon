@@ -38,10 +38,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getLocalAndSampleListings } from "@/lib/listingsService";
+import { getLocalAndSampleListings, fetchPropertiesFromDb } from "@/lib/listingsService";
 import { ListingItem } from "@/data/listingsData";
 import { toast } from "sonner";
-import heroImg from "@/assets/hero-danang.jpg";
+import heroCapitalSquare from "@/assets/hero-danang.png";
 import planMap from "@/assets/planning-map.jpg";
 import b1 from "@/assets/broker-1.jpg";
 import b2 from "@/assets/broker-2.jpg";
@@ -330,9 +330,21 @@ export default function TrangChuMoiPage() {
   const [quickPhone, setQuickPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load sample listings
-  const allListings = useMemo(() => {
-    return getLocalAndSampleListings(searchTab === "rent" ? "rent" : "sale");
+  // Load listings from database (with instant seed fallback)
+  const [allListings, setAllListings] = useState<ListingItem[]>(() =>
+    getLocalAndSampleListings(searchTab === "rent" ? "rent" : "sale")
+  );
+
+  useEffect(() => {
+    // 1. Tải tức thì từ cache
+    setAllListings(getLocalAndSampleListings(searchTab === "rent" ? "rent" : "sale"));
+
+    // 2. Nạp dữ liệu sống từ Supabase Database
+    fetchPropertiesFromDb(searchTab === "rent" ? "rent" : "sale").then((items) => {
+      if (items && items.length > 0) {
+        setAllListings(items);
+      }
+    });
   }, [searchTab]);
 
   const filteredProperties = useMemo(() => {
@@ -352,8 +364,8 @@ export default function TrangChuMoiPage() {
       searchTab === "project"
         ? "/du-an"
         : searchTab === "rent"
-        ? "/nha-dat-cho-thue"
-        : "/nha-dat-ban";
+          ? "/nha-dat-cho-thue"
+          : "/nha-dat-ban";
 
     navigate({
       to: targetRoute,
@@ -433,32 +445,31 @@ export default function TrangChuMoiPage() {
 
       <main className="flex-1">
         {/* =========================================================
-            1. HERO SECTION: Grand Background Banner (Ảnh 1)
+            1. HERO SECTION: Grand Background Banner (Capital Square & Sông Hàn)
         ========================================================= */}
         <section className="relative isolate w-full pt-12 pb-20 md:pt-16 md:pb-24 overflow-hidden text-white bg-slate-950 border-b border-border/50">
-          {/* Background Image Banner with Dark Cinematic Overlay */}
+          {/* Background Image Banner: Toàn cảnh hoàng hôn Sông Hàn & Capital Square Đà Nẵng */}
           <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
             <img
-              src={heroImg}
-              alt="Đà Nẵng skyline lúc hoàng hôn"
-              className="w-full h-full object-cover object-center scale-105"
+              src={heroCapitalSquare}
+              alt="Toàn cảnh Capital Square và Sông Hàn Đà Nẵng lúc hoàng hôn"
+              className="w-full h-full object-cover object-[center_35%] scale-100 transition-transform duration-1000"
             />
-            {/* Multi-stage gradient overlay: deep navy/slate to ensure supreme contrast */}
-            <div className="absolute inset-0 bg-slate-950/70" />
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-900/80 to-slate-950/95" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/40 via-transparent to-transparent" />
+            {/* Lớp phủ gradient tinh tế: giữ trọn ánh hoàng hôn vàng rực, mặt nước lung linh và ánh đèn đô thị */}
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/75 via-slate-950/30 to-slate-950/85" />
+            <div className="absolute inset-0 bg-radial-[ellipse_at_top] from-primary/20 via-transparent to-black/30" />
           </div>
 
           <div className="container-page relative z-10">
             <div className="max-w-3xl mx-auto text-center mb-8">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/15 text-white text-xs font-semibold mb-4 border border-white/25 backdrop-blur-md shadow-xs">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900/60 text-white text-xs font-semibold mb-4 border border-white/25 backdrop-blur-md shadow-xs">
                 <ShieldCheck className="size-3.5 text-teal-300" />
                 Cổng Bất Động Sản & Quy Hoạch Minh Bạch Đà Nẵng
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight drop-shadow-md">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight drop-shadow-[0_2px_14px_rgba(0,0,0,0.85)]">
                 Tìm tổ ấm mơ ước & Thẩm định pháp lý an toàn
               </h1>
-              <p className="mt-3.5 text-sm sm:text-base text-white/90 leading-relaxed max-w-2xl mx-auto drop-shadow-xs">
+              <p className="mt-3.5 text-sm sm:text-base text-white/95 leading-relaxed max-w-2xl mx-auto drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)]">
                 Hơn 8.500 bất động sản chính chủ, cập nhật liên tục với bản đồ quy hoạch số 2030 chính xác từng phân khu.
               </p>
             </div>
@@ -470,33 +481,30 @@ export default function TrangChuMoiPage() {
                 <button
                   type="button"
                   onClick={() => setSearchTab("sale")}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                    searchTab === "sale"
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${searchTab === "sale"
                       ? "bg-primary text-primary-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                    }`}
                 >
                   Mua bán nhà đất
                 </button>
                 <button
                   type="button"
                   onClick={() => setSearchTab("rent")}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                    searchTab === "rent"
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${searchTab === "rent"
                       ? "bg-primary text-primary-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                    }`}
                 >
                   Nhà đất cho thuê
                 </button>
                 <button
                   type="button"
                   onClick={() => setSearchTab("project")}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                    searchTab === "project"
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${searchTab === "project"
                       ? "bg-primary text-primary-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                    }`}
                 >
                   Dự án nổi bật
                 </button>
@@ -652,11 +660,10 @@ export default function TrangChuMoiPage() {
                   key={item.name}
                   to="/nha-dat-ban"
                   search={{ district: item.name.replace("Quận ", "") } as any}
-                  className={`group relative overflow-hidden rounded-2xl border border-border/60 shadow-xs hover:shadow-card-hover transition-all duration-300 ${
-                    idx === 0
+                  className={`group relative overflow-hidden rounded-2xl border border-border/60 shadow-xs hover:shadow-card-hover transition-all duration-300 ${idx === 0
                       ? "md:col-span-2 md:row-span-2 min-h-[320px] md:min-h-[440px]"
                       : "min-h-[210px]"
-                  }`}
+                    }`}
                 >
                   <img
                     src={item.img}
@@ -814,11 +821,10 @@ export default function TrangChuMoiPage() {
                   <button
                     key={tab.key}
                     onClick={() => setActiveCategory(tab.key)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
-                      activeCategory === tab.key
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${activeCategory === tab.key
                         ? "bg-primary text-primary-foreground shadow-xs"
                         : "bg-card text-muted-foreground border border-border/80 hover:text-foreground hover:bg-muted"
-                    }`}
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -866,11 +872,10 @@ export default function TrangChuMoiPage() {
                       {/* Save Button */}
                       <button
                         onClick={(e) => handleToggleSave(item.id, e)}
-                        className={`absolute top-2.5 right-2.5 size-8 rounded-full flex items-center justify-center transition-all shadow-xs backdrop-blur-xs cursor-pointer ${
-                          savedIds[item.id]
+                        className={`absolute top-2.5 right-2.5 size-8 rounded-full flex items-center justify-center transition-all shadow-xs backdrop-blur-xs cursor-pointer ${savedIds[item.id]
                             ? "bg-rose-500 text-white"
                             : "bg-black/40 hover:bg-black/60 text-white"
-                        }`}
+                          }`}
                         title="Lưu tin"
                       >
                         <Heart className={`size-4 ${savedIds[item.id] ? "fill-current" : ""}`} />
@@ -1009,13 +1014,12 @@ export default function TrangChuMoiPage() {
                         loading="lazy"
                       />
                       <div className="absolute top-3 left-3">
-                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold text-white shadow-xs ${
-                          proj.statusTone === "teal"
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold text-white shadow-xs ${proj.statusTone === "teal"
                             ? "bg-teal/95"
                             : proj.statusTone === "orange"
-                            ? "bg-orange/95"
-                            : "bg-slate-700/90"
-                        }`}>
+                              ? "bg-orange/95"
+                              : "bg-slate-700/90"
+                          }`}>
                           {proj.status}
                         </span>
                       </div>
@@ -1177,11 +1181,10 @@ export default function TrangChuMoiPage() {
                     key={agent.id}
                     type="button"
                     onClick={() => setActiveAgentIndex(idx)}
-                    className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
-                      isActive
+                    className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${isActive
                         ? "bg-card border-primary ring-2 ring-primary/20 shadow-md scale-[1.02]"
                         : "bg-card/70 border-border/70 hover:border-primary/50 hover:bg-card"
-                    }`}
+                      }`}
                   >
                     <img
                       src={agent.img}

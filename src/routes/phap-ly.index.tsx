@@ -83,24 +83,25 @@ export default function LegalCategoryPage() {
     setLoading(true);
     let allNews: any[] = [];
 
-    if (isMock) {
+    try {
+      // Ưu tiên truy vấn bài viết từ bảng news_posts trong Database
+      const { data, error } = await supabase
+        .from("news_posts")
+        .select("*")
+        .eq("published", true)
+        .order("published_at", { ascending: false });
+
+      if (error) throw error;
+      if (data && data.length > 0) {
+        allNews = data;
+      }
+    } catch (err) {
+      console.warn("[phap-ly.index] Truy vấn Supabase không thành công, dùng fallback:", err);
+    }
+
+    if (allNews.length === 0) {
       const localData = localStorage.getItem("mock_news");
       allNews = localData ? JSON.parse(localData) : [];
-    } else {
-      try {
-        const { data, error } = await supabase
-          .from("news_posts")
-          .select("*")
-          .eq("published", true)
-          .order("published_at", { ascending: false });
-
-        if (error) throw error;
-        allNews = data || [];
-      } catch (err) {
-        console.warn("Supabase fetch failed, falling back to LocalStorage:", err);
-        const localData = localStorage.getItem("mock_news");
-        allNews = localData ? JSON.parse(localData) : [];
-      }
     }
 
     // Filter only Legal posts: category is 'Pháp lý' or slug contains 'phap-ly' or 'so-do' or tags include 'Pháp lý'
