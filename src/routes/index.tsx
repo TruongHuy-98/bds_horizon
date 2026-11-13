@@ -1,26 +1,35 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useMemo, useRef, useEffect } from "react";
+import Header from "@/components/site/Header";
+import Footer from "@/components/site/Footer";
+import { NewsSection } from "@/components/site/NewsSection";
 import {
   Search,
   MapPin,
   Map as MapIcon,
-  RefreshCw,
+  ShieldCheck,
+  Building2,
   ArrowRight,
   Bed,
   Bath,
   Square,
   Star,
-  ShieldCheck,
+  CheckCircle2,
+  Sparkles,
   Phone,
-  Mail,
+  Layers,
   CalendarDays,
-  User,
+  TrendingUp,
+  Tag as TagIcon,
   Heart,
-  Share2,
+  ChevronRight,
+  ChevronLeft,
+  Compass,
+  PhoneCall,
+  Mail,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ContactConsentCheckbox } from "@/components/site/ContactConsentCheckbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -29,760 +38,1219 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Header from "@/components/site/Header";
-import Footer from "@/components/site/Footer";
-import { DistrictSection } from "@/components/site/DistrictSection";
-import { ProjectsSlider } from "@/components/site/ProjectsSlider";
-import { NewsSection } from "@/components/site/NewsSection";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { getLocalAndSampleListings, fetchPropertiesFromDb } from "@/lib/listingsService";
+import { ListingItem } from "@/data/listingsData";
 import { toast } from "sonner";
-
-import heroImg from "@/assets/hero-danang.jpg";
+import heroCapitalSquare from "@/assets/hero-danang.png";
 import planMap from "@/assets/planning-map.jpg";
-import p1 from "@/assets/property-1.jpg";
-import p2 from "@/assets/property-2.jpg";
-import p3 from "@/assets/property-3.jpg";
-import p4 from "@/assets/property-4.jpg";
-import a1 from "@/assets/agent-1.jpg";
-import a2 from "@/assets/agent-2.jpg";
-import a3 from "@/assets/agent-3.jpg";
+import b1 from "@/assets/broker-1.jpg";
+import b2 from "@/assets/broker-2.jpg";
+import b3 from "@/assets/broker-3.jpg";
+import b4 from "@/assets/broker-4.jpg";
+import proj1 from "@/assets/project-1.jpg";
+import proj2 from "@/assets/project-2.jpg";
+import proj3 from "@/assets/project-3.jpg";
+import proj4 from "@/assets/project-4.jpg";
+import proj5 from "@/assets/project-5.jpg";
+import proj6 from "@/assets/project-6.jpg";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
   head: () => ({
     meta: [
-      { title: "Da Nang Real Estate — Tìm tổ ấm mơ ước tại Đà Nẵng" },
+      { title: "Da Nang Real Estate — Tìm tổ ấm mơ ước & Thẩm định pháp lý minh bạch Đà Nẵng" },
       {
         name: "description",
         content:
-          "Nền tảng bất động sản Đà Nẵng minh bạch: mua bán, cho thuê, tra cứu quy hoạch 2030 và kết nối nhà môi giới uy tín.",
+          "Cổng thông tin Bất động sản Đà Nẵng uy tín, tra cứu quy hoạch số 2030, rà soát pháp lý dự án, mua bán & cho thuê căn hộ, biệt thự, nhà phố chính chủ.",
       },
     ],
   }),
 });
 
-const properties = [
+// Districts for the Bento Grid
+const BENTO_DISTRICTS = [
   {
-    img: p1,
-    tag: "Hot Deal",
-    tagTone: "orange" as const,
-    extra: "Sổ đỏ chính chủ",
-    title: "Biệt thự ven biển Mỹ Khê",
-    loc: "Sơn Trà, Đà Nẵng",
-    price: "12 tỷ",
-    area: "250m²",
-    beds: 4,
-    baths: 3,
+    name: "Quận Sơn Trà",
+    subtitle: "Biển Mỹ Khê & Bán đảo Sơn Trà",
+    tag: "Nghỉ dưỡng & Du lịch",
+    listingsCount: "2.120",
+    img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&auto=format&fit=crop&q=80",
+    colSpan: "col-span-1 md:col-span-2 row-span-2",
+    badgeTone: "teal",
   },
   {
-    img: p2,
-    tag: "View Sông",
-    tagTone: "teal" as const,
-    title: "Căn hộ cao cấp Azura",
-    loc: "Hải Châu, Đà Nẵng",
-    price: "3.5 tỷ",
-    area: "85m²",
-    beds: 2,
-    baths: 2,
+    name: "Quận Hải Châu",
+    subtitle: "Trung tâm thương mại & Cầu Rồng",
+    tag: "Đô thị trung tâm",
+    listingsCount: "1.850",
+    img: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=600&auto=format&fit=crop&q=80",
+    colSpan: "col-span-1 md:col-span-1 row-span-1",
+    badgeTone: "primary",
   },
   {
-    img: p3,
-    tag: "Giảm giá sâu",
-    tagTone: "orange" as const,
-    title: "Nhà phố liền kề Hòa Xuân",
-    loc: "Cẩm Lệ, Đà Nẵng",
-    price: "5.2 tỷ",
-    area: "100m²",
-    beds: 3,
-    baths: 3,
+    name: "Quận Ngũ Hành Sơn",
+    subtitle: "Khu đô thị Nam Hòa Xuân & Biển Non Nước",
+    tag: "Khu đô thị mới",
+    listingsCount: "1.430",
+    img: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&auto=format&fit=crop&q=80",
+    colSpan: "col-span-1 md:col-span-1 row-span-1",
+    badgeTone: "orange",
   },
   {
-    img: p4,
-    tag: "Sổ hồng",
-    tagTone: "teal" as const,
-    title: "Đất nền ven biển Mỹ An",
-    loc: "Ngũ Hành Sơn, Đà Nẵng",
-    price: "8.8 tỷ",
-    area: "120m²",
-    beds: 0,
-    baths: 0,
+    name: "Cẩm Lệ & Hòa Vang",
+    subtitle: "Sinh thái ven sông & Vành đai Tây",
+    tag: "Đất nền thổ cư",
+    listingsCount: "980",
+    img: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&auto=format&fit=crop&q=80",
+    colSpan: "col-span-1 md:col-span-1 row-span-1",
+    badgeTone: "neutral",
+  },
+  {
+    name: "Thanh Khê & Liên Chiểu",
+    subtitle: "Vịnh Đà Nẵng & Cảng biển Liên Chiểu",
+    tag: "Hạ tầng bứt phá",
+    listingsCount: "820",
+    img: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&auto=format&fit=crop&q=80",
+    colSpan: "col-span-1 md:col-span-1 row-span-1",
+    badgeTone: "neutral",
   },
 ];
 
-const agents = [
+// Highlighted featured projects for the 4-column slider (Ảnh 2)
+const FEATURED_PROJECTS = [
   {
-    img: a1,
+    id: "sun-ponte-residence",
+    title: "Sun Ponte Residence",
+    developer: "Sun Group",
+    district: "Sơn Trà",
+    priceFrom: "5.5 tỷ",
+    status: "Đang mở bán",
+    statusTone: "teal",
+    handover: "Q3/2026",
+    units: "495 căn",
+    img: proj1,
+  },
+  {
+    id: "the-filmore-da-nang",
+    title: "The Filmore Da Nang",
+    developer: "Filmore Development",
+    district: "Hải Châu",
+    priceFrom: "7.2 tỷ",
+    status: "Đang bàn giao",
+    statusTone: "muted",
+    handover: "Hiện hữu",
+    units: "206 căn",
+    img: proj2,
+  },
+  {
+    id: "vinhomes-danang-bay",
+    title: "Vinhomes Golden Bay",
+    developer: "Vingroup",
+    district: "Liên Chiểu",
+    priceFrom: "3.2 tỷ",
+    status: "Sắp mở bán",
+    statusTone: "orange",
+    handover: "Q4/2026",
+    units: "1.200 căn",
+    img: proj3,
+  },
+  {
+    id: "peninsula-da-nang",
+    title: "The Peninsula Da Nang",
+    developer: "Athena Luxury",
+    district: "Sơn Trà",
+    priceFrom: "4.8 tỷ",
+    status: "Đang mở bán",
+    statusTone: "teal",
+    handover: "Q2/2026",
+    units: "941 căn",
+    img: proj4,
+  },
+  {
+    id: "regal-complex-da-nang",
+    title: "Regal Complex Da Nang",
+    developer: "Đất Xanh Miền Trung",
+    district: "Ngũ Hành Sơn",
+    priceFrom: "6.5 tỷ",
+    status: "Sắp mở bán",
+    statusTone: "orange",
+    handover: "Q1/2027",
+    units: "680 căn",
+    img: proj5,
+  },
+  {
+    id: "danang-landmark-tower",
+    title: "Danang Landmark Tower",
+    developer: "Cosmos Housing",
+    district: "Hải Châu",
+    priceFrom: "8.1 tỷ",
+    status: "Đang mở bán",
+    statusTone: "teal",
+    handover: "Q4/2026",
+    units: "446 căn",
+    img: proj6,
+  },
+  {
+    id: "shizen-nami-da-nang",
+    title: "Shizen Nami Da Nang",
+    developer: "Gotec Land",
+    district: "Liên Chiểu",
+    priceFrom: "3.9 tỷ",
+    status: "Đang mở bán",
+    statusTone: "teal",
+    handover: "Q3/2026",
+    units: "487 căn",
+    img: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60",
+  },
+  {
+    id: "fpt-plaza-3",
+    title: "FPT Plaza 3",
+    developer: "FPT City Đà Nẵng",
+    district: "Ngũ Hành Sơn",
+    priceFrom: "2.1 tỷ",
+    status: "Đang bàn giao",
+    statusTone: "muted",
+    handover: "Hiện hữu",
+    units: "863 căn",
+    img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=60",
+  },
+];
+
+// Top verified local brokers with credential bullet points (Ảnh 3 theo bố cục Ảnh 4)
+const TOP_AGENTS = [
+  {
+    id: "nguyen-van-nam",
+    honorific: "ThS. Quản trị & Đầu tư BĐS",
     name: "Nguyễn Văn Nam",
-    role: "Chuyên căn hộ cao cấp",
+    role: "Chuyên gia căn hộ cao cấp & Biệt thự biển",
+    district: "Hải Châu & Sơn Trà",
+    phone: "0905 123 456",
+    email: "nam.nguyen@danangrealty.vn",
+    experience: "8 năm kinh nghiệm",
     listings: 45,
-    years: 8,
     rating: 5,
     reviews: 38,
+    img: b1,
+    bullets: [
+      "Hơn 8 năm kinh nghiệm phân phối và định giá căn hộ cao cấp ven sông Hàn.",
+      "Tốt nghiệp Thạc sĩ Quản trị Kinh doanh – Trường Đại học Kinh tế, Đại học Đà Nẵng.",
+      "Chứng chỉ hành nghề Môi giới Bất động sản và Định giá do Sở Xây Dựng Đà Nẵng cấp.",
+      "Đã chốt thành công hơn 180+ giao dịch căn hộ nghỉ dưỡng và nhà phố trung tâm.",
+      "Cam kết tư vấn chuẩn quy hoạch, hỗ trợ thủ tục công chứng sang tên sổ đỏ trọn gói.",
+    ],
   },
   {
-    img: a2,
+    id: "le-thi-mai-anh",
+    honorific: "Chuyên viên Thẩm định Địa chính",
     name: "Lê Thị Mai Anh",
-    role: "Chuyên đất nền Hòa Xuân",
+    role: "Chuyên gia đất nền sinh thái Nam Hòa Xuân",
+    district: "Cẩm Lệ & Ngũ Hành Sơn",
+    phone: "0905 888 999",
+    email: "maianh.le@danangrealty.vn",
+    experience: "5 năm kinh nghiệm",
     listings: 32,
-    years: 5,
     rating: 5,
     reviews: 29,
+    img: b2,
+    bullets: [
+      "Hơn 5 năm chuyên sâu phân khúc đất nền sinh thái ven sông Hòa Xuân và Nam Hòa Xuân.",
+      "Cử nhân Luật Kinh tế – Đại học Luật Hà Nội, am hiểu sâu sắc quy chuẩn pháp lý BĐS.",
+      "Chứng chỉ hành nghề Môi giới Bất động sản đạt chuẩn Hiệp hội BĐS Việt Nam (VNREA).",
+      "Hỗ trợ kiểm tra quy hoạch phân khu chi tiết, lộ giới quy hoạch giao thông trước đặt cọc.",
+      "Chuyên xử lý hồ sơ tách thửa, cấp đổi sổ hồng nhanh chóng và an toàn tuyệt đối.",
+    ],
   },
   {
-    img: a3,
+    id: "tran-hoang-long",
+    honorific: "Giám đốc Khối Khách hàng VIP",
     name: "Trần Hoàng Long",
-    role: "Chuyên nhà phố trung tâm",
+    role: "Trưởng phòng BĐS Nghỉ dưỡng & Khách sạn",
+    district: "Sơn Trà & Ngũ Hành Sơn",
+    phone: "0905 678 910",
+    email: "long.tran@danangrealty.vn",
+    experience: "12 năm kinh nghiệm",
     listings: 68,
-    years: 12,
     rating: 5,
     reviews: 54,
+    img: b3,
+    bullets: [
+      "Hơn 12 năm dẫn đầu thị trường BĐS nghỉ dưỡng, khách sạn ven biển Võ Nguyên Giáp.",
+      "Tốt nghiệp Cử nhân Tài chính – Bất động sản, cố vấn chiến lược cho nhiều nhà đầu tư lớn.",
+      "Chứng chỉ Chuyên gia Định giá Bất động sản và Quản lý sàn giao dịch cấp Quốc gia.",
+      "Đã kết nối thành công hơn 65 thương vụ chuyển nhượng khách sạn, toà nhà văn phòng.",
+      "Bảo mật thông tin giao dịch tuyệt đối, hỗ trợ đàm phán giá tốt nhất cho khách hàng.",
+    ],
+  },
+  {
+    id: "pham-quynh-nga",
+    honorific: "Chuyên viên Tư vấn Nhà phố",
+    name: "Phạm Quỳnh Nga",
+    role: "Chuyên viên cao cấp BĐS Nhà phố Trung tâm",
+    district: "Hải Châu & Thanh Khê",
+    phone: "0905 333 444",
+    email: "quynhnga.pham@danangrealty.vn",
+    experience: "7 năm kinh nghiệm",
+    listings: 41,
+    rating: 5,
+    reviews: 35,
+    img: b4,
+    bullets: [
+      "Hơn 7 năm kinh nghiệm giao dịch nhà phố mặt tiền kinh doanh các tuyến đường huyết mạch.",
+      "Tốt nghiệp Đại học Ngoại ngữ Đà Nẵng, thành thạo tiếng Anh và tiếng Hàn trong giao dịch BĐS.",
+      "Chứng chỉ Môi giới Bất động sản chuyên nghiệp, đạt danh hiệu Môi giới Xuất sắc 3 năm liền.",
+      "Giỏ hàng hơn 150+ căn nhà phố chính chủ gửi bán độc quyền, pháp lý chuẩn chỉnh.",
+      "Hỗ trợ vay ngân hàng liên kết (Vietcombank, BIDV, MB) với lãi suất ưu đãi duyệt hồ sơ 48h.",
+    ],
   },
 ];
 
-function Logo() {
-  return (
-    <Link to="/" className="flex items-center gap-2">
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
-        <path d="M16 4L28 26H4L16 4Z" fill="var(--primary)" />
-        <path d="M16 12L24 26H8L16 12Z" fill="var(--teal)" opacity="0.85" />
-      </svg>
-      <div className="leading-tight">
-        <div className="text-sm font-bold tracking-tight text-primary">DA NANG</div>
-        <div className="text-[10px] font-semibold tracking-[0.18em] text-muted-foreground">
-          REAL ESTATE
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function Hero() {
+export default function HomePage() {
   const navigate = useNavigate();
+
+  // Search state
+  const [searchTab, setSearchTab] = useState<"sale" | "rent" | "project">("sale");
   const [keyword, setKeyword] = useState("");
-  const [category, setCategory] = useState("all");
   const [district, setDistrict] = useState("all");
+  const [propertyType, setPropertyType] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
 
-  const handleSearch = (e: React.FormEvent) => {
+  // Property filter category
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [savedIds, setSavedIds] = useState<Record<string, boolean>>({});
+
+  // Active broker index for showcase (Ảnh 3 theo bố cục Ảnh 4)
+  const [activeAgentIndex, setActiveAgentIndex] = useState(0);
+  const activeAgent = TOP_AGENTS[activeAgentIndex];
+
+  // Ref for the 4-column project slider (Ảnh 2)
+  const projectSliderRef = useRef<HTMLDivElement>(null);
+
+  // Lead contact form
+  const [quickPhone, setQuickPhone] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load listings from database (with instant seed fallback)
+  const [allListings, setAllListings] = useState<ListingItem[]>(() =>
+    getLocalAndSampleListings(searchTab === "rent" ? "rent" : "sale")
+  );
+
+  useEffect(() => {
+    // 1. Tải tức thì từ cache
+    setAllListings(getLocalAndSampleListings(searchTab === "rent" ? "rent" : "sale"));
+
+    // 2. Nạp dữ liệu sống từ Supabase Database
+    fetchPropertiesFromDb(searchTab === "rent" ? "rent" : "sale").then((items) => {
+      if (items && items.length > 0) {
+        setAllListings(items);
+      }
+    });
+  }, [searchTab]);
+
+  const filteredProperties = useMemo(() => {
+    if (activeCategory === "all") return allListings.slice(0, 8);
+    return allListings.filter((i) => i.category === activeCategory).slice(0, 8);
+  }, [allListings, activeCategory]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const searchParams: Record<string, string> = {};
-    if (keyword.trim()) searchParams.keyword = keyword.trim();
-    if (category !== "all") searchParams.category = category;
-    if (district !== "all") searchParams.district = district;
-    if (priceRange !== "all") searchParams.priceRange = priceRange;
+    const query: Record<string, string> = {};
+    if (keyword.trim()) query.keyword = keyword.trim();
+    if (district !== "all") query.district = district;
+    if (propertyType !== "all") query.category = propertyType;
+    if (priceRange !== "all") query.priceRange = priceRange;
+
+    const targetRoute =
+      searchTab === "project"
+        ? "/du-an"
+        : searchTab === "rent"
+          ? "/nha-dat-cho-thue"
+          : "/nha-dat-ban";
 
     navigate({
-      to: "/nha-dat-ban",
-      search: searchParams,
+      to: targetRoute,
+      search: query,
     });
   };
 
-  return (
-    <section className="relative h-[520px] md:h-[560px] w-full overflow-hidden">
-      <img
-        src={heroImg}
-        alt="Đà Nẵng skyline lúc hoàng hôn"
-        width={1920}
-        height={1080}
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/30 via-primary/40 to-primary/60" />
-      <div className="relative container-page h-full flex flex-col items-center justify-center text-center">
-        <h1 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-md max-w-5xl md:whitespace-nowrap">
-          Tìm kiếm tổ ấm mơ ước tại Đà Nẵng
-        </h1>
-        <p className="mt-4 text-white/85 text-base md:text-lg max-w-xl">
-          Hơn 8.500 bất động sản đã thẩm định, minh bạch pháp lý và quy hoạch.
-        </p>
-        <form onSubmit={handleSearch} className="mt-8 w-full max-w-5xl glass rounded-xl shadow-card p-3 md:p-4 border border-white/40">
-          <div className="flex flex-col md:flex-row gap-2.5 items-center">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Tìm kiếm bất động sản..."
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                className="pl-9 h-11 bg-white border-border rounded-md w-full"
-              />
-            </div>
-            <div className="w-full md:w-36 lg:w-40 shrink-0">
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="h-11 bg-white rounded-md w-full">
-                  <SelectValue placeholder="Loại nhà đất" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả loại BĐS</SelectItem>
-                  <SelectItem value="apt">Căn hộ</SelectItem>
-                  <SelectItem value="villa">Biệt thự</SelectItem>
-                  <SelectItem value="land">Đất nền</SelectItem>
-                  <SelectItem value="town">Nhà phố</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-full md:w-36 lg:w-40 shrink-0">
-              <Select value={district} onValueChange={setDistrict}>
-                <SelectTrigger className="h-11 bg-white rounded-md w-full">
-                  <SelectValue placeholder="Quận / Huyện" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả quận/huyện</SelectItem>
-                  <SelectItem value="Hải Châu">Hải Châu</SelectItem>
-                  <SelectItem value="Sơn Trà">Sơn Trà</SelectItem>
-                  <SelectItem value="Ngũ Hành Sơn">Ngũ Hành Sơn</SelectItem>
-                  <SelectItem value="Cẩm Lệ">Cẩm Lệ</SelectItem>
-                  <SelectItem value="Thanh Khê">Thanh Khê</SelectItem>
-                  <SelectItem value="Liên Chiểu">Liên Chiểu</SelectItem>
-                  <SelectItem value="Hòa Vang">Hòa Vang</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-full md:w-36 lg:w-40 shrink-0">
-              <Select value={priceRange} onValueChange={setPriceRange}>
-                <SelectTrigger className="h-11 bg-white rounded-md w-full">
-                  <SelectValue placeholder="Khoảng giá" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả giá</SelectItem>
-                  <SelectItem value="under-2">Dưới 2 tỷ</SelectItem>
-                  <SelectItem value="2-5">2 - 5 tỷ</SelectItem>
-                  <SelectItem value="5-10">5 - 10 tỷ</SelectItem>
-                  <SelectItem value="over-10">Trên 10 tỷ</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" className="w-full md:w-auto shrink-0 bg-primary text-primary-foreground hover:bg-primary/95 h-11 px-7 rounded-md font-medium whitespace-nowrap shadow-sm transition-colors">
-              Tìm kiếm
-            </Button>
-          </div>
-        </form>
-      </div>
-    </section>
-  );
-}
-
-function PlanningCheck() {
-  return (
-    <section className="bg-surface-container/60 py-16 md:py-20">
-      <div className="container-page grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-        <div>
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-accent-foreground text-xs font-semibold">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Thông tin minh bạch
-          </span>
-          <h2 className="mt-4 text-2xl md:text-3xl font-bold text-foreground">
-            Kiểm tra Quy hoạch Đà Nẵng 2030
-          </h2>
-          <p className="mt-3 text-muted-foreground leading-relaxed">
-            Hệ thống tra cứu thông tin quy hoạch sử dụng đất hiện đại nhất. Chúng tôi cung cấp dữ
-            liệu chính xác về các phân khu chức năng, hạ tầng giao thông và các dự án trọng điểm tại
-            Đà Nẵng đến năm 2030. Giúp nhà đầu tư đưa ra quyết định an toàn và hiệu quả.
-          </p>
-          <ul className="mt-6 space-y-4">
-            <li className="flex gap-3">
-              <MapIcon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <div className="font-semibold text-sm">Bản đồ phân khu chi tiết</div>
-                <div className="text-sm text-muted-foreground">
-                  Xem chi tiết từng lô đất và mục đích sử dụng.
-                </div>
-              </div>
-            </li>
-            <li className="flex gap-3">
-              <RefreshCw className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <div className="font-semibold text-sm">Cập nhật thời gian thực</div>
-                <div className="text-sm text-muted-foreground">
-                  Dữ liệu được đồng bộ liên tục từ cơ sở quy hoạch.
-                </div>
-              </div>
-            </li>
-          </ul>
-          <Button
-            asChild
-            className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md h-11 px-6 group"
-          >
-            <Link to="/check-quy-hoach">
-              Check Quy Hoạch Ngay
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-          </Button>
-        </div>
-        <div className="relative">
-          <div className="absolute -inset-6 bg-gradient-to-br from-primary/10 to-teal/10 rounded-3xl blur-2xl" />
-          <Link
-            to="/check-quy-hoach"
-            className="group relative block overflow-hidden rounded-2xl shadow-card-hover border border-border/60"
-            title="Nhấn để tra cứu bản đồ quy hoạch trực tiếp"
-          >
-            <img
-              src={planMap}
-              alt="Bản đồ quy hoạch Đà Nẵng 2030"
-              width={1280}
-              height={960}
-              loading="lazy"
-              className="relative rounded-2xl w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-5">
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-lg">
-                <MapIcon className="h-4 w-4" /> Bấm để mở bản đồ quy hoạch số
-              </span>
-            </div>
-            <div className="absolute bottom-3 right-3 sm:hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/90 text-primary-foreground text-[11px] font-semibold backdrop-blur-sm">
-              <MapIcon className="h-3 w-3" /> Mở bản đồ
-            </div>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Tag({ tone, children }: { tone: "orange" | "teal"; children: React.ReactNode }) {
-  const cls =
-    tone === "orange" ? "bg-orange text-orange-foreground" : "bg-teal text-teal-foreground";
-  return (
-    <span className={`${cls} text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm`}>
-      {children}
-    </span>
-  );
-}
-
-function FeaturedProperties() {
-  const [dbProperties, setDbProperties] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
-  const [contactForm, setContactForm] = useState({ name: "", phone: "", message: "" });
-
-  const isMock = typeof window !== "undefined"
-    ? !!localStorage.getItem("bds_mock_role") || !import.meta.env.VITE_SUPABASE_URL
-    : true;
-
-  useEffect(() => {
-    const fetchProperties = async () => {
-      setLoading(true);
-      let list: any[] = [];
-      if (isMock) {
-        const localData = localStorage.getItem("mock_properties");
-        list = localData ? JSON.parse(localData) : [];
-      } else {
-        try {
-          const { data, error } = await supabase
-            .from("properties")
-            .select("*")
-            .eq("published", true)
-            .order("created_at", { ascending: false });
-          if (error) throw error;
-          list = data || [];
-        } catch (err) {
-          console.warn("Failed to fetch properties from Supabase, falling back to mock:", err);
-          const localData = localStorage.getItem("mock_properties");
-          list = localData ? JSON.parse(localData) : [];
-        }
-      }
-      setDbProperties(list);
-      setLoading(false);
-    };
-
-    fetchProperties();
-  }, []);
-
-  // Map database listings to UI format
-  const mappedDbProperties = dbProperties.map((p) => ({
-    raw: {
-      slug: p.slug,
-      title: p.title,
-      description: p.description || p.excerpt || "Chưa có mô tả chi tiết cho bất động sản này.",
-      price: p.price_label || (p.price ? `${p.price} tỷ` : "Thỏa thuận"),
-      area: p.area ? `${p.area}m²` : "N/A",
-      beds: p.bedrooms || 0,
-      baths: p.bathrooms || 0,
-      address: p.address || p.district || "Đà Nẵng",
-      district: p.district || "Đà Nẵng",
-      images: Array.isArray(p.images) && p.images.length > 0 
-        ? p.images 
-        : p.image_url 
-          ? [p.image_url] 
-          : ["https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60"],
-      listing_type: p.listing_type === "rent" || p.listing_type === "Cho thuê" ? "Cho thuê" : "Mua bán",
-      status: p.status === "available" ? "Còn trống" : p.status === "rented" ? "Đã cho thuê" : "Đã bán",
-      developer: p.developer || "Đang cập nhật",
-    },
-    img: p.image_url || (Array.isArray(p.images) && p.images[0]) || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60",
-    tag: p.listing_type === "rent" || p.listing_type === "Cho thuê" ? "Cho thuê" : "Mua bán",
-    tagTone: p.listing_type === "rent" || p.listing_type === "Cho thuê" ? ("teal" as const) : ("orange" as const),
-    extra: p.status === "available" ? "Còn trống" : p.status === "rented" ? "Đã cho thuê" : "Đã bán",
-    title: p.title,
-    loc: p.address || p.district || "Đà Nẵng",
-    price: p.price_label || (p.price ? `${p.price} tỷ` : "Thỏa thuận"),
-    area: p.area ? `${p.area}m²` : "N/A",
-    beds: p.bedrooms || 0,
-    baths: p.bathrooms || 0,
-  }));
-
-  const mappedStaticProperties = properties.map((p) => ({
-    ...p,
-    raw: {
-      title: p.title,
-      description: `Bất động sản cao cấp sở hữu vị trí đắc địa tại khu vực ${p.loc}. Không gian thiết kế hiện đại, thông thoáng, tối ưu hóa công năng sử dụng. Gần các tiện ích trường học, bệnh viện, khu mua sắm, an ninh đảm bảo 24/7. Thích hợp cho hộ gia đình sinh sống hoặc đầu tư kinh doanh, cho thuê sinh lời tốt.`,
-      price: p.price,
-      area: p.area,
-      beds: p.beds,
-      baths: p.baths,
-      address: p.loc,
-      district: p.loc.split(",")[0],
-      images: [p.img],
-      listing_type: p.tag === "Cho thuê" ? "Cho thuê" : "Mua bán",
-      status: p.extra || "Còn trống",
-      developer: "Đang cập nhật",
-    }
-  }));
-
-  // Combine dynamic listings with the static ones so the page is never empty
-  const allProperties = [...mappedDbProperties, ...mappedStaticProperties];
-
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleToggleSave = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
-    if (!contactForm.name || !contactForm.phone) {
-      toast.error("Vui lòng điền đầy đủ họ tên và số điện thoại.");
+    e.stopPropagation();
+    const next = !savedIds[id];
+    setSavedIds((prev) => ({ ...prev, [id]: next }));
+    if (next) {
+      toast.success("Đã lưu tin bất động sản vào danh sách yêu thích");
+    } else {
+      toast.info("Đã bỏ lưu tin");
+    }
+  };
+
+  const handlePrevAgent = () => {
+    setActiveAgentIndex((prev) => (prev === 0 ? TOP_AGENTS.length - 1 : prev - 1));
+  };
+
+  const handleNextAgent = () => {
+    setActiveAgentIndex((prev) => (prev === TOP_AGENTS.length - 1 ? 0 : prev + 1));
+  };
+
+  const scrollProjectLeft = () => {
+    if (projectSliderRef.current) {
+      projectSliderRef.current.scrollBy({ left: -340, behavior: "smooth" });
+    }
+  };
+
+  const scrollProjectRight = () => {
+    if (projectSliderRef.current) {
+      projectSliderRef.current.scrollBy({ left: 340, behavior: "smooth" });
+    }
+  };
+
+  const handleQuickLeadSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickPhone.trim()) {
+      toast.error("Vui lòng nhập số điện thoại để nhận tư vấn");
       return;
     }
-    setIsSubmittingContact(true);
+    setIsSubmitting(true);
     setTimeout(() => {
-      toast.success("Gửi yêu cầu liên hệ thành công! Chúng tôi sẽ gọi lại cho bạn trong vòng 15 phút.");
-      setIsSubmittingContact(false);
-      setContactForm({ name: "", phone: "", message: "" });
-    }, 1000);
+      toast.success("Đã gửi yêu cầu! Chuyên viên tư vấn Đà Nẵng sẽ liên hệ lại trong 15 phút.");
+      setIsSubmitting(false);
+      setQuickPhone("");
+    }, 800);
   };
 
   return (
-    <section className="py-16 md:py-20">
-      <div className="container-page">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold">Bất động sản nổi bật tại Đà Nẵng</h2>
-            <p className="mt-2 text-muted-foreground">
-              Các sản phẩm đã qua kiểm định pháp lý nghiêm ngặt.
-            </p>
-          </div>
-          <Link
-            to="/nha-dat-ban"
-            className="hidden md:inline-flex items-center gap-1 text-sm font-semibold text-primary hover:gap-2 transition-all"
-          >
-            Xem tất cả <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+      <Header />
 
-        {loading ? (
-          <div className="py-20 text-center text-muted-foreground">
-            <div className="animate-spin size-8 border-t-2 border-b-2 border-primary rounded-full mx-auto mb-3"></div>
-            Đang tải danh sách bất động sản...
+      <main className="flex-1">
+        {/* =========================================================
+            1. HERO SECTION: Grand Background Banner (Capital Square & Sông Hàn)
+        ========================================================= */}
+        <section className="relative isolate w-full pt-10 pb-12 md:pt-12 md:pb-14 overflow-hidden text-white bg-slate-950 border-b border-border/50">
+          {/* Background Image Banner: Toàn cảnh hoàng hôn Sông Hàn & Capital Square Đà Nẵng */}
+          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+            <img
+              src={heroCapitalSquare}
+              alt="Toàn cảnh Capital Square và Sông Hàn Đà Nẵng lúc hoàng hôn"
+              className="w-full h-full object-cover object-[center_35%] scale-100 transition-transform duration-1000"
+            />
+            {/* Lớp phủ gradient tinh tế: giữ trọn ánh hoàng hôn vàng rực, mặt nước lung linh và ánh đèn đô thị */}
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/75 via-slate-950/30 to-slate-950/85" />
+            <div className="absolute inset-0 bg-radial-[ellipse_at_top] from-primary/20 via-transparent to-black/30" />
           </div>
-        ) : (
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {allProperties.map((p, idx) => (
-              <article
-                key={idx}
-                onClick={() => {
-                  setSelectedProperty(p);
-                  setActiveImageIndex(0);
-                  setContactForm({ name: "", phone: "", message: "" });
-                }}
-                className="group bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 border border-border/60 cursor-pointer flex flex-col justify-between"
-              >
-                <div>
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img
-                      src={p.img}
-                      alt={p.title}
-                      width={800}
-                      height={600}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute top-3 left-3 flex gap-2">
-                      <Tag tone={p.tagTone}>{p.tag}</Tag>
-                      {p.extra && (
-                        <span className="bg-white/95 text-foreground text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                          {p.extra}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="p-4 pb-2">
-                    <h3 className="font-semibold text-base leading-snug line-clamp-1">{p.title}</h3>
-                    <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80" />
-                      <span className="line-clamp-1">{p.loc}</span>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="px-4 pb-4 pt-0">
-                  <div className="mt-2 flex items-end justify-between border-t border-border pt-3 min-h-[44px]">
-                    <div className="text-primary font-bold text-lg leading-none">{p.price}</div>
-                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                      {p.beds > 0 && (
-                        <span className="flex items-center gap-1" title={`${p.beds} phòng ngủ`}>
-                          <Bed className="h-3.5 w-3.5" />
-                          {p.beds}
-                        </span>
-                      )}
-                      {p.baths > 0 && (
-                        <span className="flex items-center gap-1" title={`${p.baths} phòng tắm`}>
-                          <Bath className="h-3.5 w-3.5" />
-                          {p.baths}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1" title={`Diện tích: ${p.area}`}>
-                        <Square className="h-3.5 w-3.5" />
-                        {p.area}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </article>
-          ))}
-          </div>
-        )}
-
-        <Dialog open={!!selectedProperty} onOpenChange={(open) => { if (!open) setSelectedProperty(null); }}>
-          <DialogContent className="max-w-4xl p-0 overflow-hidden border border-border/80 bg-card rounded-2xl shadow-2xl max-h-[90vh] flex flex-col">
-            <DialogHeader className="p-6 pb-0 border-b border-border/50 shrink-0">
-              <div className="flex items-center gap-3">
-                {selectedProperty && <Tag tone={selectedProperty.tagTone}>{selectedProperty.tag}</Tag>}
-                {selectedProperty?.extra && (
-                  <span className="bg-muted text-muted-foreground text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                    {selectedProperty.extra}
-                  </span>
-                )}
+          <div className="container-page relative z-10">
+            <div className="max-w-3xl mx-auto text-center mb-6">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900/60 text-white text-xs font-semibold mb-3 border border-white/25 backdrop-blur-md shadow-xs">
+                <ShieldCheck className="size-3.5 text-teal-300" />
+                Cổng Bất Động Sản & Quy Hoạch Minh Bạch Đà Nẵng
               </div>
-              <DialogTitle className="text-xl md:text-2xl font-bold mt-2 text-foreground pr-8">
-                {selectedProperty?.title}
-              </DialogTitle>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground pb-4 mt-1">
-                <MapPin className="h-4 w-4 text-primary shrink-0" />
-                <span>{selectedProperty?.loc}</span>
-              </div>
-            </DialogHeader>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight drop-shadow-[0_2px_14px_rgba(0,0,0,0.85)]">
+                Tìm tổ ấm mơ ước & Thẩm định pháp lý an toàn
+              </h1>
+              <p className="mt-3 text-sm sm:text-base text-white/95 leading-relaxed max-w-2xl mx-auto drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)]">
+                Hơn 8.500 bất động sản chính chủ, cập nhật liên tục với bản đồ quy hoạch số 2030 chính xác từng phân khu.
+              </p>
+            </div>
 
-            <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Left Column: Image Gallery */}
-              <div className="space-y-4">
-                <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted border border-border/40">
-                  <img
-                    src={selectedProperty?.raw.images[activeImageIndex] || selectedProperty?.img}
-                    alt={selectedProperty?.title}
-                    className="w-full h-full object-cover transition-all duration-300"
+            {/* Centralized Search Box Floating on Banner */}
+            <div className="max-w-4xl mx-auto bg-card text-foreground rounded-2xl border border-white/25 shadow-2xl p-4 sm:p-5 backdrop-blur-md">
+              {/* Tab Switcher: Sale / Rent / Project */}
+              <div className="flex items-center gap-1.5 pb-4 border-b border-border/60">
+                <button
+                  type="button"
+                  onClick={() => setSearchTab("sale")}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${searchTab === "sale"
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                >
+                  Mua bán nhà đất
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSearchTab("rent")}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${searchTab === "rent"
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                >
+                  Nhà đất cho thuê
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSearchTab("project")}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${searchTab === "project"
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                >
+                  Dự án nổi bật
+                </button>
+              </div>
+
+              {/* Input Filters Grid */}
+              <form onSubmit={handleSearchSubmit} className="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+                {/* Keyword search input */}
+                <div className="lg:col-span-4 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Nhập tên đường, dự án, khu vực..."
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    className="pl-9 h-11 bg-background border-border rounded-xl text-xs sm:text-sm placeholder:text-muted-foreground/70"
                   />
                 </div>
-                
-                {/* Thumbnails grid */}
-                {selectedProperty?.raw.images && selectedProperty.raw.images.length > 1 && (
-                  <div className="grid grid-cols-4 gap-3">
-                    {selectedProperty.raw.images.map((imgUrl: string, idx: number) => (
-                      <button
-                        key={idx}
-                        onClick={() => setActiveImageIndex(idx)}
-                        className={`relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all ${
-                          idx === activeImageIndex ? "border-primary shadow-md scale-95" : "border-transparent opacity-75 hover:opacity-100"
-                        }`}
-                      >
-                        <img src={imgUrl} alt="" className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                )}
 
-                {/* Specs overview cards */}
-                <div className="grid grid-cols-3 gap-3 pt-2">
-                  <div className="bg-surface-container/50 border border-border/40 rounded-xl p-3.5 text-center">
-                    <div className="text-xs text-muted-foreground">Giá bán</div>
-                    <div className="text-base font-bold text-primary mt-0.5">{selectedProperty?.price}</div>
-                  </div>
-                  <div className="bg-surface-container/50 border border-border/40 rounded-xl p-3.5 text-center">
-                    <div className="text-xs text-muted-foreground">Diện tích</div>
-                    <div className="text-base font-bold mt-0.5">{selectedProperty?.area}</div>
-                  </div>
-                  <div className="bg-surface-container/50 border border-border/40 rounded-xl p-3.5 text-center">
-                    <div className="text-xs text-muted-foreground">Phòng ngủ / Tắm</div>
-                    <div className="text-sm font-bold mt-1 flex justify-center gap-2 text-muted-foreground">
-                      <span className="flex items-center gap-0.5 text-foreground"><Bed className="h-3.5 w-3.5" /> {selectedProperty?.beds}</span>
-                      <span>/</span>
-                      <span className="flex items-center gap-0.5 text-foreground"><Bath className="h-3.5 w-3.5" /> {selectedProperty?.baths}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column: Descriptions & Contact Form */}
-              <div className="flex flex-col space-y-6">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">Mô tả chi tiết</h4>
-                    {selectedProperty?.raw.slug && (
-                      <Link
-                        to={selectedProperty.raw.listing_type === "Cho thuê" ? "/nha-dat-cho-thue/$slug" : "/nha-dat-ban/$slug"}
-                        params={{ slug: selectedProperty.raw.slug }}
-                        className="text-xs text-primary font-semibold hover:underline flex items-center gap-1"
-                      >
-                        Xem trang đầy đủ ↗
-                      </Link>
-                    )}
-                  </div>
-                  {selectedProperty?.raw.description?.includes("<") ? (
-                    <div
-                      className="prose prose-sm max-w-none text-sm text-muted-foreground leading-relaxed border-l-2 border-primary/20 pl-3"
-                      dangerouslySetInnerHTML={{ __html: selectedProperty.raw.description }}
-                    />
-                  ) : (
-                    <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-l-2 border-primary/20 pl-3">
-                      {selectedProperty?.raw.description || "Chưa có mô tả chi tiết cho bất động sản này."}
-                    </div>
-                  )}
+                {/* District selector */}
+                <div className="lg:col-span-3">
+                  <Select value={district} onValueChange={setDistrict}>
+                    <SelectTrigger className="h-11 bg-background border-border rounded-xl text-xs sm:text-sm">
+                      <SelectValue placeholder="Quận / Huyện" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toàn TP. Đà Nẵng</SelectItem>
+                      <SelectItem value="Hải Châu">Quận Hải Châu</SelectItem>
+                      <SelectItem value="Sơn Trà">Quận Sơn Trà</SelectItem>
+                      <SelectItem value="Ngũ Hành Sơn">Quận Ngũ Hành Sơn</SelectItem>
+                      <SelectItem value="Cẩm Lệ">Quận Cẩm Lệ</SelectItem>
+                      <SelectItem value="Thanh Khê">Quận Thanh Khê</SelectItem>
+                      <SelectItem value="Liên Chiểu">Quận Liên Chiểu</SelectItem>
+                      <SelectItem value="Hòa Vang">Huyện Hòa Vang</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="border border-border/50 bg-surface-container/20 rounded-xl p-5">
-                  <h4 className="font-bold text-sm text-foreground uppercase tracking-wider flex items-center gap-1.5 mb-4">
-                    <User className="h-4 w-4 text-primary" /> Liên hệ tư vấn
-                  </h4>
-                  <form onSubmit={handleContactSubmit} className="space-y-4">
-                    <div className="space-y-1.5">
-                      <label htmlFor="modal-name" className="text-xs font-semibold text-muted-foreground">Họ và tên</label>
-                      <Input
-                        id="modal-name"
-                        required
-                        placeholder="Nguyễn Văn A"
-                        value={contactForm.name}
-                        onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                        className="bg-card border-border h-10"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label htmlFor="modal-phone" className="text-xs font-semibold text-muted-foreground">Số điện thoại</label>
-                      <Input
-                        id="modal-phone"
-                        type="tel"
-                        required
-                        placeholder="0905 xxx xxx"
-                        value={contactForm.phone}
-                        onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                        className="bg-card border-border h-10"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label htmlFor="modal-msg" className="text-xs font-semibold text-muted-foreground">Lời nhắn (Không bắt buộc)</label>
-                      <textarea
-                        id="modal-msg"
-                        rows={2}
-                        placeholder="Tôi muốn nhận thông tin tư vấn cụ thể..."
-                        value={contactForm.message}
-                        onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                        className="w-full bg-card border border-border rounded-md p-2.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
-                      />
-                    </div>
-                    <ContactConsentCheckbox />
-                    <Button
-                      type="submit"
-                      disabled={isSubmittingContact}
-                      className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-semibold h-11 rounded-md mt-2 flex items-center justify-center gap-1.5"
-                    >
-                      {isSubmittingContact ? "Đang gửi..." : "Gửi yêu cầu gọi lại"}
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </form>
+                {/* Category selector */}
+                <div className="lg:col-span-3">
+                  <Select value={propertyType} onValueChange={setPropertyType}>
+                    <SelectTrigger className="h-11 bg-background border-border rounded-xl text-xs sm:text-sm">
+                      <SelectValue placeholder="Loại hình BĐS" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả loại hình</SelectItem>
+                      <SelectItem value="apartment">Căn hộ / Chung cư</SelectItem>
+                      <SelectItem value="house">Nhà phố liền kề</SelectItem>
+                      <SelectItem value="land">Đất nền thổ cư</SelectItem>
+                      <SelectItem value="villa">Biệt thự nghỉ dưỡng</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                {/* Submit button */}
+                <div className="lg:col-span-2">
+                  <Button
+                    type="submit"
+                    className="w-full h-11 bg-primary hover:bg-primary/95 text-primary-foreground font-semibold rounded-xl text-xs sm:text-sm transition-all shadow-xs gap-1.5 cursor-pointer"
+                  >
+                    <Search className="size-4" />
+                    Tìm kiếm
+                  </Button>
+                </div>
+              </form>
+
+              {/* Shortcut Tags */}
+              <div className="mt-3.5 pt-3 border-t border-border/50 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">Gợi ý tìm nhanh:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDistrict("Sơn Trà");
+                    setPropertyType("apartment");
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-muted text-foreground transition-colors cursor-pointer"
+                >
+                  Căn hộ view biển Sơn Trà
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDistrict("Cẩm Lệ");
+                    setPropertyType("land");
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-muted text-foreground transition-colors cursor-pointer"
+                >
+                  Đất nền sinh thái Hòa Xuân
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDistrict("Hải Châu");
+                    setPropertyType("house");
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-muted text-foreground transition-colors cursor-pointer"
+                >
+                  Nhà phố trung tâm Hải Châu
+                </button>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </section>
-  );
-}
 
-function TopAgents() {
-  return (
-    <section className="bg-surface-container/60 py-16 md:py-20">
-      <div className="container-page">
-        <div className="text-center max-w-2xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold">Nhà môi giới hàng đầu</h2>
-          <p className="mt-2 text-muted-foreground">
-            Kết nối với những chuyên gia bất động sản có tâm và có tầm tại khu vực Đà Nẵng.
-          </p>
-        </div>
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {agents.map((a) => {
-            const slug = a.name
-              .toLowerCase()
-              .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "")
-              .replace(/đ/g, "d")
-              .replace(/\s+/g, "-");
-            return (
+            {/* Value Trust Bar directly on Banner with Translucent Cards */}
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center shadow-lg">
+                <div className="text-xl md:text-2xl font-extrabold text-amber-300">8.500+</div>
+                <div className="text-xs text-white/90 mt-0.5 font-medium">BĐS thẩm định minh bạch</div>
+              </div>
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center shadow-lg">
+                <div className="text-xl md:text-2xl font-extrabold text-teal-300">100%</div>
+                <div className="text-xs text-white/90 mt-0.5 font-medium">Có bản đồ quy hoạch 2030</div>
+              </div>
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center shadow-lg">
+                <div className="text-xl md:text-2xl font-extrabold text-orange-300">450+</div>
+                <div className="text-xs text-white/90 mt-0.5 font-medium">Môi giới xác thực uy tín</div>
+              </div>
+              <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center shadow-lg">
+                <div className="text-xl md:text-2xl font-extrabold text-white">15 phút</div>
+                <div className="text-xs text-white/90 mt-0.5 font-medium">Kết nối chuyên viên hỗ trợ</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================
+            2. BENTO GRID: Khám phá BĐS theo 5 phân khu trọng điểm
+        ========================================================= */}
+        <section className="py-10 md:py-12 bg-surface-container/40">
+          <div className="container-page">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+              <div>
+                <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                  Khu vực trọng điểm
+                </span>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mt-1">
+                  Bất động sản theo từng phân khu Đà Nẵng
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  Khám phá dữ liệu giá bán, tiềm năng phát triển và giỏ hàng theo từng quận huyện.
+                </p>
+              </div>
               <Link
-                key={a.name}
-                to="/moi-gioi/$slug"
-                params={{ slug }}
-                className="bg-card rounded-xl p-5 shadow-card border border-border/60 flex items-center gap-4 hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
+                to="/nha-dat-ban"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-primary hover:gap-2 transition-all shrink-0"
               >
-                <div className="relative shrink-0">
+                Xem tất cả khu vực <ArrowRight className="size-4" />
+              </Link>
+            </div>
+
+            {/* Bento Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {BENTO_DISTRICTS.map((item, idx) => (
+                <Link
+                  key={item.name}
+                  to="/nha-dat-ban"
+                  search={{ district: item.name.replace("Quận ", "") } as any}
+                  className={`group relative overflow-hidden rounded-2xl border border-border/60 shadow-xs hover:shadow-card-hover transition-all duration-300 ${idx === 0
+                      ? "md:col-span-2 md:row-span-2 min-h-[320px] md:min-h-[440px]"
+                      : "min-h-[210px]"
+                    }`}
+                >
                   <img
-                    src={a.img}
-                    alt={a.name}
-                    width={72}
-                    height={72}
+                    src={item.img}
+                    alt={item.name}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     loading="lazy"
-                    className="h-18 w-18 size-[72px] rounded-full object-cover ring-2 ring-white"
                   />
-                  <span className="absolute bottom-0 right-0 h-4 w-4 bg-teal border-2 border-white rounded-full" />
+                  {/* High contrast gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                  {/* Top Tag */}
+                  <div className="absolute top-3.5 left-3.5">
+                    <span className="bg-white/90 text-foreground font-semibold text-[10px] px-2.5 py-1 rounded-full backdrop-blur-xs">
+                      {item.tag}
+                    </span>
+                  </div>
+
+                  {/* Content Footer */}
+                  <div className="absolute inset-x-0 bottom-0 p-4 md:p-5 text-white">
+                    <div className="text-xs text-white/80 line-clamp-1 mb-1">
+                      {item.subtitle}
+                    </div>
+                    <div className="flex items-end justify-between gap-2">
+                      <h3 className="text-lg md:text-xl font-bold leading-tight group-hover:text-amber-300 transition-colors">
+                        {item.name}
+                      </h3>
+                      <div className="inline-flex items-center gap-1 text-xs font-semibold text-amber-300 shrink-0">
+                        <span>{item.listingsCount}</span>
+                        <span className="text-white/70 font-normal">tin</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================
+            3. PLANNING CHECK FEATURE: Khối Tra cứu quy hoạch 2030
+        ========================================================= */}
+        <section className="py-10 md:py-12 bg-background">
+          <div className="container-page">
+            <div className="bg-card border border-border/80 rounded-3xl p-6 md:p-8 shadow-card grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-center">
+              {/* Left Column: Information & Actions */}
+              <div className="lg:col-span-6 space-y-3.5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal/10 text-teal text-xs font-semibold">
+                  <MapIcon className="size-3.5" />
+                  Dữ liệu số hoá địa chính 2030
                 </div>
-                <div className="min-w-0">
-                  <div className="font-semibold">{a.name}</div>
-                  <div className="text-xs text-muted-foreground">{a.role}</div>
-                  <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+
+                <h2 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
+                  Tra cứu Bản đồ Quy hoạch Đà Nẵng 2030
+                </h2>
+
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Trước khi đặt cọc bất động sản, hãy tra cứu kỹ quy hoạch phân khu, lộ giới giao thông và mục đích sử dụng đất để bảo vệ dòng vốn đầu tư an toàn 100%.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="p-3 rounded-xl bg-surface-container/60 border border-border/50">
+                    <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <CheckCircle2 className="size-3.5 text-teal" /> Phân khu chi tiết
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Đất ở đô thị, đất thương mại dịch vụ, công viên cây xanh.
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-surface-container/60 border border-border/50">
+                    <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <CheckCircle2 className="size-3.5 text-teal" /> Dự án giao thông
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Cập nhật Cảng Liên Chiểu, đường vành đai và cầu mới.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                  <Button
+                    asChild
+                    className="bg-primary hover:bg-primary/95 text-primary-foreground font-semibold h-11 px-6 rounded-xl gap-2 shadow-xs"
+                  >
+                    <Link to="/check-quy-hoach">
+                      Tra cứu quy hoạch ngay
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="border-border text-foreground hover:bg-muted h-11 px-5 rounded-xl text-xs sm:text-sm font-semibold"
+                  >
+                    <Link to="/phap-ly">
+                      Xem cẩm nang pháp lý
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Right Column: Interactive Map Preview Card */}
+              <div className="lg:col-span-6 relative">
+                <Link
+                  to="/check-quy-hoach"
+                  className="group relative block rounded-2xl overflow-hidden border border-border/70 shadow-card-hover"
+                  title="Nhấn để mở bản đồ quy hoạch trực tuyến"
+                >
+                  <img
+                    src={planMap}
+                    alt="Bản đồ quy hoạch Đà Nẵng 2030"
+                    className="w-full aspect-[4/3] object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent flex flex-col justify-end p-5 text-white">
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-300 mb-1">
+                      <span className="size-2 rounded-full bg-teal animate-ping" />
+                      Dữ liệu số hoá đồng bộ Sở Xây Dựng
+                    </div>
+                    <div className="text-base font-bold">
+                      Nhấn để tra cứu thửa đất trên bản đồ số trực quan
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================
+            4. CURATED LISTINGS: Bất động sản mới nhất theo chuẩn evondevKit
+        ========================================================= */}
+        <section className="py-10 md:py-12 bg-surface-container/30">
+          <div className="container-page">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+              <div>
+                <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                  Sản phẩm tuyển chọn
+                </span>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mt-1">
+                  Bất động sản chính chủ mới nhất
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Thông tin giá niêm yết, đơn giá m² và pháp lý minh bạch.
+                </p>
+              </div>
+
+              {/* Category Pills */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { key: "all", label: "Tất cả" },
+                  { key: "apartment", label: "Căn hộ" },
+                  { key: "house", label: "Nhà phố" },
+                  { key: "land", label: "Đất nền" },
+                  { key: "villa", label: "Biệt thự" },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveCategory(tab.key)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${activeCategory === tab.key
+                        ? "bg-primary text-primary-foreground shadow-xs"
+                        : "bg-card text-muted-foreground border border-border/80 hover:text-foreground hover:bg-muted"
+                      }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Property Cards Grid (4 Columns) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {filteredProperties.map((item) => (
+                <article
+                  key={item.id}
+                  className="group bg-card rounded-2xl border border-border/70 overflow-hidden shadow-xs hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Thumbnail */}
+                    <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                      <Link
+                        to={item.listingType === "rent" ? "/nha-dat-cho-thue/$slug" : "/nha-dat-ban/$slug"}
+                        params={{ slug: item.slug }}
+                        className="block w-full h-full"
+                      >
+                        <img
+                          src={item.images[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=60"}
+                          alt={item.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      </Link>
+
+                      {/* Badges */}
+                      <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1 pointer-events-none">
+                        {item.isVip && (
+                          <span className="bg-amber-500 text-white font-bold text-[10px] uppercase px-2 py-0.5 rounded shadow-xs">
+                            VIP
+                          </span>
+                        )}
+                        {item.isOwner && (
+                          <span className="bg-teal text-teal-foreground font-semibold text-[10px] px-2 py-0.5 rounded shadow-xs flex items-center gap-1">
+                            <CheckCircle2 className="size-3" /> Chính chủ
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Save Button */}
+                      <button
+                        onClick={(e) => handleToggleSave(item.id, e)}
+                        className={`absolute top-2.5 right-2.5 size-8 rounded-full flex items-center justify-center transition-all shadow-xs backdrop-blur-xs cursor-pointer ${savedIds[item.id]
+                            ? "bg-rose-500 text-white"
+                            : "bg-black/40 hover:bg-black/60 text-white"
+                          }`}
+                        title="Lưu tin"
+                      >
+                        <Heart className={`size-4 ${savedIds[item.id] ? "fill-current" : ""}`} />
+                      </button>
+                    </div>
+
+                    {/* Card Content */}
+                    <div className="p-4 pb-2">
+                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground mb-1 line-clamp-1">
+                        <MapPin className="size-3.5 text-primary shrink-0" />
+                        <span className="truncate">{item.district}, Đà Nẵng</span>
+                      </div>
+
+                      <Link
+                        to={item.listingType === "rent" ? "/nha-dat-cho-thue/$slug" : "/nha-dat-ban/$slug"}
+                        params={{ slug: item.slug }}
+                        className="block group-hover:text-primary transition-colors"
+                      >
+                        <h3 className="font-bold text-sm text-foreground leading-snug line-clamp-2 h-10">
+                          {item.title}
+                        </h3>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Card Bottom: Price & Metrics (Aligned perfectly) */}
+                  <div className="px-4 pb-4 pt-1">
+                    <div className="pt-3 border-t border-border/60 flex items-end justify-between min-h-[44px]">
+                      <div>
+                        <div className="text-base font-extrabold text-primary leading-none">
+                          {item.priceLabel}
+                        </div>
+                        {item.pricePerM2 && (
+                          <div className="text-[11px] text-muted-foreground mt-0.5">
+                            {item.pricePerM2}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Specs */}
+                      <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                        {item.bedrooms && item.bedrooms > 0 ? (
+                          <span className="flex items-center gap-1" title={`${item.bedrooms} phòng ngủ`}>
+                            <Bed className="size-3.5" />
+                            {item.bedrooms}
+                          </span>
+                        ) : null}
+                        <span className="flex items-center gap-1" title={`Diện tích: ${item.area}m²`}>
+                          <Square className="size-3.5" />
+                          {item.area}m²
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {/* View More Link */}
+            <div className="text-center mt-6 md:mt-8">
+              <Button
+                asChild
+                variant="outline"
+                className="bg-card border-border hover:bg-muted font-semibold px-6 h-11 rounded-xl text-xs sm:text-sm"
+              >
+                <Link to="/nha-dat-ban">
+                  Xem thêm {allListings.length} tin bất động sản khác <ChevronRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================
+            5. PROJECTS SPOTLIGHT: Slider 4 columns (Ảnh 2)
+        ========================================================= */}
+        <section className="py-10 md:py-12 bg-background overflow-hidden">
+          <div className="container-page">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+              <div>
+                <span className="text-xs font-bold text-teal uppercase tracking-wider">
+                  Quy mô & Đẳng cấp
+                </span>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mt-1">
+                  Dự án Bất động sản nổi bật 2026
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Được phát triển bởi các chủ đầu tư danh tiếng, thẩm định tiến độ thực tế.
+                </p>
+              </div>
+
+              {/* Slider 4-column Controls */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={scrollProjectLeft}
+                  className="size-9 rounded-xl border border-border bg-card hover:bg-muted text-foreground flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+                  title="Dự án trước"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={scrollProjectRight}
+                  className="size-9 rounded-xl border border-border bg-card hover:bg-muted text-foreground flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+                  title="Dự án tiếp theo"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+                <Link
+                  to="/du-an"
+                  className="hidden sm:inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-primary hover:gap-2 transition-all ml-2"
+                >
+                  Xem toàn bộ <ArrowRight className="size-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* 4-column Slider Container (4 visible cards on desktop, swipeable) */}
+            <div
+              ref={projectSliderRef}
+              className="flex gap-4 sm:gap-5 overflow-x-auto scroll-smooth pb-4 pt-1 snap-x snap-mandatory"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {FEATURED_PROJECTS.map((proj) => (
+                <article
+                  key={proj.id}
+                  className="w-[82vw] sm:w-[46vw] md:w-[31vw] lg:w-[calc(25%-15px)] shrink-0 snap-start group bg-card rounded-2xl border border-border/70 overflow-hidden shadow-xs hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                      <img
+                        src={proj.img}
+                        alt={proj.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-3 left-3">
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold text-white shadow-xs ${proj.statusTone === "teal"
+                            ? "bg-teal/95"
+                            : proj.statusTone === "orange"
+                              ? "bg-orange/95"
+                              : "bg-slate-700/90"
+                          }`}>
+                          {proj.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 pb-2">
+                      <div className="text-xs text-muted-foreground">{proj.developer}</div>
+                      <Link to="/du-an" className="block group-hover:text-primary transition-colors">
+                        <h3 className="font-bold text-base text-foreground mt-1 line-clamp-1">
+                          {proj.title}
+                        </h3>
+                      </Link>
+                      <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="size-3.5 text-primary shrink-0" />
+                        <span>Quận {proj.district}, Đà Nẵng</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 pt-0">
+                    <div className="mt-3 pt-3 border-t border-border/60 grid grid-cols-3 gap-1.5 text-center">
+                      <div className="p-2 rounded-lg bg-surface-container/60">
+                        <div className="text-[10px] text-muted-foreground uppercase">Giá từ</div>
+                        <div className="text-xs font-bold text-primary mt-0.5">{proj.priceFrom}</div>
+                      </div>
+                      <div className="p-2 rounded-lg bg-surface-container/60">
+                        <div className="text-[10px] text-muted-foreground uppercase">Quy mô</div>
+                        <div className="text-xs font-semibold text-foreground mt-0.5">{proj.units}</div>
+                      </div>
+                      <div className="p-2 rounded-lg bg-surface-container/60">
+                        <div className="text-[10px] text-muted-foreground uppercase">Bàn giao</div>
+                        <div className="text-xs font-semibold text-foreground mt-0.5">{proj.handover}</div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================
+            6. TOP VERIFIED BROKERS: Bố cục đặc biệt theo Ảnh 4 (Ảnh 3)
+        ========================================================= */}
+        <section className="py-10 md:py-12 bg-surface-container/40">
+          <div className="container-page">
+            <div className="max-w-2xl mx-auto text-center mb-6 md:mb-8">
+              <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                ĐỘI NGŨ CHUYÊN NGHIỆP
+              </span>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mt-1">
+                Nhà môi giới hàng đầu tại Đà Nẵng
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Các chuyên viên am hiểu từng ngõ ngách thị trường, có chứng chỉ hành nghề và được khách hàng đánh giá cao.
+              </p>
+            </div>
+
+            {/* Top Showcase: Big photo left + Detailed credentials right (Ảnh 4) */}
+            <div className="bg-card border border-border/70 rounded-3xl p-5 md:p-7 shadow-card grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center max-w-5xl mx-auto">
+              {/* Left Column: Big portrait photo */}
+              <div className="md:col-span-5 relative">
+                <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-muted border border-border/50 shadow-md">
+                  <img
+                    src={activeAgent.img}
+                    alt={activeAgent.name}
+                    className="w-full h-full object-cover object-top transition-all duration-500"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className="bg-teal text-teal-foreground text-xs font-semibold px-2.5 py-1 rounded-full shadow-xs flex items-center gap-1">
+                      <ShieldCheck className="size-3.5" /> Môi giới xác thực
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Credentials & Bullet points (Ảnh 4) */}
+              <div className="md:col-span-7 flex flex-col justify-between h-full py-1">
+                <div>
+                  <div className="text-xs font-semibold text-primary uppercase tracking-wider">
+                    {activeAgent.honorific}
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-extrabold text-foreground mt-1">
+                    {activeAgent.name}
+                  </h3>
+                  <div className="text-xs sm:text-sm text-teal font-semibold mt-1">
+                    {activeAgent.role} · {activeAgent.district}
+                  </div>
+
+                  {/* Rating row */}
+                  <div className="mt-2.5 flex items-center gap-2 flex-wrap">
                     <div className="flex items-center gap-0.5 text-orange">
-                      {Array.from({ length: a.rating }).map((_, i) => (
-                        <Star key={i} className="h-3.5 w-3.5 fill-current" />
+                      {Array.from({ length: activeAgent.rating }).map((_, i) => (
+                        <Star key={i} className="size-3.5 fill-current" />
                       ))}
                     </div>
                     <span className="text-xs font-bold text-foreground">5.0</span>
-                    <span className="text-[11px] text-muted-foreground">({a.reviews} đánh giá)</span>
+                    <span className="text-xs text-muted-foreground">({activeAgent.reviews} đánh giá)</span>
+                    <span className="text-muted-foreground/40">•</span>
+                    <span className="text-xs font-semibold text-foreground">{activeAgent.experience}</span>
+                    <span className="text-muted-foreground/40">•</span>
+                    <span className="text-xs text-muted-foreground">{activeAgent.listings} tin đăng</span>
                   </div>
-                  <div className="mt-1 text-[11px] text-muted-foreground">
-                    {a.listings} tin đăng • {a.years} năm kinh nghiệm
-                  </div>
+
+                  {/* Bullet points with dashes (Ảnh 4) */}
+                  <ul className="mt-5 space-y-2.5 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                    {activeAgent.bullets.map((b, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-primary font-bold shrink-0">–</span>
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
 
+                {/* Navigation arrows (Ảnh 4) + Call button */}
+                <div className="mt-6 pt-4 border-t border-border/50 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handlePrevAgent}
+                      className="size-10 rounded-xl border border-border hover:border-primary bg-card hover:bg-primary hover:text-white text-foreground flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                      title="Môi giới trước"
+                    >
+                      <ChevronLeft className="size-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextAgent}
+                      className="size-10 rounded-xl border border-border hover:border-primary bg-card hover:bg-primary hover:text-white text-foreground flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                      title="Môi giới tiếp theo"
+                    >
+                      <ChevronRight className="size-5" />
+                    </button>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {activeAgentIndex + 1} / {TOP_AGENTS.length}
+                    </span>
+                  </div>
 
+                  <Button
+                    asChild
+                    className="bg-primary hover:bg-primary/95 text-primary-foreground font-semibold rounded-xl text-xs sm:text-sm h-10 px-5 gap-1.5"
+                  >
+                    <a href={`tel:${activeAgent.phone}`}>
+                      <Phone className="size-3.5" />
+                      Gọi {activeAgent.phone}
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </div>
 
-function HomePage() {
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main>
-        <Hero />
-        <DistrictSection />
-        <PlanningCheck />
-        <FeaturedProperties />
-        <ProjectsSlider />
-        <NewsSection />
-        <TopAgents />
+            {/* Bottom Row of Thumbnails (Ảnh 4) */}
+            <div className="mt-6 max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              {TOP_AGENTS.map((agent, idx) => {
+                const isActive = idx === activeAgentIndex;
+                return (
+                  <button
+                    key={agent.id}
+                    type="button"
+                    onClick={() => setActiveAgentIndex(idx)}
+                    className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${isActive
+                        ? "bg-card border-primary ring-2 ring-primary/20 shadow-md scale-[1.02]"
+                        : "bg-card/70 border-border/70 hover:border-primary/50 hover:bg-card"
+                      }`}
+                  >
+                    <img
+                      src={agent.img}
+                      alt={agent.name}
+                      className="size-14 sm:size-16 rounded-xl object-cover shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-xs sm:text-sm text-foreground truncate">
+                        {agent.name}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground truncate mt-0.5">
+                        {agent.district}
+                      </div>
+                      <div className="text-[10px] text-primary font-semibold mt-1">
+                        {agent.listings} tin đăng
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Centered CTA Button (Ảnh 4: "Tìm hiểu thêm →") */}
+            <div className="text-center mt-6 md:mt-8">
+              <Button
+                asChild
+                className="bg-primary hover:bg-primary/95 text-primary-foreground font-semibold px-8 h-12 rounded-xl text-sm shadow-md gap-2 cursor-pointer"
+              >
+                <Link to="/moi-gioi">
+                  Xem danh bạ toàn bộ môi giới
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================
+            7. REAL ESTATE & LEGAL NEWS (Khối Tin tức BĐS chuẩn EvondevKit)
+        ========================================================= */}
+        <NewsSection className="py-10 md:py-12 bg-background" />
+
+        {/* =========================================================
+            8. QUICK CONSULTATION LEAD BANNER
+        ========================================================= */}
+        <section className="py-10 md:py-12 bg-surface-container/30">
+          <div className="container-page">
+            <div className="bg-gradient-to-r from-primary via-primary to-teal rounded-3xl p-6 md:p-10 text-white shadow-card flex flex-col lg:flex-row items-center justify-between gap-6 md:gap-8">
+              <div className="max-w-xl text-center lg:text-left">
+                <span className="bg-white/15 text-white font-semibold text-xs px-3 py-1 rounded-full backdrop-blur-xs">
+                  Tư vấn trực tiếp 24/7
+                </span>
+                <h2 className="text-2xl md:text-3xl font-extrabold mt-3">
+                  Bạn cần tìm bất động sản theo yêu cầu riêng?
+                </h2>
+                <p className="mt-2 text-sm text-white/85 leading-relaxed">
+                  Để lại số điện thoại, đội ngũ chuyên viên Đà Nẵng sẽ lọc giỏ hàng độc quyền phù hợp ngân sách và gửi cho bạn trong 15 phút.
+                </p>
+              </div>
+
+              {/* Quick Input Form */}
+              <form onSubmit={handleQuickLeadSubmit} className="w-full max-w-md bg-white rounded-2xl p-2 sm:p-2.5 shadow-lg flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    type="tel"
+                    required
+                    placeholder="Nhập số điện thoại của bạn..."
+                    value={quickPhone}
+                    onChange={(e) => setQuickPhone(e.target.value)}
+                    className="pl-10 h-11 border-none shadow-none text-slate-800 placeholder:text-muted-foreground text-xs sm:text-sm"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-primary hover:bg-primary/95 text-primary-foreground font-semibold h-11 px-6 rounded-xl text-xs sm:text-sm shrink-0 whitespace-nowrap cursor-pointer"
+                >
+                  {isSubmitting ? "Đang gửi..." : "Nhận tư vấn"}
+                </Button>
+              </form>
+            </div>
+          </div>
+        </section>
       </main>
+
       <Footer />
     </div>
   );

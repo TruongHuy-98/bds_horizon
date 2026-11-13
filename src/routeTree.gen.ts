@@ -17,7 +17,6 @@ import { Route as CheckQuyHoachRouteImport } from './routes/check-quy-hoach'
 import { Route as ChinhSachBaoMatRouteImport } from './routes/chinh-sach-bao-mat'
 import { Route as DieuKhoanSuDungRouteImport } from './routes/dieu-khoan-su-dung'
 import { Route as OnThiRouteImport } from './routes/on-thi'
-import { Route as TrangChuMoiRouteImport } from './routes/trang-chu-moi'
 import { Route as DuAnIndexRouteImport } from './routes/du-an.index'
 import { Route as DuAnSlugRouteImport } from './routes/du-an.$slug'
 import { Route as MoiGioiIndexRouteImport } from './routes/moi-gioi.index'
@@ -69,11 +68,6 @@ const DieuKhoanSuDungRoute = DieuKhoanSuDungRouteImport.update({
 const OnThiRoute = OnThiRouteImport.update({
   id: '/on-thi',
   path: '/on-thi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrangChuMoiRoute = TrangChuMoiRouteImport.update({
-  id: '/trang-chu-moi',
-  path: '/trang-chu-moi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DuAnIndexRoute = DuAnIndexRouteImport.update({
@@ -146,7 +140,6 @@ export interface FileRoutesByFullPath {
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/dieu-khoan-su-dung': typeof DieuKhoanSuDungRoute
   '/on-thi': typeof OnThiRoute
-  '/trang-chu-moi': typeof TrangChuMoiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
   '/nha-dat-ban/$slug': typeof NhaDatBanSlugRoute
@@ -169,7 +162,6 @@ export interface FileRoutesByTo {
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/dieu-khoan-su-dung': typeof DieuKhoanSuDungRoute
   '/on-thi': typeof OnThiRoute
-  '/trang-chu-moi': typeof TrangChuMoiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
   '/nha-dat-ban/$slug': typeof NhaDatBanSlugRoute
@@ -193,7 +185,6 @@ export interface FileRoutesById {
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/dieu-khoan-su-dung': typeof DieuKhoanSuDungRoute
   '/on-thi': typeof OnThiRoute
-  '/trang-chu-moi': typeof TrangChuMoiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
   '/nha-dat-ban/$slug': typeof NhaDatBanSlugRoute
@@ -218,7 +209,6 @@ export interface FileRouteTypes {
     | '/chinh-sach-bao-mat'
     | '/dieu-khoan-su-dung'
     | '/on-thi'
-    | '/trang-chu-moi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
     | '/nha-dat-ban/$slug'
@@ -241,7 +231,6 @@ export interface FileRouteTypes {
     | '/chinh-sach-bao-mat'
     | '/dieu-khoan-su-dung'
     | '/on-thi'
-    | '/trang-chu-moi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
     | '/nha-dat-ban/$slug'
@@ -264,7 +253,6 @@ export interface FileRouteTypes {
     | '/chinh-sach-bao-mat'
     | '/dieu-khoan-su-dung'
     | '/on-thi'
-    | '/trang-chu-moi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
     | '/nha-dat-ban/$slug'
@@ -288,7 +276,6 @@ export interface RootRouteChildren {
   ChinhSachBaoMatRoute: typeof ChinhSachBaoMatRoute
   DieuKhoanSuDungRoute: typeof DieuKhoanSuDungRoute
   OnThiRoute: typeof OnThiRoute
-  TrangChuMoiRoute: typeof TrangChuMoiRoute
   DuAnSlugRoute: typeof DuAnSlugRoute
   MoiGioiSlugRoute: typeof MoiGioiSlugRoute
   NhaDatBanSlugRoute: typeof NhaDatBanSlugRoute
@@ -359,13 +346,6 @@ declare module '@tanstack/react-router' {
       path: '/on-thi'
       fullPath: '/on-thi'
       preLoaderRoute: typeof OnThiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/trang-chu-moi': {
-      id: '/trang-chu-moi'
-      path: '/trang-chu-moi'
-      fullPath: '/trang-chu-moi'
-      preLoaderRoute: typeof TrangChuMoiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/du-an/': {
@@ -464,7 +444,6 @@ const rootRouteChildren: RootRouteChildren = {
   ChinhSachBaoMatRoute: ChinhSachBaoMatRoute,
   DieuKhoanSuDungRoute: DieuKhoanSuDungRoute,
   OnThiRoute: OnThiRoute,
-  TrangChuMoiRoute: TrangChuMoiRoute,
   DuAnSlugRoute: DuAnSlugRoute,
   MoiGioiSlugRoute: MoiGioiSlugRoute,
   NhaDatBanSlugRoute: NhaDatBanSlugRoute,

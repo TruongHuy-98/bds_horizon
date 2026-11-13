@@ -779,12 +779,12 @@ function CTASection() {
                 Đăng dự án ngay
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                className="h-11 px-8 rounded-xl border-white/30 text-white hover:bg-white/10 font-medium text-sm"
+              <button
+                type="button"
+                className="h-11 px-8 rounded-xl border border-white/40 text-white/90 hover:bg-white/15 hover:text-white font-medium text-sm transition-colors"
               >
                 Tìm hiểu thêm
-              </Button>
+              </button>
             </div>
           </div>
         </div>
