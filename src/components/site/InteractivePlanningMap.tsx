@@ -86,8 +86,18 @@ export function InteractivePlanningMap({
           ? [activeProperty.latitude, activeProperty.longitude]
           : [16.0678, 108.2208]; // Da Nang center
         
+        // Da Nang region bounds — restrict pan/zoom to city area
+        const danangRegionBounds = L.latLngBounds(
+          [15.5, 107.6],  // SW — rộng hơn chút để thoải mái
+          [16.4, 108.6],  // NE
+        );
+
         const map = L.map(mapContainerRef.current!, {
-          zoomControl: false, // Custom zoom control positioned on top-right
+          zoomControl: false,   // Custom zoom control positioned on top-right
+          minZoom: 10,          // Không cho zoom ra quá tầm thành phố
+          maxZoom: 19,
+          maxBounds: danangRegionBounds,
+          maxBoundsViscosity: 0.85, // Kéo ra ngoài bounds bị "kéo lại" mềm
         }).setView(initialCenter, 14);
 
         mapRef.current = map;
