@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { type Coordinates, type PoiCategory, type POIWithDistance } from "./MapPoiLayers";
 import { Info, Map as MapIcon, Loader2, Layers } from "lucide-react";
-import planningMapImg from "@/assets/quy-hoach-2050-toan-tp.jpg";
+import planningMapImg from "@/assets/quy-hoach-2050-overlay.png";
 import { queryPlanningProxy } from "@/lib/planningProxy";
 
 interface InteractivePlanningMapProps {
@@ -88,8 +88,8 @@ export function InteractivePlanningMap({
         
         // Da Nang region bounds — restrict pan/zoom to city area
         const danangRegionBounds = L.latLngBounds(
-          [15.5, 107.6],  // SW — rộng hơn chút để thoải mái
-          [16.4, 108.6],  // NE
+          [15.5, 107.5],  // SW
+          [16.4, 109.0],  // NE
         );
 
         const map = L.map(mapContainerRef.current!, {
@@ -132,12 +132,11 @@ export function InteractivePlanningMap({
 
         esriLayerRef.current = esriLayer;
 
-        // Add static planning image overlay (georeferenced to Da Nang bounds)
-        // Bounding box: Toàn thành phố Đà Nẵng (WGS84)
-        // SW: 15.726°N, 107.875°E — NE: 16.192°N, 108.335°E
+        // Add static planning image overlay (calibrated to Da Nang real landmarks)
+        // Calculated bounds matching Son Tra tip (108.334°E), Hai Van (16.195°N), and city mainland
         const danangBounds: [[number, number], [number, number]] = [
-          [15.726, 107.875], // Southwest (bottom-left)
-          [16.192, 108.335], // Northeast (top-right)
+          [15.8386, 107.7148], // Southwest (bottom-left)
+          [16.2890, 108.8782], // Northeast (top-right)
         ];
         const imgOverlay = L.imageOverlay(planningMapImg, danangBounds, {
           opacity: 0,          // start hidden, controlled externally via prop

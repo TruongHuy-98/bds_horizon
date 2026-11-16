@@ -309,24 +309,24 @@ function CheckQuyHoachPage() {
                   <Switch checked={layerSubzone} onCheckedChange={setLayerSubzone} />
                 </div>
 
-                {/* Overlay bản đồ quy hoạch 2050 scan */}
+                {/* Lớp Bản đồ quy hoạch 2050 */}
                 <div className={`flex items-center justify-between bg-card border border-border px-4 py-3 ${planningOverlayOpacity > 0 ? "rounded-t-md border-b-0" : "rounded-md"}`}>
                   <div className="flex items-center gap-3">
                     <Layers className="h-4.5 w-4.5 text-primary" />
                     <div>
-                      <span className="text-sm font-medium block">Bản đồ QH 2050 (scan)</span>
-                      <span className="text-xs text-muted-foreground">Lớp phủ định hướng SD đất toàn TP</span>
+                      <span className="text-sm font-medium block">Bản đồ quy hoạch 2050</span>
+                      <span className="text-xs text-muted-foreground">Định hướng sử dụng đất toàn TP</span>
                     </div>
                   </div>
                   <Switch
                     checked={planningOverlayOpacity > 0}
-                    onCheckedChange={(v) => setPlanningOverlayOpacity(v ? 70 : 0)}
+                    onCheckedChange={(v) => setPlanningOverlayOpacity(v ? 75 : 0)}
                   />
                 </div>
                 {planningOverlayOpacity > 0 && (
                   <div className="px-4 pb-3 pt-2 bg-card border border-border border-t-0 rounded-b-md">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs text-muted-foreground">Độ mờ overlay</span>
+                      <span className="text-xs text-muted-foreground">Độ hiển thị</span>
                       <span className="text-xs font-semibold text-primary">{planningOverlayOpacity}%</span>
                     </div>
                     <input
@@ -338,8 +338,8 @@ function CheckQuyHoachPage() {
                       className="w-full h-1.5 accent-primary cursor-pointer"
                     />
                     <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>Trong suốt</span>
-                      <span>Đục hoàn toàn</span>
+                      <span>Mờ</span>
+                      <span>Rõ nét</span>
                     </div>
                   </div>
                 )}
