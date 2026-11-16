@@ -108,6 +108,9 @@ export function InteractivePlanningMap({
           {
             maxZoom: 19,
             attribution: "© OpenStreetMap contributors",
+            updateWhenZooming: false,  // don't reload tiles mid-animation
+            updateWhenIdle: true,      // only load when pan/zoom ends
+            keepBuffer: 4,             // keep more tiles in buffer to avoid gray areas
           }
         ).addTo(map);
         baseMapLayerRef.current = baseLayer;
@@ -116,11 +119,15 @@ export function InteractivePlanningMap({
         poiMarkersGroupRef.current = L.layerGroup().addTo(map);
 
         // Add Planning layer from ArcGIS of Da Nang
+        // updateInterval: throttle requests during zoom/pan animation (ms)
+        // disableCache: false → reuse cached tiles
         const esriLayer = esri.dynamicMapLayer({
           url: "https://thongtinquyhoachxaydung.danang.gov.vn/arcgis/rest/services/SoXayDung/QuyHoachDoThi/MapServer",
           layers: getVisibleLayers(layer2026, layerSubzone),
           opacity: 0.65,
           useCors: true,
+          updateInterval: 500,   // only re-request after 500ms idle — reduces lag during zoom
+          disableCache: false,
         }).addTo(map);
 
         esriLayerRef.current = esriLayer;
@@ -198,6 +205,9 @@ export function InteractivePlanningMap({
         {
           maxZoom: 20,
           attribution: "© Google Maps Satellite",
+          updateWhenZooming: false,
+          updateWhenIdle: true,
+          keepBuffer: 4,
         }
       ).addTo(mapRef.current);
       baseMapLayerRef.current = satLayer;
@@ -209,6 +219,9 @@ export function InteractivePlanningMap({
         {
           maxZoom: 19,
           attribution: "© OpenStreetMap",
+          updateWhenZooming: false,
+          updateWhenIdle: true,
+          keepBuffer: 4,
         }
       ).addTo(mapRef.current);
       baseMapLayerRef.current = osmLayer;
