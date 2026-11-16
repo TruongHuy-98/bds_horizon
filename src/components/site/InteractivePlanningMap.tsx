@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { type Coordinates, type PoiCategory, type POIWithDistance } from "./MapPoiLayers";
-import { Info, Map as MapIcon, Loader2 } from "lucide-react";
+import { Info, Map as MapIcon, Loader2, Layers } from "lucide-react";
+import planningMapImg from "@/assets/quy-hoach-2050-toan-tp.jpg";
 import { queryPlanningProxy } from "@/lib/planningProxy";
 
 interface InteractivePlanningMapProps {
@@ -10,6 +11,8 @@ interface InteractivePlanningMapProps {
   layer2026: boolean;
   layerSubzone: boolean;
   onPlanningQuery: (info: PlanningInfo | null, isLoading: boolean) => void;
+  // New: overlay from uploaded planning map image
+  planningOverlayOpacity?: number; // 0–100
 }
 
 export interface PlanningInfo {
@@ -49,6 +52,7 @@ export function InteractivePlanningMap({
   layer2026,
   layerSubzone,
   onPlanningQuery,
+  planningOverlayOpacity = 0,
 }: InteractivePlanningMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -58,6 +62,8 @@ export function InteractivePlanningMap({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [baseMapType, setBaseMapType] = useState<"osm" | "satellite">("osm");
   const baseMapLayerRef = useRef<any>(null);
+  // Ref for the planning image overlay layer
+  const planningImageLayerRef = useRef<any>(null);
 
   // Initialize Map (Client-only load)
   useEffect(() => {
@@ -109,6 +115,21 @@ export function InteractivePlanningMap({
 
         esriLayerRef.current = esriLayer;
 
+        // Add static planning image overlay (georeferenced to Da Nang bounds)
+        // Bounding box: Toàn thành phố Đà Nẵng (WGS84)
+        // SW: 15.726°N, 107.875°E — NE: 16.192°N, 108.335°E
+        const danangBounds: [[number, number], [number, number]] = [
+          [15.726, 107.875], // Southwest (bottom-left)
+          [16.192, 108.335], // Northeast (top-right)
+        ];
+        const imgOverlay = L.imageOverlay(planningMapImg, danangBounds, {
+          opacity: 0,          // start hidden, controlled externally via prop
+          interactive: false,
+          zIndex: 500,
+          crossOrigin: true,
+        }).addTo(map);
+        planningImageLayerRef.current = imgOverlay;
+
         // Map Click Event
         map.on("click", async (e: any) => {
           const { lat, lng } = e.latlng;
@@ -136,6 +157,12 @@ export function InteractivePlanningMap({
       }
     };
   }, []);
+
+  // Sync planning overlay opacity when slider changes
+  useEffect(() => {
+    if (!planningImageLayerRef.current) return;
+    planningImageLayerRef.current.setOpacity(planningOverlayOpacity / 100);
+  }, [planningOverlayOpacity]);
 
   // Helper to determine visible layer IDs based on switches
   const getVisibleLayers = (show2026: boolean, showSubzone: boolean) => {
