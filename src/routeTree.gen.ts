@@ -16,6 +16,7 @@ import { Route as BanDatRouteImport } from './routes/ban-dat'
 import { Route as CheckQuyHoachRouteImport } from './routes/check-quy-hoach'
 import { Route as ChinhSachBaoMatRouteImport } from './routes/chinh-sach-bao-mat'
 import { Route as DieuKhoanSuDungRouteImport } from './routes/dieu-khoan-su-dung'
+import { Route as LienHeRouteImport } from './routes/lien-he'
 import { Route as OnThiRouteImport } from './routes/on-thi'
 import { Route as DuAnIndexRouteImport } from './routes/du-an.index'
 import { Route as DuAnSlugRouteImport } from './routes/du-an.$slug'
@@ -63,6 +64,11 @@ const ChinhSachBaoMatRoute = ChinhSachBaoMatRouteImport.update({
 const DieuKhoanSuDungRoute = DieuKhoanSuDungRouteImport.update({
   id: '/dieu-khoan-su-dung',
   path: '/dieu-khoan-su-dung',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LienHeRoute = LienHeRouteImport.update({
+  id: '/lien-he',
+  path: '/lien-he',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnThiRoute = OnThiRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/check-quy-hoach': typeof CheckQuyHoachRoute
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/dieu-khoan-su-dung': typeof DieuKhoanSuDungRoute
+  '/lien-he': typeof LienHeRoute
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/check-quy-hoach': typeof CheckQuyHoachRoute
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/dieu-khoan-su-dung': typeof DieuKhoanSuDungRoute
+  '/lien-he': typeof LienHeRoute
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/check-quy-hoach': typeof CheckQuyHoachRoute
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/dieu-khoan-su-dung': typeof DieuKhoanSuDungRoute
+  '/lien-he': typeof LienHeRoute
   '/on-thi': typeof OnThiRoute
   '/du-an/$slug': typeof DuAnSlugRoute
   '/moi-gioi/$slug': typeof MoiGioiSlugRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/check-quy-hoach'
     | '/chinh-sach-bao-mat'
     | '/dieu-khoan-su-dung'
+    | '/lien-he'
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/check-quy-hoach'
     | '/chinh-sach-bao-mat'
     | '/dieu-khoan-su-dung'
+    | '/lien-he'
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/check-quy-hoach'
     | '/chinh-sach-bao-mat'
     | '/dieu-khoan-su-dung'
+    | '/lien-he'
     | '/on-thi'
     | '/du-an/$slug'
     | '/moi-gioi/$slug'
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   CheckQuyHoachRoute: typeof CheckQuyHoachRoute
   ChinhSachBaoMatRoute: typeof ChinhSachBaoMatRoute
   DieuKhoanSuDungRoute: typeof DieuKhoanSuDungRoute
+  LienHeRoute: typeof LienHeRoute
   OnThiRoute: typeof OnThiRoute
   DuAnSlugRoute: typeof DuAnSlugRoute
   MoiGioiSlugRoute: typeof MoiGioiSlugRoute
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       path: '/dieu-khoan-su-dung'
       fullPath: '/dieu-khoan-su-dung'
       preLoaderRoute: typeof DieuKhoanSuDungRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lien-he': {
+      id: '/lien-he'
+      path: '/lien-he'
+      fullPath: '/lien-he'
+      preLoaderRoute: typeof LienHeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/on-thi': {
@@ -443,6 +463,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckQuyHoachRoute: CheckQuyHoachRoute,
   ChinhSachBaoMatRoute: ChinhSachBaoMatRoute,
   DieuKhoanSuDungRoute: DieuKhoanSuDungRoute,
+  LienHeRoute: LienHeRoute,
   OnThiRoute: OnThiRoute,
   DuAnSlugRoute: DuAnSlugRoute,
   MoiGioiSlugRoute: MoiGioiSlugRoute,

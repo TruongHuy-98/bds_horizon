@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { type Coordinates, type PoiCategory, type POIWithDistance } from "./MapPoiLayers";
 import { Info, Map as MapIcon, Loader2, Layers } from "lucide-react";
-import planningMapImg from "@/assets/quy-hoach-2050-overlay.png";
 import { queryPlanningProxy } from "@/lib/planningProxy";
 
 interface InteractivePlanningMapProps {
@@ -11,8 +10,6 @@ interface InteractivePlanningMapProps {
   layer2026: boolean;
   layerSubzone: boolean;
   onPlanningQuery: (info: PlanningInfo | null, isLoading: boolean) => void;
-  // New: overlay from uploaded planning map image
-  planningOverlayOpacity?: number; // 0–100
 }
 
 export interface PlanningInfo {
@@ -52,7 +49,6 @@ export function InteractivePlanningMap({
   layer2026,
   layerSubzone,
   onPlanningQuery,
-  planningOverlayOpacity = 0,
 }: InteractivePlanningMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -62,8 +58,6 @@ export function InteractivePlanningMap({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [baseMapType, setBaseMapType] = useState<"osm" | "satellite">("osm");
   const baseMapLayerRef = useRef<any>(null);
-  // Ref for the planning image overlay layer
-  const planningImageLayerRef = useRef<any>(null);
 
   // Initialize Map (Client-only load)
   useEffect(() => {
@@ -85,35 +79,44 @@ export function InteractivePlanningMap({
         const initialCenter = activeProperty
           ? [activeProperty.latitude, activeProperty.longitude]
           : [16.0678, 108.2208]; // Da Nang center
-        
-        // Da Nang region bounds — restrict pan/zoom to city area
-        const danangRegionBounds = L.latLngBounds(
-          [15.5, 107.5],  // SW
-          [16.4, 109.0],  // NE
-        );
 
         const map = L.map(mapContainerRef.current!, {
-          zoomControl: false,   // Custom zoom control positioned on top-right
-          minZoom: 10,          // Không cho zoom ra quá tầm thành phố
+          zoomControl: false, // Custom zoom control positioned on top-right
+          minZoom: 4,         // Cho phép zoom tự do ra cả Việt Nam / toàn cầu
           maxZoom: 19,
-          maxBounds: danangRegionBounds,
-          maxBoundsViscosity: 0.85, // Kéo ra ngoài bounds bị "kéo lại" mềm
         }).setView(initialCenter, 14);
 
         mapRef.current = map;
 
-        // Base Map (OSM default)
+        // Base Map (Google Maps Vietnam tiếng Việt - hiển thị chuẩn địa danh chủ quyền Việt Nam)
         const baseLayer = L.tileLayer(
-          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          "https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}",
           {
-            maxZoom: 19,
-            attribution: "© OpenStreetMap contributors",
-            updateWhenZooming: false,  // don't reload tiles mid-animation
-            updateWhenIdle: true,      // only load when pan/zoom ends
-            keepBuffer: 4,             // keep more tiles in buffer to avoid gray areas
+            maxZoom: 20,
+            attribution: "© Google Maps (Việt Nam)",
+            updateWhenZooming: false,
+            updateWhenIdle: true,
+            keepBuffer: 4,
           }
         ).addTo(map);
         baseMapLayerRef.current = baseLayer;
+
+        // Thêm nhãn khẳng định chủ quyền Hoàng Sa (TP. Đà Nẵng) & Trường Sa (Tỉnh Khánh Hòa)
+        const hoangSaIcon = L.divIcon({
+          className: "sovereignty-badge",
+          html: `<div style="background:#b91c1c;color:#fff;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;border:1.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">🇻🇳 Quần đảo Hoàng Sa (TP. Đà Nẵng)</div>`,
+          iconSize: [210, 26],
+          iconAnchor: [105, 13],
+        });
+        L.marker([16.53, 112.02], { icon: hoangSaIcon, interactive: false }).addTo(map);
+
+        const truongSaIcon = L.divIcon({
+          className: "sovereignty-badge",
+          html: `<div style="background:#b91c1c;color:#fff;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;border:1.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">🇻🇳 Quần đảo Trường Sa (Tỉnh Khánh Hòa)</div>`,
+          iconSize: [220, 26],
+          iconAnchor: [110, 13],
+        });
+        L.marker([10.73, 115.82], { icon: truongSaIcon, interactive: false }).addTo(map);
 
         // Create POI markers group
         poiMarkersGroupRef.current = L.layerGroup().addTo(map);
@@ -131,20 +134,6 @@ export function InteractivePlanningMap({
         }).addTo(map);
 
         esriLayerRef.current = esriLayer;
-
-        // Add static planning image overlay (calibrated to Da Nang real landmarks)
-        // Calculated bounds matching Son Tra tip (108.334°E), Hai Van (16.195°N), and city mainland
-        const danangBounds: [[number, number], [number, number]] = [
-          [15.8386, 107.7148], // Southwest (bottom-left)
-          [16.2890, 108.8782], // Northeast (top-right)
-        ];
-        const imgOverlay = L.imageOverlay(planningMapImg, danangBounds, {
-          opacity: 0,          // start hidden, controlled externally via prop
-          interactive: false,
-          zIndex: 500,
-          crossOrigin: true,
-        }).addTo(map);
-        planningImageLayerRef.current = imgOverlay;
 
         // Map Click Event
         map.on("click", async (e: any) => {
@@ -174,12 +163,6 @@ export function InteractivePlanningMap({
     };
   }, []);
 
-  // Sync planning overlay opacity when slider changes
-  useEffect(() => {
-    if (!planningImageLayerRef.current) return;
-    planningImageLayerRef.current.setOpacity(planningOverlayOpacity / 100);
-  }, [planningOverlayOpacity]);
-
   // Helper to determine visible layer IDs based on switches
   const getVisibleLayers = (show2026: boolean, showSubzone: boolean) => {
     const layers: number[] = [4]; // Detail 1/500 layer is always useful
@@ -200,10 +183,10 @@ export function InteractivePlanningMap({
     if (baseMapType === "osm") {
       // Switch to Satellite Hybrid
       const satLayer = L.tileLayer(
-        "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+        "https://mt1.google.com/vt/lyrs=y&hl=vi&x={x}&y={y}&z={z}",
         {
           maxZoom: 20,
-          attribution: "© Google Maps Satellite",
+          attribution: "© Google Maps Satellite (Việt Nam)",
           updateWhenZooming: false,
           updateWhenIdle: true,
           keepBuffer: 4,
@@ -212,18 +195,18 @@ export function InteractivePlanningMap({
       baseMapLayerRef.current = satLayer;
       setBaseMapType("satellite");
     } else {
-      // Switch to OSM
-      const osmLayer = L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      // Switch to Google Maps Road tiếng Việt
+      const roadLayer = L.tileLayer(
+        "https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}",
         {
-          maxZoom: 19,
-          attribution: "© OpenStreetMap",
+          maxZoom: 20,
+          attribution: "© Google Maps (Việt Nam)",
           updateWhenZooming: false,
           updateWhenIdle: true,
           keepBuffer: 4,
         }
       ).addTo(mapRef.current);
-      baseMapLayerRef.current = osmLayer;
+      baseMapLayerRef.current = roadLayer;
       setBaseMapType("osm");
     }
   };

@@ -9,6 +9,10 @@ import {
   Loader2,
   Navigation,
   Layers,
+  Maximize2,
+  Eye,
+  EyeOff,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +30,7 @@ import {
   InteractivePlanningMap,
   type PlanningInfo,
 } from "@/components/site/InteractivePlanningMap";
+import { PlanningMapModalViewer } from "@/components/site/PlanningMapModalViewer";
 import { useAddressSearch } from "@/hooks/useAddressSearch";
 
 export const Route = createFileRoute("/check-quy-hoach")({
@@ -82,7 +87,10 @@ function CheckQuyHoachPage() {
   const [tab, setTab] = useState<"address" | "parcel">("address");
   const [layer2026, setLayer2026] = useState(true);
   const [layerSubzone, setLayerSubzone] = useState(false);
-  const [planningOverlayOpacity, setPlanningOverlayOpacity] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showMapOverlays, setShowMapOverlays] = useState(true);
+  const [showLegend, setShowLegend] = useState(true);
+  const [showTraffic, setShowTraffic] = useState(true);
 
   // Active property marker coordinate state (Default to a location in Da Nang)
   const [activeProperty, setActiveProperty] = useState<Coordinates | null>({
@@ -309,40 +317,15 @@ function CheckQuyHoachPage() {
                   <Switch checked={layerSubzone} onCheckedChange={setLayerSubzone} />
                 </div>
 
-                {/* Lớp Bản đồ quy hoạch 2050 */}
-                <div className={`flex items-center justify-between bg-card border border-border px-4 py-3 ${planningOverlayOpacity > 0 ? "rounded-t-md border-b-0" : "rounded-md"}`}>
-                  <div className="flex items-center gap-3">
-                    <Layers className="h-4.5 w-4.5 text-primary" />
-                    <div>
-                      <span className="text-sm font-medium block">Bản đồ quy hoạch 2050</span>
-                      <span className="text-xs text-muted-foreground">Định hướng sử dụng đất toàn TP</span>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={planningOverlayOpacity > 0}
-                    onCheckedChange={(v) => setPlanningOverlayOpacity(v ? 75 : 0)}
-                  />
-                </div>
-                {planningOverlayOpacity > 0 && (
-                  <div className="px-4 pb-3 pt-2 bg-card border border-border border-t-0 rounded-b-md">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs text-muted-foreground">Độ hiển thị</span>
-                      <span className="text-xs font-semibold text-primary">{planningOverlayOpacity}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={10}
-                      max={100}
-                      value={planningOverlayOpacity}
-                      onChange={(e) => setPlanningOverlayOpacity(Number(e.target.value))}
-                      className="w-full h-1.5 accent-primary cursor-pointer"
-                    />
-                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>Mờ</span>
-                      <span>Rõ nét</span>
-                    </div>
-                  </div>
-                )}
+                {/* Nút mở bản đồ quy hoạch 2050 toàn màn hình */}
+                <Button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white h-11 rounded-md font-semibold text-xs shadow-sm transition-all"
+                >
+                  <Maximize2 className="h-4 w-4" />
+                  Xem bản đồ quy hoạch 2050
+                </Button>
               </div>
             </section>
 
@@ -368,68 +351,148 @@ function CheckQuyHoachPage() {
               layer2026={layer2026}
               layerSubzone={layerSubzone}
               onPlanningQuery={handlePlanningQuery}
-              planningOverlayOpacity={planningOverlayOpacity}
             />
 
-            {/* Floating POI Utility Layer Switch panel */}
-            <PoiControlPanel
-              activeCategories={activeCategories}
-              onCategoryToggle={handleCategoryToggle}
-              activePoiCount={activePois.length}
-              className="absolute bottom-[20px] left-3 md:bottom-auto md:top-5 md:left-5 z-20"
-            />
+            {/* Top-Right Map Actions Bar */}
+            <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+              {/* Toggle hide/show map overlay widgets */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (showMapOverlays) {
+                    setShowMapOverlays(false);
+                  } else {
+                    setShowMapOverlays(true);
+                    setShowLegend(true);
+                    setShowTraffic(true);
+                  }
+                }}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg shadow-md border text-xs font-semibold backdrop-blur transition-all hover:scale-[1.02] ${
+                  !showMapOverlays
+                    ? "bg-primary text-white border-primary"
+                    : "bg-white/95 hover:bg-white text-slate-800 border-slate-200"
+                }`}
+                title={showMapOverlays ? "Ẩn các bảng tiện ích để xem toàn cảnh bản đồ" : "Hiện lại các bảng tiện ích"}
+              >
+                {showMapOverlays ? (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5 text-slate-500" />
+                    <span>Ẩn công cụ</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3.5 w-3.5 text-white" />
+                    <span>Hiện công cụ</span>
+                  </>
+                )}
+              </button>
 
-            {/* Legend overlay */}
-            <div className="hidden md:block absolute bottom-5 left-[175px] md:left-[300px] glass rounded-xl shadow-card border border-white/50 p-4 w-60 z-20 pointer-events-auto">
-              <div className="text-xs font-bold uppercase tracking-wider text-primary mb-2">Chú giải quy hoạch</div>
-              <ul className="space-y-1.5">
-                {legend.map((l) => (
-                  <li key={l.label} className="flex items-center gap-2.5 text-xs font-semibold">
-                    <span className="h-3.5 w-3.5 rounded-sm shrink-0 shadow-sm" style={{ backgroundColor: l.color }} />
-                    <span className="text-foreground/90">{l.label}</span>
-                  </li>
-                ))}
-              </ul>
+              {/* Quick Fullscreen Viewer Button on Map */}
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-white/95 hover:bg-white text-slate-800 rounded-lg shadow-md border border-slate-200 text-xs font-semibold backdrop-blur transition-all hover:scale-[1.02]"
+                title="Mở bản đồ quy hoạch 2050 toàn màn hình"
+              >
+                <Maximize2 className="h-3.5 w-3.5 text-primary" />
+                <span>Xem bản đồ 2050</span>
+              </button>
             </div>
 
-            {/* Mock Traffic Density Overlay */}
-            <div className="hidden xl:block absolute bottom-5 right-5 glass rounded-xl shadow-card border border-white/50 p-4 w-60 z-20">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-xs font-bold uppercase tracking-wider text-primary">Lưu lượng giao thông</div>
-                <span className="text-[10px] font-bold text-teal bg-teal/10 px-2 py-0.5 rounded-full">
-                  +18% năm nay
-                </span>
-              </div>
-              <div className="flex items-end gap-1.5 h-16 mt-2">
-                {[
-                  { h: 22, c: "bg-teal/30" },
-                  { h: 30, c: "bg-teal/40" },
-                  { h: 38, c: "bg-teal/50" },
-                  { h: 58, c: "bg-teal/70" },
-                  { h: 45, c: "bg-orange/70", label: "16k" },
-                  { h: 70, c: "bg-teal/80" },
-                  { h: 88, c: "bg-teal/90" },
-                  { h: 100, c: "bg-teal" },
-                ].map((b, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center justify-end relative">
-                    {b.label && (
-                      <span className="absolute -top-1.5 text-[9px] font-extrabold bg-foreground text-background px-1.5 py-0.5 rounded scale-90">
-                        {b.label}
-                      </span>
-                    )}
-                    <div className={`${b.c} w-full rounded-t`} style={{ height: `${b.h}%` }} />
+            {/* Floating Widgets (can be hidden/shown via toggle) */}
+            {showMapOverlays && (
+              <>
+                {/* Floating POI Utility Layer Switch panel */}
+                <PoiControlPanel
+                  activeCategories={activeCategories}
+                  onCategoryToggle={handleCategoryToggle}
+                  activePoiCount={activePois.length}
+                  className="absolute bottom-[20px] left-3 md:bottom-auto md:top-5 md:left-5 z-20 animate-fade-in"
+                />
+
+                {/* Legend overlay */}
+                {showLegend && (
+                  <div className="hidden md:block absolute bottom-5 left-[175px] md:left-[300px] glass rounded-xl shadow-card border border-white/50 p-4 w-60 z-20 pointer-events-auto animate-fade-in">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs font-bold uppercase tracking-wider text-primary">Chú giải quy hoạch</div>
+                      <button
+                        type="button"
+                        onClick={() => setShowLegend(false)}
+                        className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-black/5 transition-colors"
+                        title="Đóng chú giải"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {legend.map((l) => (
+                        <li key={l.label} className="flex items-center gap-2.5 text-xs font-semibold">
+                          <span className="h-3.5 w-3.5 rounded-sm shrink-0 shadow-sm" style={{ backgroundColor: l.color }} />
+                          <span className="text-foreground/90">{l.label}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                ))}
-              </div>
-              <div className="mt-2 flex justify-between text-[9px] font-semibold text-muted-foreground">
-                <span>Giờ thấp điểm</span>
-                <span>Giờ cao điểm</span>
-              </div>
-            </div>
+                )}
+
+                {/* Mock Traffic Density Overlay */}
+                {showTraffic && (
+                  <div className="hidden xl:block absolute bottom-5 right-5 glass rounded-xl shadow-card border border-white/50 p-4 w-60 z-20 animate-fade-in">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs font-bold uppercase tracking-wider text-primary">Lưu lượng giao thông</div>
+                        <span className="text-[10px] font-bold text-teal bg-teal/10 px-2 py-0.5 rounded-full">
+                          +18%
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowTraffic(false)}
+                        className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-black/5 transition-colors"
+                        title="Đóng lưu lượng"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div className="flex items-end gap-1.5 h-16 mt-2">
+                      {[
+                        { h: 22, c: "bg-teal/30" },
+                        { h: 30, c: "bg-teal/40" },
+                        { h: 38, c: "bg-teal/50" },
+                        { h: 58, c: "bg-teal/70" },
+                        { h: 45, c: "bg-orange/70", label: "16k" },
+                        { h: 70, c: "bg-teal/80" },
+                        { h: 88, c: "bg-teal/90" },
+                        { h: 100, c: "bg-teal" },
+                      ].map((b, i) => (
+                        <div key={i} className="flex-1 flex flex-col items-center justify-end relative">
+                          {b.label && (
+                            <span className="absolute -top-1.5 text-[9px] font-extrabold bg-foreground text-background px-1.5 py-0.5 rounded scale-90">
+                              {b.label}
+                            </span>
+                          )}
+                          <div className={`${b.c} w-full rounded-t`} style={{ height: `${b.h}%` }} />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex justify-between text-[9px] font-semibold text-muted-foreground">
+                      <span>Giờ thấp điểm</span>
+                      <span>Giờ cao điểm</span>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </main>
       <Footer />
+
+      {/* Modal Viewer HD soi bản đồ quy hoạch 2050 */}
+      <PlanningMapModalViewer
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

@@ -107,9 +107,9 @@ export default function Footer() {
               </a>
             </li>
             <li>
-              <a href={`mailto:${COMPANY_INFO.email}`} className="hover:text-primary transition-colors">
+              <Link to="/lien-he" className="hover:text-primary transition-colors">
                 Liên hệ
-              </a>
+              </Link>
             </li>
             <li>
               <Link to="/dieu-khoan-su-dung" className="hover:text-primary transition-colors">

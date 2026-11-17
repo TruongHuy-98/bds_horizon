@@ -48,6 +48,7 @@ export default function Header() {
     { label: "Pháp lý", to: "/phap-ly" },
     { label: "Luyện thi", to: "/on-thi" },
     { label: "Danh bạ Môi giới", to: "/moi-gioi" },
+    { label: "Liên hệ", to: "/lien-he" },
   ];
 
   const fullNav = [...mainNav, ...moreNav];

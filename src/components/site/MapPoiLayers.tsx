@@ -7,6 +7,8 @@ import {
   Trees,
   MapPin,
   X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -191,21 +193,40 @@ export function PoiControlPanel({
   className,
   activePoiCount = 0,
 }: PoiControlPanelProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   return (
     <Card
-      className={`glass border-white/40 shadow-card bg-white/75 backdrop-blur-md rounded-2xl w-72 transition-all duration-300 ${className}`}
+      className={`glass border-white/40 shadow-card bg-white/80 backdrop-blur-md rounded-2xl w-72 transition-all duration-300 ${className}`}
     >
-      <CardHeader className="p-4 pb-2 border-b border-border/40">
+      <CardHeader 
+        className="p-3.5 pb-2.5 border-b border-border/40 cursor-pointer select-none hover:bg-black/[0.02] transition-colors rounded-t-2xl"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
         <CardTitle className="text-xs font-bold uppercase tracking-wider text-primary flex items-center justify-between">
-          <span>Tiện ích xung quanh</span>
-          {activePoiCount > 0 && (
-            <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
-              {activePoiCount} điểm
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <span>Tiện ích xung quanh</span>
+            {activePoiCount > 0 && (
+              <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {activePoiCount} điểm
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-black/5 transition-colors"
+            title={isCollapsed ? "Mở rộng" : "Thu gọn"}
+          >
+            {isCollapsed ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronUp className="h-4 w-4" />
+            )}
+          </button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4 space-y-3">
+      {!isCollapsed && (
+        <CardContent className="p-4 space-y-3 animate-fade-in">
         {(Object.keys(CATEGORY_CONFIGS) as PoiCategory[]).map((cat) => {
           const config = CATEGORY_CONFIGS[cat];
           const IconComp = config.icon;
@@ -242,6 +263,7 @@ export function PoiControlPanel({
           );
         })}
       </CardContent>
+      )}
     </Card>
   );
 }
