@@ -133,7 +133,6 @@ export function UserProfileModal() {
     profile,
     role,
     updateProfile,
-    switchMockRole,
   } = useAuth();
 
   // Form states
@@ -1248,48 +1247,22 @@ export function UserProfileModal() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/40 dark:bg-blue-950/20 flex flex-col justify-between space-y-3">
-                      <div>
-                        <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-sm">
-                          <Building2 className="size-4" /> Nhà Môi Giới BĐS
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Đăng tin bán và cho thuê BĐS không giới hạn, xác minh chứng chỉ chuyên nghiệp và tiếp cận hàng ngàn khách hàng.
-                        </p>
+                    <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/40 dark:bg-blue-950/20 space-y-2">
+                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-sm">
+                        <Building2 className="size-4" /> Nhà Môi Giới BĐS
                       </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => {
-                          switchMockRole("broker");
-                          toast.success("Đã nâng cấp tài khoản xem thử sang Nhà Môi Giới!");
-                        }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs"
-                      >
-                        Chuyển sang Môi giới <ArrowRight className="size-3.5 ml-1" />
-                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        Đăng tin bán và cho thuê BĐS không giới hạn, xác minh chứng chỉ chuyên nghiệp và tiếp cận hàng ngàn khách hàng. Liên hệ Admin để được nâng cấp quyền.
+                      </p>
                     </div>
 
-                    <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 flex flex-col justify-between space-y-3">
-                      <div>
-                        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-sm">
-                          <Award className="size-4" /> Cộng Tác Viên (CTV)
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Nhận mã giới thiệu riêng, chia sẻ dự án BĐS Horizon và nhận hoa hồng hấp dẫn trực tiếp qua tài khoản ngân hàng.
-                        </p>
+                    <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 space-y-2">
+                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-sm">
+                        <Award className="size-4" /> Cộng Tác Viên (CTV)
                       </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => {
-                          switchMockRole("collaborator");
-                          toast.success("Đã nâng cấp tài khoản xem thử sang Cộng Tác Viên!");
-                        }}
-                        className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs"
-                      >
-                        Chuyển sang CTV <ArrowRight className="size-3.5 ml-1" />
-                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        Nhận mã giới thiệu riêng, chia sẻ dự án BĐS Horizon và nhận hoa hồng hấp dẫn trực tiếp qua tài khoản ngân hàng. Liên hệ Admin để đăng ký CTV.
+                      </p>
                     </div>
                   </div>
                 </div>

@@ -32,7 +32,7 @@ function Logo() {
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, role, isGuest, profile, openProfileModal, switchMockRole, logout } = useAuth();
+  const { user, role, isGuest, profile, openProfileModal, logout } = useAuth();
 
   // Core primary routes always visible on desktop
   const mainNav = [
@@ -223,64 +223,6 @@ export default function Header() {
                       <Link to="/admin">Bảng Quản Trị</Link>
                     </Button>
                   )}
-                </div>
-
-                {/* Quick Role Switcher on Mobile */}
-                <div className="pt-2 border-t border-border/50">
-                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                    <Sparkles className="size-3 text-amber-500" />
-                    Đổi vai trò xem thử
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => switchMockRole("admin")}
-                      className={`text-[11px] py-1 px-2 rounded-md border text-left flex items-center justify-between ${
-                        role === "admin"
-                          ? "bg-purple-100 text-purple-900 border-purple-300 font-semibold"
-                          : "bg-background text-muted-foreground border-border"
-                      }`}
-                    >
-                      <span>Admin</span>
-                      {role === "admin" && "✓"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => switchMockRole("broker")}
-                      className={`text-[11px] py-1 px-2 rounded-md border text-left flex items-center justify-between ${
-                        role === "broker"
-                          ? "bg-blue-100 text-blue-900 border-blue-300 font-semibold"
-                          : "bg-background text-muted-foreground border-border"
-                      }`}
-                    >
-                      <span>Môi giới</span>
-                      {role === "broker" && "✓"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => switchMockRole("collaborator")}
-                      className={`text-[11px] py-1 px-2 rounded-md border text-left flex items-center justify-between ${
-                        role === "collaborator"
-                          ? "bg-amber-100 text-amber-900 border-amber-300 font-semibold"
-                          : "bg-background text-muted-foreground border-border"
-                      }`}
-                    >
-                      <span>CTV</span>
-                      {role === "collaborator" && "✓"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => switchMockRole("user")}
-                      className={`text-[11px] py-1 px-2 rounded-md border text-left flex items-center justify-between ${
-                        role === "user"
-                          ? "bg-slate-200 text-slate-900 border-slate-400 font-semibold"
-                          : "bg-background text-muted-foreground border-border"
-                      }`}
-                    >
-                      <span>Thành viên</span>
-                      {role === "user" && "✓"}
-                    </button>
-                  </div>
                 </div>
               </div>
             )}

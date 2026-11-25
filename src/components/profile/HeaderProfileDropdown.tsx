@@ -76,7 +76,7 @@ export function HeaderProfileDropdown({
   showNameOnMobile = false,
   compact = false,
 }: HeaderProfileDropdownProps) {
-  const { role, profile, user, openProfileModal, switchMockRole, logout, isMock } =
+  const { role, profile, user, openProfileModal, logout } =
     useAuth();
   const navigate = useNavigate();
 
@@ -247,70 +247,6 @@ export function HeaderProfileDropdown({
               </Link>
             </DropdownMenuItem>
           )}
-        </DropdownMenuGroup>
-
-        <DropdownMenuSeparator className="my-1.5" />
-
-        {/* Đổi vai trò xem thử (Mock Mode) */}
-        <DropdownMenuGroup>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="flex items-center gap-2.5 px-2.5 py-2 cursor-pointer rounded-md text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30">
-              <Sparkles className="size-4 text-amber-500" />
-              <div className="flex-1 text-left">
-                <span>Đổi vai trò xem thử</span>
-                <span className="block text-[10px] text-muted-foreground font-normal">
-                  Chuyển nhanh quyền hạn UI
-                </span>
-              </div>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-56 p-1.5 bg-card/95 backdrop-blur-xl border-border/70 rounded-xl shadow-xl z-50">
-              <DropdownMenuLabel className="text-[11px] text-muted-foreground px-2 py-1 font-semibold uppercase tracking-wider">
-                Chọn vai trò thử nghiệm
-              </DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => switchMockRole("admin")}
-                className="flex items-center justify-between px-2.5 py-2 cursor-pointer text-xs rounded-md"
-              >
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="size-4 text-purple-600" />
-                  <span className="font-semibold">Quản trị viên (Admin)</span>
-                </div>
-                {role === "admin" && <Check className="size-4 text-primary font-bold" />}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => switchMockRole("broker")}
-                className="flex items-center justify-between px-2.5 py-2 cursor-pointer text-xs rounded-md"
-              >
-                <div className="flex items-center gap-2">
-                  <Building2 className="size-4 text-blue-600" />
-                  <span className="font-semibold">Môi giới BĐS (Broker)</span>
-                </div>
-                {role === "broker" && <Check className="size-4 text-primary font-bold" />}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => switchMockRole("collaborator")}
-                className="flex items-center justify-between px-2.5 py-2 cursor-pointer text-xs rounded-md"
-              >
-                <div className="flex items-center gap-2">
-                  <Award className="size-4 text-amber-600" />
-                  <span className="font-semibold">Cộng tác viên (CTV)</span>
-                </div>
-                {role === "collaborator" && (
-                  <Check className="size-4 text-primary font-bold" />
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => switchMockRole("user")}
-                className="flex items-center justify-between px-2.5 py-2 cursor-pointer text-xs rounded-md"
-              >
-                <div className="flex items-center gap-2">
-                  <User className="size-4 text-slate-600" />
-                  <span className="font-semibold">Thành viên (Khách)</span>
-                </div>
-                {role === "user" && <Check className="size-4 text-primary font-bold" />}
-              </DropdownMenuItem>
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator className="my-1.5" />

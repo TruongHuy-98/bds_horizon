@@ -41,49 +41,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-  const getMockRole = (): UserRole | null => {
-    if (typeof window !== "undefined") {
-      const val = localStorage.getItem("bds_mock_role");
-      if (val) return val as UserRole;
-    }
-    return null;
-  };
+  const isMock = false;
 
-  const isMock = typeof window !== "undefined" && !!localStorage.getItem("bds_mock_role");
-
-  // Load initial profile & auth state
+  // Load initial profile & auth state (Real Supabase Authentication Mode)
   useEffect(() => {
-    const mockRole = getMockRole();
-    if (mockRole) {
-      setRole(mockRole);
-      if (mockRole === "guest") {
-        setUser(null);
-        setSession(null);
-        setProfile(null);
-      } else {
-        const mockEmail = `mock-${mockRole}@horizon.vn`;
-        const mockUserId = `mock-${mockRole}-id`;
-        const initialProfile = getProfileForRole(mockRole as DbUserRole);
-
-        setUser({
-          id: mockUserId,
-          email: initialProfile.email || mockEmail,
-          aud: "authenticated",
-          created_at: new Date().toISOString(),
-        } as User);
-
-        setSession({
-          access_token: "mock-token",
-          user: { id: mockUserId, email: initialProfile.email || mockEmail } as User,
-        } as Session);
-
-        setProfile(initialProfile);
-      }
-      setLoading(false);
-      return;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("bds_mock_role");
+      localStorage.removeItem("bds_mock_admin");
     }
 
-    // Real Supabase Authentication Mode
     const fetchUserRoleAndProfile = async (userId: string, userEmail?: string) => {
       try {
         const { data, error } = await supabase
@@ -189,70 +155,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
-  const switchMockRole = (newRole: UserRole) => {
-    if (newRole === "guest") {
-      localStorage.setItem("bds_mock_role", "guest");
-      localStorage.removeItem("bds_mock_admin");
-      setRole("guest");
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      toast.info("Đã chuyển sang chế độ Khách vãng lai");
-      return;
-    }
-
-    localStorage.setItem("bds_mock_role", newRole);
-    if (newRole === "admin") {
-      localStorage.setItem("bds_mock_admin", "true");
-    } else {
-      localStorage.removeItem("bds_mock_admin");
-    }
-
-    const targetProfile = getProfileForRole(newRole as DbUserRole);
-    setRole(newRole);
-    setProfile(targetProfile);
-
-    const mockEmail = targetProfile.email || `mock-${newRole}@horizon.vn`;
-    const mockUserId = targetProfile.id || `mock-${newRole}-id`;
-
-    setUser({
-      id: mockUserId,
-      email: mockEmail,
-      aud: "authenticated",
-      created_at: new Date().toISOString(),
-    } as User);
-
-    setSession({
-      access_token: "mock-token",
-      user: { id: mockUserId, email: mockEmail } as User,
-    } as Session);
-
-    const roleNames: Record<string, string> = {
-      admin: "Quản trị viên",
-      broker: "Môi giới BĐS",
-      collaborator: "Cộng tác viên",
-      user: "Thành viên",
-    };
-    toast.success(`Đã đổi vai trò xem thử: ${roleNames[newRole] || newRole}`);
+  const switchMockRole = (_newRole: UserRole) => {
+    toast.info("Chế độ xem thử đã được tắt. Vui lòng sử dụng tài khoản thực.");
   };
 
   const logout = async () => {
-    if (isMock) {
+    if (typeof window !== "undefined") {
       localStorage.removeItem("bds_mock_role");
       localStorage.removeItem("bds_mock_admin");
-      setRole("guest");
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      toast.success("Đã đăng xuất");
-    } else {
-      await supabase.auth.signOut();
-      setRole("guest");
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      toast.success("Đã đăng xuất");
     }
+    await supabase.auth.signOut();
+    setRole("guest");
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    toast.success("Đã đăng xuất");
   };
 
   const isAdmin = role === "admin";

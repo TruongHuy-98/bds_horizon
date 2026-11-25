@@ -607,48 +607,23 @@ const examNavItems: { key: SectionKey; label: string; icon: any; category: strin
 const navItems = [...systemNavItems, ...accountNavItems, ...examNavItems];
 
 function AdminPage() {
-  const { user: realUser, role, profile, isAdmin, isBroker, isCollaborator, isGuest, loading: authLoading, openProfileModal } = useAuth();
+  const { user: realUser, role, profile, isAdmin, isBroker, isCollaborator, isGuest, isMock, loading: authLoading, openProfileModal } = useAuth();
   const navigate = useNavigate();
-  const [grantingSelf, setGrantingSelf] = useState(false);
   const [section, setSection] = useState<SectionKey>("overview");
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Check if mock mode is enabled in localStorage
-  const isMock = typeof window !== "undefined" && !!localStorage.getItem("bds_mock_role");
-  const isMockAdmin = isMock && localStorage.getItem("bds_mock_role") === "admin";
   const user = realUser;
   const loading = authLoading;
 
   useEffect(() => {
-    // If not loading, and user is guest/normal customer, direct to auth
-    if (!loading && isGuest && !isMock) {
+    if (!loading && isGuest) {
       navigate({ to: "/auth" });
     }
-  }, [loading, isGuest, isMock]);
-
-  const makeMeAdmin = async () => {
-    if (!realUser) return;
-    setGrantingSelf(true);
-    const { error } = await supabase.from("user_roles").insert({ user_id: realUser.id, role: "admin" });
-    setGrantingSelf(false);
-    if (error) {
-      toast.error("Không thể tự cấp quyền admin.");
-    } else {
-      toast.success("Đã cấp quyền admin. Tải lại trang...");
-      setTimeout(() => window.location.reload(), 500);
-    }
-  };
+  }, [loading, isGuest]);
 
   const handleSignOut = async () => {
-    if (isMock) {
-      localStorage.removeItem("bds_mock_role");
-      localStorage.removeItem("bds_mock_admin");
-      toast.success("Đã thoát chế độ Demo");
-      navigate({ to: "/auth" });
-    } else {
-      await supabase.auth.signOut();
-      navigate({ to: "/auth" });
-    }
+    await supabase.auth.signOut();
+    navigate({ to: "/auth" });
   };
 
   if (loading) {
