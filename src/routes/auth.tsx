@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,11 +76,18 @@ function AuthPage() {
   const onGoogle = async () => {
     setGoogleLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + "/admin",
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/admin`,
+        },
       });
-      if (result.error) toast.error("Đăng nhập Google thất bại");
-    } finally {
+      if (error) {
+        toast.error(error.message || "Đăng nhập Google thất bại");
+        setGoogleLoading(false);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Đăng nhập Google thất bại");
       setGoogleLoading(false);
     }
   };
